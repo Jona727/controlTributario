@@ -276,6 +276,8 @@ require __DIR__ . '/layout_header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const formatCurrency = (val) => '$ ' + parseFloat(val).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    
     const btnsCaja = document.querySelectorAll('.btn-caja');
     const formCaja = document.getElementById('form-cobrar-factura');
     
