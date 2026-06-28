@@ -28,12 +28,19 @@ class AuthController
      */
     public function login(Request $request, Response $response): Response
     {
+        // Rate Limiting (3 intentos fallidos por 5 minutos)
+        if (isset($_SESSION['login_locked_until']) && $_SESSION['login_locked_until'] > time()) {
+            $mins = ceil(($_SESSION['login_locked_until'] - time()) / 60);
+            return $this->returnError($request, $response, "Demasiados intentos fallidos. Intente de nuevo en {$mins} minuto(s).");
+        }
+
         $data = $request->getParsedBody();
         $cuit = trim($data['cuit'] ?? '');
         $pass = $data['password'] ?? '';
+        $remember = !empty($data['remember_me']);
 
         if (empty($cuit) || empty($pass)) {
-            return $this->redirectWithError($response, 'Ingrese CUIT y contraseña.');
+            return $this->returnError($request, $response, 'Ingrese CUIT y contraseña.');
         }
 
         // Limpiar guiones del CUIT de entrada para comparación robusta
@@ -58,8 +65,17 @@ class AuthController
         }
 
         if (!$user || !password_verify($pass, $user['password_hash'])) {
-            return $this->redirectWithError($response, 'Credenciales inválidas.');
+            $_SESSION['login_attempts'] = ($_SESSION['login_attempts'] ?? 0) + 1;
+            if ($_SESSION['login_attempts'] >= 3) {
+                $_SESSION['login_locked_until'] = time() + (5 * 60); // 5 min
+                return $this->returnError($request, $response, 'Demasiados intentos fallidos. Intente de nuevo en 5 minutos.');
+            }
+            return $this->returnError($request, $response, 'Credenciales inválidas.');
         }
+
+        // Si login exitoso, limpiar intentos
+        unset($_SESSION['login_attempts']);
+        unset($_SESSION['login_locked_until']);
 
         // Generar tokens
         $jwt          = new JwtService();
@@ -70,17 +86,20 @@ class AuthController
         $stmt = $db->prepare('UPDATE users SET last_login = NOW() WHERE id = :id');
         $stmt->execute([':id' => $user['id']]);
 
-        // Establecer cookies
+        // Establecer cookies (con expiración modificada por remember_me)
+        $expAccess = $remember ? time() + (30 * 24 * 3600) : time() + (int) $_ENV['JWT_EXPIRATION'];
+        $expRefresh = $remember ? time() + (60 * 24 * 3600) : time() + (int) $_ENV['JWT_REFRESH_EXPIRATION'];
+
         $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
         $cookiePath = $basePath === '' ? '/' : $basePath;
         setcookie('access_token', $accessToken, [
-            'expires'  => time() + (int) $_ENV['JWT_EXPIRATION'],
+            'expires'  => $expAccess,
             'path'     => $cookiePath,
             'httponly'  => true,
             'samesite' => 'Lax',
         ]);
         setcookie('refresh_token', $refreshToken, [
-            'expires'  => time() + (int) $_ENV['JWT_REFRESH_EXPIRATION'],
+            'expires'  => $expRefresh,
             'path'     => $cookiePath,
             'httponly'  => true,
             'samesite' => 'Lax',
@@ -90,6 +109,11 @@ class AuthController
         $redirect = in_array($user['role_name'], ['admin', 'super'])
             ? $basePath . '/admin/dashboard'
             : $basePath . '/user/dashboard';
+
+        if ($request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest') {
+            $response->getBody()->write(json_encode(['success' => true, 'redirect' => $redirect]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        }
 
         return $response
             ->withHeader('Location', $redirect)
@@ -123,8 +147,13 @@ class AuthController
             ->withStatus(302);
     }
 
-    private function redirectWithError(Response $response, string $message): Response
+    private function returnError(Request $request, Response $response, string $message): Response
     {
+        if ($request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest') {
+            $response->getBody()->write(json_encode(['success' => false, 'error' => $message]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+        }
+        
         $_SESSION['login_error'] = $message;
         $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
         return $response
