@@ -7,6 +7,10 @@ require __DIR__ . '/layout_header.php';
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
     <p style="font-size:0.85rem; color:var(--gray-500);"><?= count($facturas) ?> factura(s)</p>
     <div style="display:flex; gap:0.5rem; align-items:center;">
+        <div style="position:relative;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchInput" class="form-input" placeholder="Buscar factura..." style="padding-left: 2.25rem; width: 220px; font-size: 0.85rem;">
+        </div>
         <button class="btn btn-success" id="btn-cobrar-lote" style="display:none;" data-modal-open="modal-cobrar-lote">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:0.25rem;vertical-align:middle;"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             Cobrar Seleccionadas (<span id="count-seleccionadas">0</span>)
@@ -60,7 +64,7 @@ require __DIR__ . '/layout_header.php';
     $sc = match($f['status']) { 'paid'=>'status-paid','pending'=>'status-pending','overdue'=>'status-overdue',default=>'status-cancelled' };
     $sl = match($f['status']) { 'paid'=>'Pagado','pending'=>'Pendiente','overdue'=>'Vencido','cancelled'=>'Cancelado',default=>$f['status'] };
 ?>
-    <tr>
+    <tr class="factura-row">
         <td style="text-align: center;">
             <?php if ($f['status'] === 'pending' || $f['status'] === 'overdue'): ?>
                 <input type="checkbox" class="form-checkbox check-factura" value="<?= $f['id'] ?>" data-user="<?= $f['user_id'] ?>" data-comercio="<?= htmlspecialchars($f['business_name']) ?>" data-monto="<?= floatval($f['subtotal']) ?>">
@@ -95,10 +99,14 @@ require __DIR__ . '/layout_header.php';
                 <?php endif; ?>
                 <?php if ($f['status'] !== 'paid' && $f['status'] !== 'cancelled'): 
                     $moraData = \App\Controllers\InvoiceController::calculateMora($f);
+                    $btnDisabled = $f['has_older_debt'] ? 'disabled' : '';
+                    $btnColor = $f['has_older_debt'] ? 'var(--slate-medium)' : 'var(--success)';
+                    $btnTitle = $f['has_older_debt'] ? 'Cobro bloqueado: Deuda anterior impaga' : 'Cobrar en Ventanilla';
                 ?>
                     <button class="btn btn-ghost btn-sm btn-caja" 
-                            title="Cobrar en Ventanilla"
-                            style="padding: 0.35rem 0.6rem; color: var(--success);"
+                            title="<?= $btnTitle ?>"
+                            style="padding: 0.35rem 0.6rem; color: <?= $btnColor ?>;"
+                            <?= $btnDisabled ?>
                             data-id="<?= $f['id'] ?>"
                             data-numero="<?= htmlspecialchars($f['invoice_number']) ?>"
                             data-periodo="<?= htmlspecialchars($f['period'] ?? '–') ?>"
@@ -109,7 +117,11 @@ require __DIR__ . '/layout_header.php';
                             data-dias="<?= intval($moraData['dias_mora']) ?>"
                             data-total="<?= floatval($moraData['total_amount']) ?>"
                             data-modal-open="modal-cobrar-factura">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 14c2.209 0 4-1.791 4-4s-1.791-4-4-4-4 1.791-4 4 1.791 4 4 4z"/></svg>
+                        <?php if ($f['has_older_debt']): ?>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        <?php else: ?>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 14c2.209 0 4-1.791 4-4s-1.791-4-4-4-4 1.791-4 4 1.791 4 4 4z"/></svg>
+                        <?php endif; ?>
                     </button>
                 <?php endif; ?>
                 <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/estado/<?= $f['id'] ?>" style="display:inline;margin:0;">
@@ -117,7 +129,6 @@ require __DIR__ . '/layout_header.php';
                     <select name="status" onchange="this.form.submit()" class="form-select" style="width:auto;padding:0.25rem 0.5rem;font-size:0.75rem;margin:0;">
                         <option value="">Estado...</option>
                         <option value="pending">Pendiente</option>
-                        <option value="paid">Pagado</option>
                         <option value="overdue">Vencido</option>
                         <option value="cancelled">Cancelado</option>
                     </select>
@@ -279,6 +290,20 @@ require __DIR__ . '/layout_header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // Live Search
+    const searchInput = document.getElementById('searchInput');
+    const rows = document.querySelectorAll('.factura-row');
+    
+    if(searchInput) {
+        searchInput.addEventListener('input', function() {
+            const term = this.value.toLowerCase().trim();
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+    }
+
     const formatCurrency = (val) => '$ ' + parseFloat(val).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     
     const btnsCaja = document.querySelectorAll('.btn-caja');

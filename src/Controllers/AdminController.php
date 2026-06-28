@@ -141,7 +141,13 @@ class AdminController
         $filterPeriod = $queryParams['period'] ?? '';
 
         $sql = "
-            SELECT i.*, u.business_name, u.client_code, u.cuit, p.id AS payment_id
+            SELECT i.*, u.business_name, u.client_code, u.cuit, p.id AS payment_id,
+                   EXISTS (
+                       SELECT 1 FROM invoices i2 
+                       WHERE i2.user_id = i.user_id 
+                         AND i2.status IN ('pending', 'overdue') 
+                         AND i2.issue_date < i.issue_date
+                   ) as has_older_debt
             FROM invoices i
             JOIN users u ON i.user_id = u.id
             LEFT JOIN payments p ON i.id = p.invoice_id
