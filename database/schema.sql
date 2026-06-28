@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
 CREATE TABLE IF NOT EXISTS payments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     invoice_id INT NOT NULL,
-    receipt_number VARCHAR(50) NOT NULL UNIQUE COMMENT 'Ej: REC-2026-00001',
+    receipt_number VARCHAR(50) NOT NULL COMMENT 'Ej: REC-2026-00001',
     payment_date DATETIME NOT NULL COMMENT 'Fecha y hora del cobro en ventanilla',
     amount_paid DECIMAL(12,2) NOT NULL COMMENT 'Subtotal + Mora cobrada',
     surcharge_paid DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Mora cobrada',

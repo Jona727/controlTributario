@@ -42,6 +42,23 @@ class JwtMiddleware implements MiddlewareInterface
         if (!$decoded) {
             return $this->redirectToLogin();
         }
+        
+        // Verificar en DB que el usuario sigue activo (para revocación rápida)
+        try {
+            $db = \App\Config\Database::getConnection();
+            $stmt = $db->prepare("SELECT is_active FROM users WHERE id = :id");
+            $stmt->execute([':id' => $decoded->sub]);
+            $user = $stmt->fetch();
+            
+            if (!$user || (int)$user['is_active'] === 0) {
+                // Borrar cookie
+                setcookie('access_token', '', time() - 3600, '/');
+                return $this->redirectToLogin();
+            }
+        } catch (\Exception $e) {
+            // Si hay error de DB, lo dejamos pasar o redirigimos? Mejor redirigir
+            return $this->redirectToLogin();
+        }
 
         // Agregar datos del usuario al request
         $request = $request->withAttribute('user_id', $decoded->sub);

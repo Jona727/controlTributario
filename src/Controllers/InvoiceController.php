@@ -688,6 +688,9 @@ class InvoiceController
      */
     public function generateBatchInvoices(Request $request, Response $response): Response
     {
+        // Ampliar el tiempo de ejecución para evitar timeouts en lotes grandes
+        set_time_limit(300);
+
         $data = $request->getParsedBody();
         $db   = Database::getConnection();
 
