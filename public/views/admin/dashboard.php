@@ -4,6 +4,51 @@ $activePage = 'dashboard';
 require __DIR__ . '/layout_header.php';
 ?>
 
+<style>
+/* Micro-interacciones para Stat Cards */
+.stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+}
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.quick-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.chart-container {
+    position: relative;
+    height: 250px;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+</style>
+
+<!-- Acciones Rápidas -->
+<div class="quick-actions">
+    <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas" class="btn btn-primary btn-sm" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nueva Factura
+    </a>
+    <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas" class="btn btn-warning btn-sm" style="padding: 0.4rem 0.75rem; font-size: 0.8rem; color:#fff;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Generar Lote
+    </a>
+    <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios" class="btn btn-ghost btn-sm" style="padding: 0.4rem 0.75rem; font-size: 0.8rem; background:#fff; border: 1px solid var(--slate-border);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Nuevo Comercio
+    </a>
+</div>
+
 <!-- ═══ Stat Cards ═══ -->
 <div class="stats-grid">
     <div class="stat-card stat-primary">
@@ -112,6 +157,11 @@ require __DIR__ . '/layout_header.php';
                     <h3 style="font-size: 1.05rem;">Ranking de Comercios con Mayor Mora</h3>
                     <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/deuda" class="btn btn-ghost btn-sm" style="border-radius: 4px;">Ver Auditoría de Deuda</a>
                 </div>
+                <div class="card-body" style="padding: 1.5rem 1.5rem 0 1.5rem;">
+                    <div class="chart-container">
+                        <canvas id="morososChart"></canvas>
+                    </div>
+                </div>
                 <div style="overflow-x: auto;">
                     <table class="data-table">
                         <thead>
@@ -149,24 +199,9 @@ require __DIR__ . '/layout_header.php';
                     <h3 style="font-size: 1.05rem;">Cobrabilidad del Mes</h3>
                 </div>
                 <div class="card-body" style="padding: 1.5rem;">
-                    <div style="margin-bottom: 1.25rem;">
-                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.35rem; font-weight: 500;">
-                            <span>Facturas Vencidas (Mora)</span>
-                            <span style="font-weight: bold; color: var(--danger);"><?= $stats['facturas_vencidas'] ?></span>
-                        </div>
-                        <div style="height: 6px; background-color: #f1f5f9; border-radius: 3px; overflow: hidden;">
-                            <div style="width: <?= min(100, ($stats['facturas_vencidas'] > 0 ? 100 : 0)) ?>%; height: 100%; background-color: var(--danger);"></div>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 1.25rem;">
-                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.35rem; font-weight: 500;">
-                            <span>Facturas Pendientes</span>
-                            <span style="font-weight: bold; color: var(--warning);"><?= $stats['facturas_pendientes'] ?></span>
-                        </div>
-                        <div style="height: 6px; background-color: #f1f5f9; border-radius: 3px; overflow: hidden;">
-                            <div style="width: <?= min(100, ($stats['facturas_pendientes'] > 0 ? 100 : 0)) ?>%; height: 100%; background-color: var(--warning);"></div>
-                        </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
                     </div>
 
                     <div style="border-top: 1px solid var(--slate-border); padding-top: 1.25rem; margin-top: 1.25rem; text-align: center;">
@@ -179,6 +214,7 @@ require __DIR__ . '/layout_header.php';
     </div>
 </div>
 
+<!-- Script de Navegación por Pestañas -->
 <!-- Script de Navegación por Pestañas -->
 <script>
 function switchTab(event, tabId) {
@@ -205,6 +241,106 @@ function switchTab(event, tabId) {
     activeBtn.style.color = '#ffffff';
     activeBtn.style.borderColor = 'var(--slate-medium)';
 }
+</script>
+
+<!-- Integración de Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Datos PHP -> JS
+    const stats = {
+        pagadas: <?= (int)($stats['facturas_pagadas'] ?? 0) ?>,
+        pendientes: <?= (int)($stats['facturas_pendientes'] ?? 0) ?>,
+        vencidas: <?= (int)($stats['facturas_vencidas'] ?? 0) ?>
+    };
+
+    const morososData = <?= json_encode(array_map(function($m) {
+        return [
+            'name' => mb_strimwidth($m['business_name'], 0, 15, "..."),
+            'deuda' => (float)$m['deuda']
+        ];
+    }, $morosos ?? [])) ?>;
+
+    // Colores del Theme
+    const colors = {
+        success: '#10b981',
+        warning: '#f59e0b',
+        danger: '#ef4444',
+        slate: '#94a3b8'
+    };
+
+    // 1. Gráfico Circular (Estado Global)
+    const ctxStatus = document.getElementById('statusChart').getContext('2d');
+    new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pagadas', 'Pendientes', 'Vencidas'],
+            datasets: [{
+                data: [stats.pagadas, stats.pendientes, stats.vencidas],
+                backgroundColor: [colors.success, colors.warning, colors.danger],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ' ' + context.label + ': ' + context.raw + ' facturas';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // 2. Gráfico de Barras (Morosos)
+    if (morososData.length > 0) {
+        const ctxMorosos = document.getElementById('morososChart').getContext('2d');
+        new Chart(ctxMorosos, {
+            type: 'bar',
+            data: {
+                labels: morososData.map(d => d.name),
+                datasets: [{
+                    label: 'Deuda ($)',
+                    data: morososData.map(d => d.deuda),
+                    backgroundColor: colors.danger,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { borderDash: [2, 4], color: '#e2e8f0' },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + (value/1000) + 'k'; // Format as k for thousands
+                            }
+                        }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    } else {
+        // Hide canvas if no data
+        document.getElementById('morososChart').style.display = 'none';
+        document.getElementById('morososChart').parentElement.innerHTML = '<div class="empty-state" style="padding-top:4rem;"><p>No hay datos suficientes para graficar.</p></div>';
+    }
+});
 </script>
 
 <?php require __DIR__ . '/layout_footer.php'; ?>

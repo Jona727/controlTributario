@@ -36,6 +36,10 @@ class AdminController
         $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status IN ('pending', 'overdue')");
         $stats['deuda_total'] = $stmt->fetch()['total'];
 
+        // Facturas pagadas (para el gráfico)
+        $stmt = $db->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'paid'");
+        $stats['facturas_pagadas'] = $stmt->fetch()['total'];
+
         // Recaudación del mes actual
         $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status = 'paid' AND MONTH(issue_date) = MONTH(CURDATE()) AND YEAR(issue_date) = YEAR(CURDATE())");
         $stats['recaudacion_mes'] = $stmt->fetch()['total'];
