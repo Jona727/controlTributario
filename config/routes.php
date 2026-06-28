@@ -41,6 +41,7 @@ $app->group('/admin', function ($group) {
     $group->post('/facturas/estado/{id}',     [InvoiceController::class, 'updateStatus']);
     $group->get('/facturas/pdf/{id}',         [InvoiceController::class, 'downloadPdf']);
     $group->post('/facturas/pagar/{id}',      [InvoiceController::class, 'payInVentanilla']);
+    $group->post('/facturas/pagar-lote',      [InvoiceController::class, 'payBulkInVentanilla']);
     $group->post('/facturas/revertir/{id}',   [InvoiceController::class, 'revertPayment']);
     $group->get('/facturas/recibo/{id}',      [InvoiceController::class, 'downloadReceiptPdf']);
     $group->post('/facturas/generar-lote',    [InvoiceController::class, 'generateBatchInvoices']);

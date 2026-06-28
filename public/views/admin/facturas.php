@@ -6,7 +6,11 @@ require __DIR__ . '/layout_header.php';
 
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
     <p style="font-size:0.85rem; color:var(--gray-500);"><?= count($facturas) ?> factura(s)</p>
-    <div style="display:flex; gap:0.5rem;">
+    <div style="display:flex; gap:0.5rem; align-items:center;">
+        <button class="btn btn-success" id="btn-cobrar-lote" style="display:none;" data-modal-open="modal-cobrar-lote">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:0.25rem;vertical-align:middle;"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Cobrar Seleccionadas (<span id="count-seleccionadas">0</span>)
+        </button>
         <button class="btn btn-secondary" data-modal-open="modal-generar-lote">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:0.25rem;vertical-align:middle;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
             Generar Lote Mensual
@@ -46,6 +50,7 @@ require __DIR__ . '/layout_header.php';
 <div style="overflow-x:auto;">
 <table class="data-table">
 <thead><tr>
+    <th style="width: 40px; text-align: center;"><input type="checkbox" id="check-all-facturas" class="form-checkbox"></th>
     <th># Factura</th><th>Comercio</th><th>CUIT</th><th>Período</th><th>Emisión</th><th>Vencimiento</th><th>Importe</th><th>Estado</th><th>Acciones</th>
 </tr></thead>
 <tbody>
@@ -56,6 +61,11 @@ require __DIR__ . '/layout_header.php';
     $sl = match($f['status']) { 'paid'=>'Pagado','pending'=>'Pendiente','overdue'=>'Vencido','cancelled'=>'Cancelado',default=>$f['status'] };
 ?>
     <tr>
+        <td style="text-align: center;">
+            <?php if ($f['status'] === 'pending' || $f['status'] === 'overdue'): ?>
+                <input type="checkbox" class="form-checkbox check-factura" value="<?= $f['id'] ?>" data-user="<?= $f['user_id'] ?>" data-comercio="<?= htmlspecialchars($f['business_name']) ?>" data-monto="<?= floatval($f['subtotal']) ?>">
+            <?php endif; ?>
+        </td>
         <td style="font-weight:600;"><?= htmlspecialchars($f['invoice_number']) ?></td>
         <td><?= htmlspecialchars($f['business_name']) ?></td>
         <td><?= htmlspecialchars($f['cuit']) ?></td>
@@ -235,6 +245,33 @@ require __DIR__ . '/layout_header.php';
         Revertir Pago
     </button>
 </div>
+</div>
+</form></div></div>
+
+<!-- Modal Registrar Cobro en Lote -->
+<div class="modal-overlay" id="modal-cobrar-lote"><div class="modal">
+<div class="modal-header"><h3>Cobro en Lote (Efectivo)</h3><button class="modal-close" data-modal-close>&times;</button></div>
+<form id="form-cobrar-lote" method="POST" action="">
+<div class="modal-body">
+    <div class="alert-info">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Se registrará el cobro de <strong id="lote-count-text"></strong> facturas para <strong id="lote-comercio-text"></strong>.
+    </div>
+    
+    <div id="lote-facturas-list" style="max-height: 150px; overflow-y: auto; margin-bottom: 1rem; border: 1px solid var(--slate-border); border-radius: 4px; padding: 0.5rem; font-size: 0.85rem; background: var(--slate-light);">
+    </div>
+
+    <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Contraseña de Seguridad *</label>
+        <input type="password" name="admin_password" class="form-input" placeholder="Tu contraseña de administrador" required>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-ghost" data-modal-close>Cancelar</button>
+    <button type="submit" class="btn btn-success" id="btn-submit-lote">
+        Confirmar y Emitir Recibo Único
+    </button>
+</div>
 </form></div></div>
 
 <script>
@@ -366,6 +403,133 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+        });
+    }
+
+    // --- LOGICA DE COBRO EN LOTE ---
+    const checkAll = document.getElementById('check-all-facturas');
+    const checkFacturas = document.querySelectorAll('.check-factura');
+    const btnCobrarLote = document.getElementById('btn-cobrar-lote');
+    const countSeleccionadas = document.getElementById('count-seleccionadas');
+    const formCobrarLote = document.getElementById('form-cobrar-lote');
+
+    function updateCobrarLoteBtn() {
+        const checked = document.querySelectorAll('.check-factura:checked');
+        countSeleccionadas.textContent = checked.length;
+        if (checked.length > 1) {
+            btnCobrarLote.style.display = 'inline-flex';
+        } else {
+            btnCobrarLote.style.display = 'none';
+        }
+    }
+
+    if (checkAll) {
+        checkAll.addEventListener('change', (e) => {
+            checkFacturas.forEach(cb => {
+                // Solo checkear si están visibles (podrían estar filtradas, aunque la paginación no se hace en frontend, pero por si acaso)
+                cb.checked = e.target.checked;
+            });
+            updateCobrarLoteBtn();
+        });
+    }
+
+    checkFacturas.forEach(cb => {
+        cb.addEventListener('change', () => {
+            if (!cb.checked && checkAll) checkAll.checked = false;
+            updateCobrarLoteBtn();
+        });
+    });
+
+    if (btnCobrarLote) {
+        btnCobrarLote.addEventListener('click', (e) => {
+            const checked = document.querySelectorAll('.check-factura:checked');
+            if (checked.length < 2) {
+                e.preventDefault();
+                alert('Debe seleccionar al menos 2 facturas para el cobro en lote.');
+                return;
+            }
+
+            // Validar que todas sean del mismo comercio
+            let firstUser = null;
+            let firstComercioName = null;
+            let isValid = true;
+            let listHtml = '';
+            
+            checked.forEach(cb => {
+                if (firstUser === null) {
+                    firstUser = cb.dataset.user;
+                    firstComercioName = cb.dataset.comercio;
+                } else if (firstUser !== cb.dataset.user) {
+                    isValid = false;
+                }
+                const tr = cb.closest('tr');
+                const num = tr.cells[1].textContent.trim();
+                const per = tr.cells[4].textContent.trim();
+                listHtml += `<div>- Factura <strong>${num}</strong> (Vto: ${per})</div>`;
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                alert('Solo puede seleccionar facturas de un mismo comercio para realizar un pago en lote.');
+                e.stopPropagation();
+                
+                // Cerrar modal automáticamente ya que se abriría por el data-modal-open
+                const modal = document.getElementById('modal-cobrar-lote');
+                if (modal) modal.classList.remove('active');
+                return;
+            }
+
+            document.getElementById('lote-count-text').textContent = checked.length;
+            document.getElementById('lote-comercio-text').textContent = firstComercioName;
+            document.getElementById('lote-facturas-list').innerHTML = listHtml;
+            formCobrarLote.action = `<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/pagar-lote`;
+        });
+    }
+
+    if (formCobrarLote) {
+        formCobrarLote.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const checked = document.querySelectorAll('.check-factura:checked');
+            const invoiceIds = Array.from(checked).map(cb => parseInt(cb.value));
+            const submitBtn = formCobrarLote.querySelector('button[type="submit"]');
+            const passInput = formCobrarLote.querySelector('input[name="admin_password"]');
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> Procesando...';
+            
+            try {
+                const response = await fetch(formCobrarLote.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ 
+                        admin_password: passInput.value,
+                        invoice_ids: invoiceIds
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.open(`<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/recibo/${result.payment_id}`, '_blank');
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (result.error || 'No se pudo procesar el pago en lote.'));
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Confirmar y Emitir Recibo Único';
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Ocurrió un error inesperado al procesar el pago en lote.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Confirmar y Emitir Recibo Único';
+            }
+        });
+    }
+
 });
 
 function confirmarLote(e, form) {

@@ -371,6 +371,23 @@ class PdfService
         return $dompdf->output();
     }
 
+    public function generateBatchReceiptPdf(array $payments, array $invoices, array $user): string
+    {
+        $options = new Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', true);
+        $options->set('defaultFont', 'Helvetica');
+
+        $dompdf = new Dompdf($options);
+        $html = $this->getBatchReceiptTemplate($payments, $invoices, $user);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return $dompdf->output();
+    }
+
+
     private function getReceiptTemplate(array $payment, array $invoice, array $user): string
     {
         $paymentDate = date('d/m/Y H:i:s', strtotime($payment['payment_date']));
@@ -666,6 +683,309 @@ class PdfService
 
                 <div class='legal-footer'>
                     <p style='font-size: 9px; color: #9ca3af; margin: 0;'>Documento electrónico oficial emitido por la Dirección General de Rentas de la Municipalidad.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        ";
+    }
+
+    private function getBatchReceiptTemplate(array $payments, array $invoices, array $user): string
+    {
+        $firstPayment = $payments[0];
+        $paymentDate = date('d/m/Y H:i:s', strtotime($firstPayment['payment_date']));
+        $receiptNumber = $firstPayment['receipt_number'];
+        
+        $totalSubtotal = 0;
+        $totalSurcharge = 0;
+        $totalAmount = 0;
+        
+        $detailsRows = '';
+        foreach ($invoices as $index => $inv) {
+            $p = $payments[$index];
+            $dueDate = date('d/m/Y', strtotime($inv['due_date']));
+            $pMora = floatval($p['surcharge_paid']);
+            $pBase = floatval($inv['subtotal']);
+            $pTotal = floatval($p['amount_paid']);
+            
+            $totalSubtotal += $pBase;
+            $totalSurcharge += $pMora;
+            $totalAmount += $pTotal;
+            
+            $detailsRows .= "
+            <tr>
+                <td><strong>Tasa de Seguridad e Higiene (Boleta {$inv['invoice_number']})</strong></td>
+                <td style='text-align: center;'>{$inv['period']}</td>
+                <td style='text-align: right;'>{$dueDate}</td>
+                <td style='text-align: right;'>$ " . number_format($pBase, 2, ',', '.') . "</td>
+                <td style='text-align: right;'>$ " . number_format($pMora, 2, ',', '.') . "</td>
+            </tr>";
+        }
+
+        $totalSubtotalStr = number_format($totalSubtotal, 2, ',', '.');
+        $totalSurchargeStr = number_format($totalSurcharge, 2, ',', '.');
+        $totalAmountStr = number_format($totalAmount, 2, ',', '.');
+
+        return "
+        <!DOCTYPE html>
+        <html lang='es'>
+        <head>
+            <meta charset='UTF-8'>
+            <style>
+                body {
+                    font-family: 'Helvetica', 'Arial', sans-serif;
+                    color: #333;
+                    font-size: 11px;
+                    line-height: 1.4;
+                    margin: 0;
+                    padding: 0;
+                }
+                .container {
+                    padding: 20px;
+                    border: 1px solid #d1d5db;
+                    margin: 10px;
+                    background-color: #ffffff;
+                }
+                .header-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 20px;
+                    border-bottom: 2px solid #111827;
+                    padding-bottom: 10px;
+                }
+                .logo-container {
+                    width: 50%;
+                    text-align: left;
+                }
+                .logo-circle {
+                    display: inline-block;
+                    width: 45px;
+                    height: 45px;
+                    background-color: #111827;
+                    color: white;
+                    border-radius: 8px;
+                    text-align: center;
+                    line-height: 45px;
+                    font-weight: bold;
+                    font-size: 20px;
+                }
+                .logo-text {
+                    display: inline-block;
+                    vertical-align: middle;
+                    margin-left: 10px;
+                }
+                .logo-title {
+                    font-size: 14px;
+                    font-weight: bold;
+                    color: #111827;
+                    margin: 0;
+                }
+                .logo-subtitle {
+                    font-size: 9px;
+                    color: #4b5563;
+                    margin: 0;
+                    text-transform: uppercase;
+                }
+                .receipt-info-container {
+                    width: 50%;
+                    text-align: right;
+                    vertical-align: middle;
+                }
+                .receipt-title {
+                    font-size: 14px;
+                    font-weight: bold;
+                    color: #111827;
+                    margin: 0;
+                    text-transform: uppercase;
+                }
+                .receipt-number {
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: #dc2626;
+                    margin-top: 5px;
+                }
+                .section-title {
+                    font-size: 12px;
+                    font-weight: bold;
+                    color: #111827;
+                    border-bottom: 1px solid #e5e7eb;
+                    padding-bottom: 5px;
+                    margin-top: 15px;
+                    margin-bottom: 10px;
+                    text-transform: uppercase;
+                }
+                .info-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 15px;
+                }
+                .info-label {
+                    width: 20%;
+                    color: #6b7280;
+                    padding: 4px 0;
+                }
+                .info-value {
+                    width: 30%;
+                    color: #111827;
+                    padding: 4px 0;
+                }
+                .details-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 20px;
+                    border: 1px solid #e5e7eb;
+                }
+                .details-table th {
+                    background-color: #f3f4f6;
+                    color: #374151;
+                    font-weight: bold;
+                    padding: 8px;
+                    border-bottom: 1px solid #e5e7eb;
+                }
+                .details-table td {
+                    padding: 8px;
+                    border-bottom: 1px solid #e5e7eb;
+                }
+                .totals-table {
+                    width: 40%;
+                    float: right;
+                    border-collapse: collapse;
+                    margin-top: 10px;
+                }
+                .totals-label {
+                    text-align: right;
+                    padding: 6px;
+                    color: #4b5563;
+                }
+                .totals-value {
+                    text-align: right;
+                    padding: 6px;
+                    font-weight: bold;
+                    color: #111827;
+                }
+                .total-row {
+                    border-top: 2px solid #111827;
+                    font-size: 14px;
+                }
+                .total-row .totals-label,
+                .total-row .totals-value {
+                    color: #111827;
+                    padding-top: 10px;
+                }
+                .footer-stamp {
+                    clear: both;
+                    float: right;
+                    width: 180px;
+                    height: 90px;
+                    border: 2px dashed #9ca3af;
+                    border-radius: 6px;
+                    text-align: center;
+                    padding: 10px;
+                    margin-top: 20px;
+                    color: #6b7280;
+                }
+                .stamp-title {
+                    font-size: 9px;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                    margin-bottom: 25px;
+                }
+                .stamp-text {
+                    font-size: 8px;
+                    color: #9ca3af;
+                    text-transform: uppercase;
+                }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <table class='header-table'>
+                    <tr>
+                        <td class='logo-container'>
+                            <div class='logo-circle'>MT</div>
+                            <div class='logo-text'>
+                                <h1 class='logo-title'>MUNICIPALIDAD</h1>
+                                <p class='logo-subtitle'>Dirección de Tesorería y Finanzas</p>
+                            </div>
+                        </td>
+                        <td class='receipt-info-container'>
+                            <h2 class='receipt-title'>RECIBO OFICIAL DE PAGO (LOTE)</h2>
+                            <div class='receipt-number'>{$receiptNumber}</div>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class='section-title'>Detalles de la Transacción</div>
+                <table class='info-table'>
+                    <tr>
+                        <td class='info-label'>Fecha y Hora de Pago:</td>
+                        <td class='info-value'><strong>{$paymentDate}</strong></td>
+                        <td class='info-label'>Cajero / Operador:</td>
+                        <td class='info-value'>Municipalidad de Rentas (Caja 1)</td>
+                    </tr>
+                    <tr>
+                        <td class='info-label'>Medio de Pago:</td>
+                        <td class='info-value'><strong>EFECTIVO (Ventanilla)</strong></td>
+                        <td class='info-label'>Estado de Caja:</td>
+                        <td class='info-value' style='color:#059669; font-weight:bold;'>PROCESADO / COBRADO</td>
+                    </tr>
+                </table>
+
+                <div class='section-title'>Datos del Contribuyente</div>
+                <table class='info-table'>
+                    <tr>
+                        <td class='info-label'>Razón Social:</td>
+                        <td class='info-value'><strong>" . htmlspecialchars($user['business_name']) . "</strong></td>
+                        <td class='info-label'>Código de Cliente:</td>
+                        <td class='info-value'>" . htmlspecialchars($user['client_code']) . "</td>
+                    </tr>
+                    <tr>
+                        <td class='info-label'>CUIT:</td>
+                        <td class='info-value'>" . htmlspecialchars($user['cuit']) . "</td>
+                        <td class='info-label'>Domicilio Comercial:</td>
+                        <td class='info-value'>" . htmlspecialchars($user['address']) . "</td>
+                    </tr>
+                </table>
+
+                <div class='section-title'>Conceptos Cancelados</div>
+                <table class='details-table'>
+                    <thead>
+                        <tr>
+                            <th style='text-align: left;'>Obligación Tributaria</th>
+                            <th style='width: 15%; text-align: center;'>Período</th>
+                            <th style='width: 20%; text-align: right;'>Fecha Vto.</th>
+                            <th style='width: 15%; text-align: right;'>Base</th>
+                            <th style='width: 15%; text-align: right;'>Mora</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {$detailsRows}
+                    </tbody>
+                </table>
+
+                <table class='totals-table'>
+                    <tr>
+                        <td class='totals-label'>Subtotal Base:</td>
+                        <td class='totals-value'>$ {$totalSubtotalStr}</td>
+                    </tr>
+                    <tr>
+                        <td class='totals-label'>Subtotal Mora:</td>
+                        <td class='totals-value'>$ {$totalSurchargeStr}</td>
+                    </tr>
+                    <tr class='total-row'>
+                        <td class='totals-label'><strong>TOTAL COBRADO:</strong></td>
+                        <td class='totals-value' style='color: #059669; font-size: 16px;'><strong>$ {$totalAmountStr}</strong></td>
+                    </tr>
+                </table>
+
+                <div class='footer-stamp'>
+                    <div class='stamp-title'>SELLO DE CAJA</div>
+                    <div class='stamp-text'>PAGADO - MUNICIPALIDAD</div>
+                    <div class='stamp-text'>FECHA: " . date('d/m/Y', strtotime($firstPayment['payment_date'])) . "</div>
+                </div>
+
+                <div style='clear: both; margin-top: 40px; font-size: 9px; color: #9ca3af; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 10px;'>
+                    Comprobante válido como recibo de pago oficial. Conserve este documento. Emitido por el Sistema de Control Tributario.
                 </div>
             </div>
         </body>

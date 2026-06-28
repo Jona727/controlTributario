@@ -273,6 +273,30 @@ class InvoiceController
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
             }
 
+            // Validar control cronológico
+            $checkStmt = $db->prepare("
+                SELECT invoice_number, period 
+                FROM invoices 
+                WHERE user_id = :uid 
+                  AND status IN ('pending', 'overdue') 
+                  AND issue_date < :issue 
+                ORDER BY issue_date ASC 
+                LIMIT 1
+            ");
+            $checkStmt->execute([
+                ':uid' => $invoice['user_id'],
+                ':issue' => $invoice['issue_date']
+            ]);
+            $olderInvoice = $checkStmt->fetch();
+            if ($olderInvoice) {
+                $db->rollBack();
+                $response->getBody()->write(json_encode([
+                    'success' => false, 
+                    'error' => "Control Cronológico: No puede pagar este período. Existe deuda anterior impaga (Factura {$olderInvoice['invoice_number']} - Período {$olderInvoice['period']}). Debe cancelarla primero o realizar un pago en lote."
+                ]));
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+            }
+
             // 2. Calcular mora al día de la cobranza
             $moraData = self::calculateMora($invoice);
             $finalSurcharge = $moraData['surcharge'];
@@ -343,6 +367,162 @@ class InvoiceController
                 'payment_id' => $paymentId,
                 'receipt_number' => $receiptNum,
                 'message' => 'Cobro en ventanilla registrado exitosamente.'
+            ]));
+            return $response->withHeader('Content-Type', 'application/json');
+
+        } catch (\Exception $e) {
+            $db->rollBack();
+            $response->getBody()->write(json_encode(['success' => false, 'error' => 'Error de base de datos: ' . $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    }
+
+    /**
+     * Pago en Lote de Múltiples Facturas (POST /admin/facturas/pagar-lote).
+     */
+    public function payBulkInVentanilla(Request $request, Response $response): Response
+    {
+        $db = Database::getConnection();
+        $adminId = $request->getAttribute('user_id');
+
+        try {
+            $db->beginTransaction();
+
+            $data = $request->getParsedBody();
+            $invoiceIds = $data['invoice_ids'] ?? [];
+            if (empty($invoiceIds) || !is_array($invoiceIds)) {
+                $db->rollBack();
+                $response->getBody()->write(json_encode(['success' => false, 'error' => 'No se seleccionaron facturas.']));
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+            }
+
+            // Validar contraseña de seguridad
+            $adminStmt = $db->prepare("SELECT password_hash FROM users WHERE id = :id AND role_id IN (1, 2)");
+            $adminStmt->execute([':id' => $adminId]);
+            $adminData = $adminStmt->fetch();
+            if (!$adminData || !password_verify($data['admin_password'] ?? '', $adminData['password_hash'])) {
+                $db->rollBack();
+                $response->getBody()->write(json_encode(['success' => false, 'error' => 'Contraseña de seguridad incorrecta.']));
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+            }
+
+            // Obtener todas las facturas
+            $inMarks = str_repeat('?,', count($invoiceIds) - 1) . '?';
+            $stmt = $db->prepare("SELECT * FROM invoices WHERE id IN ($inMarks) FOR UPDATE");
+            $stmt->execute($invoiceIds);
+            $invoices = $stmt->fetchAll();
+
+            if (count($invoices) !== count($invoiceIds)) {
+                $db->rollBack();
+                $response->getBody()->write(json_encode(['success' => false, 'error' => 'Algunas facturas no existen o no se encontraron.']));
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+            }
+
+            // Verificar que todas pertenezcan al mismo usuario y estén pendientes/vencidas
+            $userId = $invoices[0]['user_id'];
+            $earliestIssue = null;
+            
+            foreach ($invoices as $inv) {
+                if ($inv['user_id'] != $userId) {
+                    $db->rollBack();
+                    $response->getBody()->write(json_encode(['success' => false, 'error' => 'No se pueden pagar en lote facturas de distintos comercios.']));
+                    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+                }
+                if ($inv['status'] === 'paid' || $inv['status'] === 'cancelled') {
+                    $db->rollBack();
+                    $response->getBody()->write(json_encode(['success' => false, 'error' => "La factura {$inv['invoice_number']} ya está pagada o cancelada."]));
+                    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+                }
+                if ($earliestIssue === null || $inv['issue_date'] < $earliestIssue) {
+                    $earliestIssue = $inv['issue_date'];
+                }
+            }
+
+            // Validar control cronológico para el lote
+            $checkStmt = $db->prepare("
+                SELECT id, invoice_number, period 
+                FROM invoices 
+                WHERE user_id = :uid 
+                  AND status IN ('pending', 'overdue') 
+                  AND issue_date < :issue 
+                ORDER BY issue_date ASC
+            ");
+            $checkStmt->execute([
+                ':uid' => $userId,
+                ':issue' => $earliestIssue
+            ]);
+            $olderInvoices = $checkStmt->fetchAll();
+            foreach ($olderInvoices as $older) {
+                if (!in_array($older['id'], $invoiceIds)) {
+                    $db->rollBack();
+                    $response->getBody()->write(json_encode([
+                        'success' => false, 
+                        'error' => "Control Cronológico: Existe deuda anterior impaga (Factura {$older['invoice_number']} - {$older['period']}) que no está incluida en este lote. Debe seleccionarla también."
+                    ]));
+                    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+                }
+            }
+
+            // Generar 1 solo número de recibo para el lote
+            $year = date('Y');
+            $countStmt = $db->prepare("SELECT COUNT(DISTINCT receipt_number) FROM payments WHERE receipt_number LIKE :pattern");
+            $countStmt->execute([':pattern' => "REC-{$year}-%"]);
+            $count = (int) $countStmt->fetchColumn();
+            $receiptNum = sprintf("REC-%s-%05d", $year, $count + 1);
+
+            $paymentIdToReturn = null;
+
+            foreach ($invoices as $inv) {
+                $moraData = self::calculateMora($inv);
+                $finalSurcharge = $moraData['surcharge'];
+                $finalTotal = $moraData['total_amount'];
+
+                $upStmt = $db->prepare("UPDATE invoices SET status = 'paid', surcharge = :sur, total_amount = :tot WHERE id = :id");
+                $upStmt->execute([':sur' => $finalSurcharge, ':tot' => $finalTotal, ':id' => $inv['id']]);
+
+                $payStmt = $db->prepare("
+                    INSERT INTO payments (invoice_id, receipt_number, payment_date, amount_paid, surcharge_paid, registered_by)
+                    VALUES (:iid, :receipt, NOW(), :amount, :surcharge, :admin)
+                ");
+                $payStmt->execute([
+                    ':iid'       => $inv['id'],
+                    ':receipt'   => $receiptNum,
+                    ':amount'    => $finalTotal,
+                    ':surcharge' => $finalSurcharge,
+                    ':admin'     => $adminId
+                ]);
+
+                if ($paymentIdToReturn === null) {
+                    $paymentIdToReturn = (int) $db->lastInsertId();
+                }
+
+                if ($finalSurcharge > 0) {
+                    $itemStmt = $db->prepare("
+                        INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, line_total)
+                        VALUES (:iid, :desc, 1, :price, :total)
+                    ");
+                    $itemStmt->execute([
+                        ':iid'   => $inv['id'],
+                        ':desc'  => 'Recargo por mora (Tasa resarcitoria cobrada en caja)',
+                        ':price' => $finalSurcharge,
+                        ':total' => $finalSurcharge
+                    ]);
+                }
+            }
+
+            $notifStmt = $db->prepare("INSERT INTO notifications (user_id, type, title, message) VALUES (:uid, 'info', 'Pago en Lote Registrado', :msg)");
+            $notifStmt->execute([
+                ':uid' => $userId,
+                ':msg' => "Se registró con éxito el cobro en efectivo de " . count($invoices) . " facturas bajo el recibo oficial: {$receiptNum}."
+            ]);
+
+            $db->commit();
+
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'payment_id' => $paymentIdToReturn,
+                'receipt_number' => $receiptNum,
+                'message' => 'Cobro en lote registrado exitosamente.'
             ]));
             return $response->withHeader('Content-Type', 'application/json');
 
@@ -474,9 +654,26 @@ class InvoiceController
         $stmt->execute([':id' => $invoice['user_id']]);
         $user = $stmt->fetch();
 
-        // 5. Generar recibo oficial en PDF
+        // 5. Generar recibo oficial en PDF (Verificar si es lote o individual)
         $pdfService = new \App\Services\PdfService();
-        $pdfBinary  = $pdfService->generateReceiptPdf($payment, $invoice, $user);
+        
+        $stmtBatch = $db->prepare("SELECT * FROM payments WHERE receipt_number = :rec");
+        $stmtBatch->execute([':rec' => $payment['receipt_number']]);
+        $batchPayments = $stmtBatch->fetchAll();
+        
+        if (count($batchPayments) > 1) {
+            // Es un recibo por lote
+            $batchInvoices = [];
+            foreach ($batchPayments as $bp) {
+                $invStmt = $db->prepare("SELECT * FROM invoices WHERE id = :id");
+                $invStmt->execute([':id' => $bp['invoice_id']]);
+                $batchInvoices[] = $invStmt->fetch();
+            }
+            $pdfBinary = $pdfService->generateBatchReceiptPdf($batchPayments, $batchInvoices, $user);
+        } else {
+            // Es un recibo individual
+            $pdfBinary = $pdfService->generateReceiptPdf($payment, $invoice, $user);
+        }
 
         // 6. Configurar respuesta
         $response->getBody()->write($pdfBinary);
