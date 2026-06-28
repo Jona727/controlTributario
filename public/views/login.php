@@ -7,6 +7,7 @@
     <meta name="description" content="Acceso al Sistema de Control Tributario Municipal">
     <meta name="theme-color" content="#1b2129">
     <meta name="app-base-path" content="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>">
+    <meta name="csrf-token" content="<?= $_SESSION['csrf_token'] ?? '' ?>">
     <link rel="manifest" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/manifest.json">
     <link rel="apple-touch-icon" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/images/icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -117,6 +118,7 @@
             <?php endif; ?>
 
             <form method="POST" action="" autocomplete="off" style="text-align: left;">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                 
                 <div class="form-group">
                     <label class="form-label" for="cuit">CUIT del Comercio / Contribuyente</label>

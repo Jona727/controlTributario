@@ -61,3 +61,6 @@ $app->group('/user', function ($group) {
     $group->get('/facturas/recibo/{id}',      [InvoiceController::class, 'downloadReceiptPdf']);
 })
 ->add(new JwtMiddleware());
+
+// Añadir middleware CSRF globalmente a todas las rutas
+$app->add(new \App\Middleware\CsrfMiddleware());

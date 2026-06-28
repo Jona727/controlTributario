@@ -113,6 +113,7 @@ require __DIR__ . '/layout_header.php';
                     </button>
                 <?php endif; ?>
                 <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/estado/<?= $f['id'] ?>" style="display:inline;margin:0;">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                     <select name="status" onchange="this.form.submit()" class="form-select" style="width:auto;padding:0.25rem 0.5rem;font-size:0.75rem;margin:0;">
                         <option value="">Estado...</option>
                         <option value="pending">Pendiente</option>
@@ -133,6 +134,7 @@ require __DIR__ . '/layout_header.php';
 <div class="modal-overlay" id="modal-crear-factura"><div class="modal">
 <div class="modal-header"><h3>Nueva Factura</h3><button class="modal-close" data-modal-close>&times;</button></div>
 <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/crear">
+<input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 <div class="modal-body">
     <div class="form-group">
         <label class="form-label">Comercio *</label>
@@ -165,6 +167,7 @@ require __DIR__ . '/layout_header.php';
 <div class="modal-overlay" id="modal-generar-lote"><div class="modal">
 <div class="modal-header"><h3>Facturación Masiva (Generar Lote)</h3><button class="modal-close" data-modal-close>&times;</button></div>
 <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/generar-lote" onsubmit="confirmarLote(event, this)">
+<input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 <div class="modal-body">
     <div class="alert-info">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -329,7 +332,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
                     body: JSON.stringify({ admin_password: passInput.value })
                 });
@@ -376,7 +380,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
                     body: JSON.stringify({ admin_password: passInput.value })
                 });
@@ -505,7 +510,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
                     body: JSON.stringify({ 
                         admin_password: passInput.value,

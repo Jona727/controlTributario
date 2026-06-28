@@ -40,6 +40,7 @@ require __DIR__ . '/layout_header.php';
         <td>
             <button class="btn btn-ghost btn-sm" onclick='openEditModal(<?= json_encode($c) ?>)'>Editar</button>
             <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios/eliminar/<?= $c['id'] ?>" style="display:inline;" onsubmit="return confirm('¿Desactivar este comercio?')">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                 <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--danger);">Eliminar</button>
             </form>
         </td>
@@ -53,6 +54,7 @@ require __DIR__ . '/layout_header.php';
 <div class="modal-overlay" id="modal-importar-csv"><div class="modal">
 <div class="modal-header"><h3>Importar Comercios desde CSV</h3><button class="modal-close" data-modal-close>&times;</button></div>
 <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios/importar" enctype="multipart/form-data" onsubmit="iniciarImportacion(event, this)">
+<input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 <div class="modal-body">
     <div class="alert-info">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -81,6 +83,7 @@ require __DIR__ . '/layout_header.php';
 <div class="modal-overlay" id="modal-crear-comercio"><div class="modal">
 <div class="modal-header"><h3>Nuevo Comercio</h3><button class="modal-close" data-modal-close>&times;</button></div>
 <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios/crear">
+<input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 <div class="modal-body">
     <div class="form-row"><div class="form-group"><label class="form-label">Código *</label><input type="text" name="client_code" class="form-input" required></div><div class="form-group"><label class="form-label">CUIT *</label><input type="text" name="cuit" class="form-input" required></div></div>
     <div class="form-group"><label class="form-label">Razón Social *</label><input type="text" name="business_name" class="form-input" required></div>
@@ -95,6 +98,7 @@ require __DIR__ . '/layout_header.php';
 <div class="modal-overlay" id="modal-editar-comercio"><div class="modal">
 <div class="modal-header"><h3>Editar Comercio</h3><button class="modal-close" data-modal-close>&times;</button></div>
 <form method="POST" id="form-editar-comercio">
+<input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 <div class="modal-body">
     <div class="form-row"><div class="form-group"><label class="form-label">Código *</label><input type="text" name="client_code" id="edit-client-code" class="form-input" required></div><div class="form-group"><label class="form-label">CUIT *</label><input type="text" name="cuit" id="edit-cuit" class="form-input" required></div></div>
     <div class="form-group"><label class="form-label">Razón Social *</label><input type="text" name="business_name" id="edit-business-name" class="form-input" required></div>
