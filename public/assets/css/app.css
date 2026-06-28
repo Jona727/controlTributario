@@ -1,0 +1,1252 @@
+/* =====================================================
+   Sistema de Control Tributario Municipal (Rentas y Tasas)
+   Estilo Premium de Inspiración Institucional / Clásico
+   ===================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+/* ── Variables CSS de Inspiración Clásica ── */
+:root {
+    /* Paleta Institucional Sobria y Profesional */
+    --brand-primary: #0f172a;      /* Slate Oscuro (Muy profesional) */
+    --brand-primary-hover: #1e293b;
+    --brand-accent: #0f766e;       /* Teal discreto y profesional */
+    --brand-accent-hover: #0d5e58;
+    
+    /* Variables del Sistema Compatibles */
+    --slate-dark: var(--brand-primary);
+    --slate-medium: #475569;       /* Slate gris medio */
+    --slate-medium-hover: #334155;
+    --slate-light: #f8fafc;        /* Fondo neutro claro */
+    --slate-accent: #0f766e;       /* Teal discreto */
+    --slate-border: #e2e8f0;       /* Bordes grises sutiles estándar */
+    
+    --success: #0f766e;            /* Verde sobrio para estados correctos */
+    --success-light: #f0fdf4;
+    --warning: #d97706;            /* Amarillo opaco */
+    --warning-light: #fffbeb;
+    --danger: #be123c;             /* Rojo sobrio institucional */
+    --danger-light: #fff1f2;
+    
+    --font-heading: 'Lora', 'Georgia', serif;
+    --font-body: 'Outfit', -apple-system, sans-serif;
+    
+    --sidebar-width: 260px;
+    --header-height: 70px;         /* Compact header */
+    --transition: all 0.2s ease-in-out;
+    
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05);
+    --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.08);
+    
+    /* Propiedades Glassmorphism */
+    --glass-bg: #ffffff;
+    --glass-border: rgba(15, 23, 42, 0.06);
+}
+
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--slate-light);
+    color: #333d47;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    color: var(--slate-dark);
+    font-weight: 600;
+}
+
+/* ── Botones Premium (Estilo Moderno e Interactivo) ── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.4rem;
+    border: 1px solid transparent;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    white-space: nowrap;
+    border-radius: 8px;
+    user-select: none;
+}
+
+.btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.btn-primary {
+    background-color: var(--brand-accent);
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background-color: var(--brand-accent-hover);
+    color: #ffffff;
+}
+
+.btn-ghost {
+    background-color: transparent;
+    color: var(--slate-medium);
+    border-color: var(--slate-border);
+}
+
+.btn-ghost:hover {
+    background-color: var(--slate-light);
+    border-color: var(--slate-medium);
+    color: var(--brand-primary);
+}
+
+.btn-secondary {
+    background-color: var(--slate-medium);
+    border: 1px solid var(--slate-medium);
+    color: #ffffff;
+}
+
+.btn-secondary:hover {
+    background-color: var(--slate-medium-hover);
+    border-color: var(--slate-medium-hover);
+    color: #ffffff;
+}
+
+.btn-success {
+    background-color: var(--success);
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #0d5e58;
+}
+
+.btn-danger {
+    background-color: var(--danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #9f1239;
+}
+
+/* ── Mensajes de Alerta Reutilizables ── */
+.alert-info {
+    margin-bottom: 1.25rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    background-color: var(--slate-light);
+    border: 1px solid var(--slate-border);
+    color: var(--slate-medium);
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    line-height: 1.4;
+}
+
+.alert-success {
+    margin-bottom: 1.25rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    background-color: var(--success-light);
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    line-height: 1.4;
+}
+
+.btn-sm {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.72rem;
+    border-radius: 6px;
+}
+
+/* ── Inputs Elegantes ── */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #475569;
+    margin-bottom: 0.5rem;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--slate-border);
+    background-color: #f8fafc;
+    color: var(--brand-primary);
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--slate-medium);
+    box-shadow: 0 0 0 3px rgba(60, 73, 86, 0.1);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* =====================================================
+   PORTAL DE BIENVENIDA / LANDING & LOGIN (Stephanie Kemen Style)
+   ===================================================== */
+
+/* 1. Header del Portal */
+.portal-header {
+    background-color: var(--slate-dark);
+    height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4rem;
+    position: relative;
+    z-index: 100;
+}
+
+.portal-contact-info {
+    color: #a4b3c2;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    font-weight: 300;
+}
+
+.portal-social-links {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.portal-social-links a {
+    color: #a4b3c2;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: var(--transition);
+}
+
+.portal-social-links a:hover {
+    color: #ffffff;
+}
+
+/* Barra de Navegación */
+.portal-nav-bar {
+    background-color: #ffffff;
+    height: 65px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 4rem 0 200px;
+    position: relative;
+    z-index: 90;
+    border-bottom: 1px solid var(--slate-border);
+}
+
+/* Logotipo Colgante */
+.portal-logo-box {
+    position: absolute;
+    left: 4rem;
+    top: 0; /* Cuelga desde arriba */
+    background-color: #ffffff;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    z-index: 110;
+    border: 1px solid var(--slate-border);
+    border-top: none;
+    text-align: center;
+    width: 170px;
+}
+
+.portal-logo-box .logo-symbol {
+    font-family: var(--font-heading);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--slate-dark);
+    line-height: 1;
+    letter-spacing: -0.05em;
+    border-bottom: 1px solid var(--slate-border);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.portal-logo-box .logo-text {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--slate-medium);
+    font-weight: 600;
+}
+
+.portal-nav-links {
+    display: flex;
+    gap: 2rem;
+}
+
+.portal-nav-links a {
+    color: var(--slate-medium);
+    text-decoration: none;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.portal-nav-links a:hover,
+.portal-nav-links a.active {
+    color: var(--slate-dark);
+    border-bottom: 2px solid var(--slate-accent);
+    padding-bottom: 4px;
+}
+
+/* 2. Hero Banner (Con columnas clásicas en escala de grises) */
+.portal-hero {
+    position: relative;
+    background-image: linear-gradient(rgba(27, 33, 41, 0.4), rgba(27, 33, 41, 0.45)), url('/tasas_municipales/public/assets/images/municipal_columns.png');
+    background-size: cover;
+    background-position: center 30%;
+    min-height: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 4rem;
+}
+
+.portal-hero-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    width: 100%;
+    max-width: 1100px;
+    margin-top: 2rem;
+}
+
+.portal-hero-card {
+    background-color: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 2.25rem 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 280px;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    transition: var(--transition);
+}
+
+.portal-hero-card:hover {
+    background-color: rgba(255, 255, 255, 0.95);
+    transform: translateY(-5px);
+}
+
+.portal-hero-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--slate-dark);
+    position: relative;
+    padding-bottom: 0.75rem;
+}
+
+.portal-hero-card h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 40px; height: 1px;
+    background-color: var(--slate-border);
+}
+
+.portal-hero-card p {
+    font-size: 0.85rem;
+    color: #4a545e;
+    margin-bottom: 1.5rem;
+    flex: 1;
+}
+
+.portal-hero-card .btn {
+    width: 100%;
+}
+
+/* 3. Icon Section (Sobre Fondo Slate) */
+.portal-icon-bar {
+    background-color: var(--slate-medium);
+    padding: 4rem 4rem;
+    color: #ffffff;
+    text-align: center;
+}
+
+.portal-icon-bar h2 {
+    color: #ffffff;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.portal-icon-bar .bar-subtitle {
+    font-size: 0.9rem;
+    color: #cfd8e2;
+    max-width: 700px;
+    margin: 0 auto 3rem auto;
+}
+
+.portal-icons-grid {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    flex-wrap: wrap;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.portal-icon-item {
+    width: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.portal-icon-circle {
+    width: 85px; height: 85px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    background-color: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    margin-bottom: 1.25rem;
+    transition: var(--transition);
+}
+
+.portal-icon-item:hover .portal-icon-circle {
+    background-color: #ffffff;
+    color: var(--slate-medium);
+    border-color: #ffffff;
+    transform: scale(1.05);
+}
+
+.portal-icon-item span {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+}
+
+/* 4. Testimonials (Compromiso de Gestión) */
+.portal-quotes {
+    background-color: #ffffff;
+    padding: 5rem 4rem;
+    text-align: center;
+}
+
+.portal-quotes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3rem;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.portal-quote-item {
+    text-align: left;
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.portal-quote-item::before {
+    content: '“';
+    position: absolute;
+    left: -0.5rem; top: -1.5rem;
+    font-family: Georgia, serif;
+    font-size: 4rem;
+    color: #e2e8f0;
+    line-height: 1;
+}
+
+.portal-quote-text {
+    font-family: var(--font-heading);
+    font-style: italic;
+    font-size: 0.95rem;
+    color: #4a545e;
+    margin-bottom: 1.25rem;
+}
+
+.portal-quote-author {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    color: var(--slate-medium);
+}
+
+/* 5. Footer del Portal (Súper Elegante en 3 Columnas) */
+.portal-footer {
+    background-color: var(--slate-dark);
+    padding: 5rem 4rem 3rem 4rem;
+    color: #a4b3c2;
+    border-top: 4px solid var(--slate-accent);
+}
+
+.portal-footer-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1.2fr;
+    gap: 4rem;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.portal-footer-col h4 {
+    color: #ffffff;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1.5rem;
+    position: relative;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.portal-footer-col p {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.portal-footer-links {
+    list-style: none;
+}
+
+.portal-footer-links li {
+    margin-bottom: 0.75rem;
+}
+
+.portal-footer-links li a {
+    color: #a4b3c2;
+    text-decoration: none;
+    font-size: 0.82rem;
+    transition: var(--transition);
+}
+
+.portal-footer-links li a:hover {
+    color: #ffffff;
+    padding-left: 4px;
+}
+
+.portal-footer-form input,
+.portal-footer-form textarea {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    margin-bottom: 0.75rem;
+    font-size: 0.8rem;
+    padding: 0.6rem 0.85rem;
+    width: 100%;
+}
+
+.portal-footer-form input:focus,
+.portal-footer-form textarea:focus {
+    border-color: rgba(255, 255, 255, 0.4);
+    outline: none;
+}
+
+.portal-footer-form button {
+    width: 100%;
+    padding: 0.6rem;
+    font-size: 0.75rem;
+}
+
+.portal-footer-bottom {
+    max-width: 1100px;
+    margin: 4rem auto 0 auto;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+}
+
+.portal-footer-bottom .logo-bottom {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* =====================================================
+   ESTILOS DEL PANEL INTERNO (SIDEBAR / DASHBOARD)
+   ===================================================== */
+
+/* Sidebar Clásica Oscura - Ahora Flotante y Sólida */
+.sidebar {
+    position: fixed;
+    top: 1.25rem; left: 1.25rem; bottom: 1.25rem;
+    width: var(--sidebar-width);
+    background-color: var(--brand-primary);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    z-index: 40;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.sidebar-logo {
+    padding: 2.25rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+}
+
+.sidebar-logo .logo-icon {
+    font-family: var(--font-heading);
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #ffffff;
+    border-bottom: 1.5px solid var(--brand-accent);
+    padding-bottom: 0.35rem;
+    width: auto;
+    letter-spacing: -0.02em;
+}
+
+.sidebar-logo h1 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1.25;
+}
+
+.sidebar-logo h1 span {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 0.25rem;
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 1.75rem 1.25rem;
+    overflow-y: auto;
+}
+
+.nav-section {
+    margin-bottom: 2.25rem;
+}
+
+.nav-section-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #64748b;
+    padding: 0 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.8rem 1rem;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: var(--transition);
+    margin-bottom: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+}
+
+.nav-link.active {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 25%; bottom: 25%;
+    width: 3px;
+    background-color: var(--brand-accent);
+    border-radius: 0 2px 2px 0;
+}
+
+.nav-icon {
+    width: 20px; height: 20px;
+    flex-shrink: 0;
+    stroke: currentColor;
+    stroke-width: 2px;
+}
+
+.sidebar-footer {
+    padding: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.sidebar-user .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background-color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.82rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-user .user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.sidebar-user .user-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-user .user-role {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Main Content Alignment */
+.main-content {
+    margin-left: calc(var(--sidebar-width) + 1.25rem); /* Extra space for floating sidebar */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-right: 1.25rem; /* Symmetry */
+}
+
+/* Elegant Header */
+.top-header {
+    height: var(--header-height);
+    background: #ffffff;
+    border-bottom: 1px solid var(--slate-border);
+    border-radius: 0 0 12px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    margin-top: 1.25rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.top-header h2 {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--brand-primary);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-content {
+    flex: 1;
+    padding: 2rem 1.25rem 2.5rem 1.25rem;
+}
+
+/* ── Tarjetas Clásicas de Datos (Súper Compactas y Sobrias) ── */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: #ffffff;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--slate-border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 0.75rem;
+    row-gap: 0.1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.stat-card .stat-icon {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: 34px; height: 34px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0;
+    font-size: 1rem;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.stat-card.stat-primary .stat-icon,
+.stat-card.stat-warning .stat-icon,
+.stat-card.stat-danger .stat-icon,
+.stat-card.stat-success .stat-icon {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.stat-card .stat-label {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin-bottom: 0;
+    line-height: 1.2;
+}
+
+.stat-card .stat-value {
+    grid-column: 2;
+    grid-row: 2;
+    font-family: var(--font-body);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--brand-primary);
+    line-height: 1.2;
+}
+
+/* ── Paneles Clásicos Premium ── */
+.card {
+    background: #ffffff;
+    border: 1px solid var(--slate-border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--slate-border);
+    background-color: #ffffff;
+}
+
+.card-header h3 {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--brand-primary);
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+/* ── Tablas Elegantes de Alta Gama ── */
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.data-table thead th {
+    text-align: left;
+    padding: 1rem 0.75rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #4b5563;
+    background: #f8fafc;
+    border-bottom: 1px solid var(--slate-border);
+}
+
+.data-table thead th:first-child {
+    border-top-left-radius: 8px;
+}
+
+.data-table thead th:last-child {
+    border-top-right-radius: 8px;
+}
+
+.data-table tbody td {
+    padding: 0.75rem 0.75rem;
+    font-size: 0.82rem;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.data-table tbody tr {
+    transition: var(--transition);
+}
+
+.data-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.data-table tbody tr:hover td {
+    color: #0f172a;
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ── Badges de Estado Limpios ── */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 50px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.status-paid {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #d1fae5;
+}
+
+.status-pending {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fef3c7;
+}
+
+.status-overdue {
+    background: #fff1f2;
+    color: #be123c;
+    border: 1px solid #ffe4e6;
+}
+
+.status-cancelled {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-paid .status-dot     { background: #10b981; }
+.status-pending .status-dot  { background: #f59e0b; }
+.status-overdue .status-dot  { background: #f43f5e; }
+.status-cancelled .status-dot{ background: #94a3b8; }
+
+/* ── Modales Clásicos ── */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal {
+    background: #ffffff;
+    border: 1px solid var(--slate-border);
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 580px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalIn {
+    from { opacity: 0; transform: scale(0.96) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--slate-border);
+}
+
+.modal-header h3 {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    width: 32px; height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--slate-border);
+    background: transparent;
+    cursor: pointer;
+    color: var(--slate-medium);
+    transition: var(--transition);
+}
+
+.modal-close:hover {
+    background: var(--slate-light);
+    color: var(--slate-dark);
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1.25rem 2rem;
+    border-top: 1px solid var(--slate-border);
+    background-color: var(--slate-light);
+}
+
+/* ── Mensajes Flash ── */
+.flash-message {
+    padding: 1rem 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: 1px solid transparent;
+}
+
+.flash-success {
+    background: var(--success-light);
+    color: #065f46;
+    border-color: #a7f3d0;
+}
+
+.flash-error {
+    background: var(--danger-light);
+    color: #991b1b;
+    border-color: #fca5a5;
+}
+
+.icon-btn {
+    position: relative;
+    width: 40px; height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--slate-border);
+    background: #fff;
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--slate-medium);
+}
+
+.icon-btn:hover {
+    background: var(--slate-light);
+    color: var(--slate-dark);
+}
+
+/* Panel de notificaciones */
+.notif-panel {
+    position: absolute;
+    top: 50px; right: 0;
+    width: 340px;
+    background: #ffffff;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--slate-border);
+    z-index: 50;
+    display: none;
+}
+
+.notif-panel.active {
+    display: block;
+}
+
+.notif-panel .notif-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--slate-border);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--slate-dark);
+    background-color: var(--slate-light);
+}
+
+.notif-item {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--slate-light);
+    transition: var(--transition);
+}
+
+.notif-item:hover {
+    background: var(--slate-light);
+}
+
+.notif-item.unread {
+    background: var(--warning-light);
+}
+
+.notif-item .notif-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--slate-dark);
+    margin-bottom: 0.2rem;
+}
+
+.notif-item .notif-text {
+    font-size: 0.76rem;
+    color: #4a545e;
+    line-height: 1.4;
+}
+
+.notif-item .notif-time {
+    font-size: 0.68rem;
+    color: #8c9ba5;
+    margin-top: 0.4rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .sidebar {
+        top: 0; left: 0; bottom: 0;
+        margin: 0;
+        border-radius: 0;
+        height: 100vh;
+        transform: translateX(-100%);
+    }
+    .sidebar.active {
+        transform: translateX(0);
+        box-shadow: 10px 0 30px rgba(11, 34, 30, 0.25);
+    }
+    .main-content {
+        margin-left: 0;
+        padding-right: 0;
+    }
+    .top-header {
+        margin-top: 0;
+        border-radius: 0;
+        padding: 0 1.5rem;
+    }
+    #mobile-menu-toggle {
+        display: flex !important;
+    }
+    .portal-header, .portal-nav-bar, .portal-hero, .portal-icon-bar, .portal-quotes, .portal-footer {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+    .portal-nav-bar {
+        padding-left: 1.5rem;
+    }
+    .portal-logo-box {
+        left: 1.5rem;
+    }
+    .portal-hero-grid, .portal-quotes-grid, .portal-footer-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    .grid-2-1, .grid-1-1 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Responsive Grids */
+.grid-2-1 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+}
+.grid-1-1 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}

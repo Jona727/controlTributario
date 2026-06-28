@@ -1,0 +1,9 @@
+/vendor/
+.env
+.env.*
+!.env.example
+composer.phar
+.DS_Store
+*.log
+.idea/
+.vscode/
