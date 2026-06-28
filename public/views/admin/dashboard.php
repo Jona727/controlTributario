@@ -13,18 +13,7 @@ require __DIR__ . '/layout_header.php';
     transform: translateY(-4px);
     box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
 }
-/* Quick Actions */
-.quick-actions {
-    display: flex;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-}
-.quick-actions .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
+
 .chart-container {
     position: relative;
     height: 250px;
@@ -33,21 +22,7 @@ require __DIR__ . '/layout_header.php';
 }
 </style>
 
-<!-- Acciones Rápidas -->
-<div class="quick-actions">
-    <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas" class="btn btn-primary btn-sm" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Nueva Factura
-    </a>
-    <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas" class="btn btn-warning btn-sm" style="padding: 0.4rem 0.75rem; font-size: 0.8rem; color:#fff;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Generar Lote
-    </a>
-    <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios" class="btn btn-ghost btn-sm" style="padding: 0.4rem 0.75rem; font-size: 0.8rem; background:#fff; border: 1px solid var(--slate-border);">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        Nuevo Comercio
-    </a>
-</div>
+
 
 <!-- ═══ Stat Cards ═══ -->
 <div class="stats-grid">
