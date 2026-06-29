@@ -435,8 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-        });
-    }
+
 
     // --- LOGICA DE COBRO EN LOTE ---
     const checkAll = document.getElementById('check-all-facturas');
