@@ -235,6 +235,7 @@ class AdminController
             GROUP BY u.id
             HAVING deuda_total > 0
             ORDER BY deuda_total DESC
+            LIMIT 100
         ");
         $deudores = $stmt->fetchAll();
 

@@ -50,8 +50,12 @@ require __DIR__ . '/layout_header.php';
 </div>
 
 <div class="card">
-    <div class="card-header">
+    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
         <h3>Detalle de Transacciones del Día</h3>
+        <div style="position:relative;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchCaja" class="form-input" placeholder="Buscar recibo, comercio o CUIT..." style="padding-left: 2.25rem; width: 260px; font-size: 0.85rem;">
+        </div>
     </div>
     <div style="overflow-x:auto;">
         <table class="data-table">
@@ -76,7 +80,7 @@ require __DIR__ . '/layout_header.php';
                         </td>
                     </tr>
                 <?php else: foreach ($cobros as $c): ?>
-                    <tr>
+                    <tr class="caja-row">
                         <td><?= date('H:i:s', strtotime($c['payment_date'])) ?> hs</td>
                         <td>
                             <div style="font-weight: 600;"><?= htmlspecialchars($c['business_name']) ?></div>
@@ -95,5 +99,21 @@ require __DIR__ . '/layout_header.php';
         </table>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const searchCaja = document.getElementById('searchCaja');
+    const rowsCaja = document.querySelectorAll('.caja-row');
+    if (searchCaja) {
+        searchCaja.addEventListener('input', function() {
+            const term = this.value.toLowerCase().trim();
+            rowsCaja.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
 
 <?php require __DIR__ . '/layout_footer.php'; ?>

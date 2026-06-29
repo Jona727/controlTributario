@@ -91,9 +91,15 @@ require __DIR__ . '/layout_header.php';
 
 <!-- ═══ Ranking de Deudores ═══ -->
 <div class="card">
-    <div class="card-header">
-        <h3>Ranking y Seguimiento de Deudores</h3>
-        <p style="font-size:0.75rem; color:var(--gray-400);">Comercios con obligaciones pendientes, ordenados de mayor a menor deuda</p>
+    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h3>Ranking y Seguimiento de Deudores</h3>
+            <p style="font-size:0.75rem; color:var(--gray-400);">Top 100 Comercios con obligaciones pendientes, ordenados de mayor a menor deuda</p>
+        </div>
+        <div style="position:relative;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchDeudores" class="form-input" placeholder="Buscar deudor..." style="padding-left: 2.25rem; width: 220px; font-size: 0.85rem;">
+        </div>
     </div>
     <div style="overflow-x:auto;">
         <table class="data-table">
@@ -114,7 +120,7 @@ require __DIR__ . '/layout_header.php';
                 <?php if (empty($deudores)): ?>
                     <tr><td colspan="9" class="empty-state"><p>No se registran comercios deudores en el sistema.</p></td></tr>
                 <?php else: $i = 1; foreach ($deudores as $d): ?>
-                    <tr>
+                    <tr class="deudor-row">
                         <td style="font-weight: bold; text-align: center; color: var(--gray-400); width: 60px;"># <?= $i++ ?></td>
                         <td>
                             <div style="font-weight: 600; color: var(--gray-900);"><?= htmlspecialchars($d['business_name']) ?></div>
@@ -135,7 +141,7 @@ require __DIR__ . '/layout_header.php';
                             <a href="mailto:<?= $d['email'] ?>?subject=Recordatorio%20de%20Pago%20-%20Tasas%20Municipales&body=Estimado%20Contribuyente%20de%20<?= rawurlencode($d['business_name']) ?>%2C%20le%20escribimos%20desde%20la%20Municipalidad%20para%20recordarle%20que%20registra%20una%20deuda%20de%20%24<?= number_format((float)$d['deuda_total'], 2, ',', '.') ?>%20en%20concepto%20de%20Tasas%20de%20Seguridad%20e%20Higiene.%20Por%20favor%20ingrese%20al%20sistema%20para%20regularizar." 
                                class="btn btn-ghost btn-sm" 
                                style="padding: 0.35rem 0.6rem; color: var(--primary-600); border-color: var(--primary-200);"
-                               title="Enviar Notificación de Cobro">
+                               title="Enviar Notificación de Cobro" target="_blank">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                                 Reclamar
                             </a>
@@ -150,6 +156,19 @@ require __DIR__ . '/layout_header.php';
 <script>
 // Preparar los gráficos interactivos
 document.addEventListener('DOMContentLoaded', () => {
+    // Live Search para Deudores
+    const searchDeudores = document.getElementById('searchDeudores');
+    const rowsDeudores = document.querySelectorAll('.deudor-row');
+    if (searchDeudores) {
+        searchDeudores.addEventListener('input', function() {
+            const term = this.value.toLowerCase().trim();
+            rowsDeudores.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+    }
+
     // 1. Gráfico Histórico
     const histCtx = document.getElementById('historicalChart').getContext('2d');
     
