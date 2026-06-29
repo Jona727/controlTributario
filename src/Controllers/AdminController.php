@@ -139,6 +139,7 @@ class AdminController
         $queryParams = $request->getQueryParams();
         $filterUserId = $queryParams['user_id'] ?? '';
         $filterPeriod = $queryParams['period'] ?? '';
+        $tab = $queryParams['tab'] ?? 'pendientes';
 
         $sql = "
             SELECT i.*, u.business_name, u.client_code, u.cuit, p.id AS payment_id,
@@ -162,6 +163,14 @@ class AdminController
         if ($filterPeriod !== '') {
             $sql .= " AND i.period = :period";
             $params[':period'] = $filterPeriod;
+        }
+
+        if ($tab === 'pagadas') {
+            $sql .= " AND i.status = 'paid'";
+        } elseif ($tab === 'anuladas') {
+            $sql .= " AND i.status = 'cancelled'";
+        } else {
+            $sql .= " AND i.status IN ('pending', 'overdue')";
         }
         $sql .= " ORDER BY u.business_name ASC, i.created_at DESC";
 

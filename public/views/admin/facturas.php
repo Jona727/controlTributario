@@ -11,10 +11,12 @@ require __DIR__ . '/layout_header.php';
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="searchInput" class="form-input" placeholder="Buscar factura..." style="padding-left: 2.25rem; width: 220px; font-size: 0.85rem;">
         </div>
+        <?php if ($tab === 'pendientes'): ?>
         <button class="btn btn-success" id="btn-cobrar-lote" style="display:none;" data-modal-open="modal-cobrar-lote">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:0.25rem;vertical-align:middle;"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             Cobrar Seleccionadas (<span id="count-seleccionadas">0</span>)
         </button>
+        <?php endif; ?>
         <button class="btn btn-secondary" data-modal-open="modal-generar-lote">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:0.25rem;vertical-align:middle;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
             Generar Lote Mensual
@@ -26,7 +28,23 @@ require __DIR__ . '/layout_header.php';
     </div>
 </div>
 
+<div class="tabs" style="display:flex; border-bottom:1px solid var(--slate-border); margin-bottom:1.5rem; gap:1.5rem;">
+    <a href="?tab=pendientes<?= !empty($_GET['user_id']) ? '&user_id='.$_GET['user_id'] : '' ?><?= !empty($_GET['period']) ? '&period='.$_GET['period'] : '' ?>" 
+       style="padding:0.75rem 0; font-weight:600; color:<?= $tab === 'pendientes' ? 'var(--brand-primary)' : 'var(--slate-medium)' ?>; border-bottom:2px solid <?= $tab === 'pendientes' ? 'var(--brand-primary)' : 'transparent' ?>; text-decoration:none;">
+       Pendientes / Vencidas
+    </a>
+    <a href="?tab=pagadas<?= !empty($_GET['user_id']) ? '&user_id='.$_GET['user_id'] : '' ?><?= !empty($_GET['period']) ? '&period='.$_GET['period'] : '' ?>" 
+       style="padding:0.75rem 0; font-weight:600; color:<?= $tab === 'pagadas' ? 'var(--brand-primary)' : 'var(--slate-medium)' ?>; border-bottom:2px solid <?= $tab === 'pagadas' ? 'var(--brand-primary)' : 'transparent' ?>; text-decoration:none;">
+       Historial (Pagadas)
+    </a>
+    <a href="?tab=anuladas<?= !empty($_GET['user_id']) ? '&user_id='.$_GET['user_id'] : '' ?><?= !empty($_GET['period']) ? '&period='.$_GET['period'] : '' ?>" 
+       style="padding:0.75rem 0; font-weight:600; color:<?= $tab === 'anuladas' ? 'var(--brand-primary)' : 'var(--slate-medium)' ?>; border-bottom:2px solid <?= $tab === 'anuladas' ? 'var(--brand-primary)' : 'transparent' ?>; text-decoration:none;">
+       Anuladas
+    </a>
+</div>
+
 <form method="GET" action="" style="display:flex; gap:1rem; margin-bottom:1.5rem; align-items:end; flex-wrap:wrap;">
+    <input type="hidden" name="tab" value="<?= htmlspecialchars($tab) ?>">
     <div class="form-group" style="margin-bottom:0; min-width: 250px;">
         <label class="form-label">Filtrar por Comercio</label>
         <select name="user_id" class="form-select">
@@ -45,7 +63,7 @@ require __DIR__ . '/layout_header.php';
     <div style="display:flex; gap:0.5rem;">
         <button type="submit" class="btn btn-primary">Buscar</button>
         <?php if (!empty($_GET['user_id']) || !empty($_GET['period'])): ?>
-            <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas" class="btn btn-ghost">Limpiar</a>
+            <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas?tab=<?= htmlspecialchars($tab) ?>" class="btn btn-ghost">Limpiar</a>
         <?php endif; ?>
     </div>
 </form>
@@ -54,7 +72,11 @@ require __DIR__ . '/layout_header.php';
 <div style="overflow-x:auto;">
 <table class="data-table">
 <thead><tr>
-    <th style="width: 40px; text-align: center;"><input type="checkbox" id="check-all-facturas" class="form-checkbox"></th>
+    <th style="width: 40px; text-align: center;">
+        <?php if ($tab === 'pendientes'): ?>
+            <input type="checkbox" id="check-all-facturas" class="form-checkbox">
+        <?php endif; ?>
+    </th>
     <th># Factura</th><th>Comercio</th><th>CUIT</th><th>Período</th><th>Emisión</th><th>Vencimiento</th><th>Importe</th><th>Estado</th><th>Acciones</th>
 </tr></thead>
 <tbody>
