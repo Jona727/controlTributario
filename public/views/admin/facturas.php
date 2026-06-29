@@ -47,7 +47,7 @@ require __DIR__ . '/layout_header.php';
     <input type="hidden" name="tab" value="<?= htmlspecialchars($tab) ?>">
     <div class="form-group" style="margin-bottom:0; min-width: 250px;">
         <label class="form-label">Filtrar por Comercio</label>
-        <select name="user_id" class="form-select">
+        <select name="user_id" class="form-select searchable-select">
             <option value="">Todos los comercios</option>
             <?php foreach ($comerciosSelect as $cs): ?>
                 <option value="<?= $cs['id'] ?>" <?= (isset($_GET['user_id']) && $_GET['user_id'] == $cs['id']) ? 'selected' : '' ?>>
@@ -171,7 +171,7 @@ require __DIR__ . '/layout_header.php';
 <div class="modal-body">
     <div class="form-group">
         <label class="form-label">Comercio *</label>
-        <select name="user_id" class="form-select" required>
+        <select name="user_id" class="form-select searchable-select" required>
             <option value="">Seleccionar comercio...</option>
             <?php foreach ($comerciosSelect as $cs): ?>
                 <option value="<?= $cs['id'] ?>"><?= htmlspecialchars($cs['client_code'] . ' – ' . $cs['business_name']) ?></option>
