@@ -10,8 +10,7 @@
     <meta name="csrf-token" content="<?= $_SESSION['csrf_token'] ?? '' ?>">
     <link rel="manifest" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/manifest.json">
     <link rel="apple-touch-icon" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/images/icon-192.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/css/app.css">
     <style>
         /* Estructura específica para la ventana de login ultra premium y centrada */
@@ -20,7 +19,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-image: linear-gradient(rgba(27, 33, 41, 0.5), rgba(27, 33, 41, 0.6)), url('<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/images/municipal_columns.png');
+            background-image: linear-gradient(rgba(27, 33, 41, 0.4), rgba(190, 24, 93, 0.6)), url('<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/images/bg-login.jpg');
             background-size: cover;
             background-position: center;
             padding: 1.5rem;
@@ -28,12 +27,12 @@
         }
 
         .login-card-classic {
-            background-color: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(6px);
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             border: 1px solid var(--slate-border);
             width: 100%;
-            max-width: 440px;
-            padding: 3.5rem 2.5rem 2.5rem 2.5rem;
+            max-width: 360px;
+            padding: 3.5rem 2rem 2rem 2rem;
             box-shadow: var(--shadow-lg);
             text-align: center;
             position: relative;
@@ -101,9 +100,8 @@
         <div class="login-card-classic">
             
             <!-- Logotipo Colgante de Inspiración Clásica -->
-            <div class="login-logo-hanging">
-                <div class="logo-symbol">MT</div>
-                <div class="logo-text">DIRECCIÓN DE RENTAS<br><span style="font-size: 0.48rem; color:#8c9ba5;">MUNICIPAL</span></div>
+            <div class="login-logo-hanging" style="padding: 0; width: 110px; height: 110px; border-radius: 50%; overflow: hidden; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15); top: -55px; background-color: #fff;">
+                <img src="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/images/logo-pingo.jpg" alt="Logo Municipio" style="width: 100%; height: 100%; object-fit: contain;">
             </div>
 
             <h2 class="login-title">Acceso Contribuyente</h2>

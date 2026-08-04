@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/images/icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/css/app.css">
 </head>
@@ -21,10 +21,12 @@
 <!-- ═══ Sidebar ═══ -->
 <nav class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-        <div class="logo-icon">MT</div>
+        <div style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; margin-right: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex-shrink: 0; background-color: #fff;">
+            <img src="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/images/logo-pingo.jpg" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
         <h1>
             Control Tributario
-            <span>Panel de Administración</span>
+            <span>Municipio de El Pingo</span>
         </h1>
     </div>
 

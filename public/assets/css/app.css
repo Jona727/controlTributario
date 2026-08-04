@@ -3,13 +3,14 @@
    Estilo Premium de Inspiración Institucional / Clásico
    ===================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap');
+/* Tipografias gestionadas globalmente */
 
 /* ── Variables CSS de Inspiración Clásica ── */
 :root {
-    /* Paleta Institucional Sobria y Profesional */
-    --brand-primary: #0f172a;      /* Slate Oscuro (Muy profesional) */
-    --brand-primary-hover: #1e293b;
+    /* Paleta Institucional (El Pingo) */
+    --brand-primary: #be185d;      /* Fucsia */
+    --brand-primary-hover: #9f1239;
+    --brand-secondary: #eab308;    /* Amarillo */
     --brand-accent: #0f766e;       /* Teal discreto y profesional */
     --brand-accent-hover: #0d5e58;
     
@@ -28,8 +29,9 @@
     --danger: #be123c;             /* Rojo sobrio institucional */
     --danger-light: #fff1f2;
     
-    --font-heading: 'Lora', 'Georgia', serif;
-    --font-body: 'Outfit', -apple-system, sans-serif;
+    --font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+    --font-heading: 'Montserrat', sans-serif;
+    --font-body: 'Montserrat', -apple-system, sans-serif;
     
     --sidebar-width: 260px;
     --header-height: 70px;         /* Compact header */
