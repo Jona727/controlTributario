@@ -18,6 +18,10 @@ class DashboardController
         $db     = Database::getConnection();
         $userId = $request->getAttribute('user_id');
 
+        // Sincroniza mora/estado antes de calcular el resumen, para que la
+        // "Deuda Pendiente" de arriba coincida con el detalle de facturas de abajo.
+        \App\Controllers\InvoiceController::refreshOverdueStatuses();
+
         // Datos del usuario
         $stmt = $db->prepare("SELECT u.*, r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = :id");
         $stmt->execute([':id' => $userId]);

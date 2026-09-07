@@ -93,36 +93,52 @@ class InvoiceController
         $id   = (int) $args['id'];
         $data = $request->getParsedBody();
         $db   = Database::getConnection();
+        $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
 
-        $validStatus = ['pending', 'paid', 'overdue', 'cancelled'];
+        // 'paid' queda deliberadamente afuera: marcar una factura como pagada
+        // solo puede pasar a través de payInVentanilla/payBulkInVentanilla,
+        // que generan el recibo oficial y piden la contraseña de seguridad.
+        // Permitirlo acá saltearía todo ese control.
+        $validStatus = ['pending', 'overdue', 'cancelled'];
         $newStatus   = $data['status'] ?? '';
 
         if (!in_array($newStatus, $validStatus, true)) {
             $_SESSION['flash_error'] = 'Estado inválido.';
-            $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
+            return $response->withHeader('Location', $basePath . '/admin/facturas')->withStatus(302);
+        }
+
+        $stmt = $db->prepare("SELECT status, invoice_number FROM invoices WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        $invoice = $stmt->fetch();
+
+        if (!$invoice) {
+            $_SESSION['flash_error'] = 'Factura no encontrada.';
+            return $response->withHeader('Location', $basePath . '/admin/facturas')->withStatus(302);
+        }
+
+        // Una factura pagada solo se puede "despagar" con Revertir Pago
+        // (que borra el recibo, pide contraseña y queda en auditoría).
+        if ($invoice['status'] === 'paid') {
+            $_SESSION['flash_error'] = 'Esta boleta está pagada. Use "Revertir Pago" para anular el cobro.';
             return $response->withHeader('Location', $basePath . '/admin/facturas')->withStatus(302);
         }
 
         $stmt = $db->prepare("UPDATE invoices SET status = :status WHERE id = :id");
         $stmt->execute([':status' => $newStatus, ':id' => $id]);
 
-        // Si se marca como pagada, notificar
-        if ($newStatus === 'paid') {
-            $stmt = $db->prepare("SELECT user_id, invoice_number FROM invoices WHERE id = :id");
-            $stmt->execute([':id' => $id]);
-            $inv = $stmt->fetch();
-
-            if ($inv) {
-                $stmt = $db->prepare("INSERT INTO notifications (user_id, type, title, message) VALUES (:uid, 'info', 'Pago confirmado', :msg)");
-                $stmt->execute([
-                    ':uid' => $inv['user_id'],
-                    ':msg' => "Su pago para la factura {$inv['invoice_number']} ha sido registrado exitosamente.",
-                ]);
-            }
-        }
+        $adminId = $request->getAttribute('user_id');
+        $auditStmt = $db->prepare("
+            INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, ip_address)
+            VALUES (:uid, 'invoice.update_status', 'invoice', :eid, :details, :ip)
+        ");
+        $auditStmt->execute([
+            ':uid'     => $adminId,
+            ':eid'     => $id,
+            ':details' => json_encode(['invoice_number' => $invoice['invoice_number'], 'from' => $invoice['status'], 'to' => $newStatus]),
+            ':ip'      => $_SERVER['REMOTE_ADDR'] ?? '',
+        ]);
 
         $_SESSION['flash_success'] = 'Estado de factura actualizado.';
-        $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
         return $response->withHeader('Location', $basePath . '/admin/facturas')->withStatus(302);
     }
 
@@ -153,21 +169,14 @@ class InvoiceController
             return $response->withStatus(403);
         }
 
-        // Calcular mora dinámica al día de hoy si está pendiente o vencida
+        // Calcular mora dinámica al día de hoy si está pendiente o vencida.
+        // Solo para mostrarla en el PDF: una descarga (GET) no debe escribir
+        // en la base — eso lo hace refreshOverdueStatuses() explícitamente.
         if ($invoice['status'] !== 'paid' && $invoice['status'] !== 'cancelled') {
             $moraData = self::calculateMora($invoice);
             $invoice['surcharge'] = $moraData['surcharge'];
             $invoice['total_amount'] = $moraData['total_amount'];
             $invoice['status'] = $moraData['status'];
-
-            // Persistir la mora calculada en DB para que sea consistente
-            $upStmt = $db->prepare("UPDATE invoices SET surcharge = :sur, total_amount = :tot, status = :status WHERE id = :id");
-            $upStmt->execute([
-                ':sur' => $moraData['surcharge'],
-                ':tot' => $moraData['total_amount'],
-                ':status' => $moraData['status'],
-                ':id' => $id
-            ]);
         }
 
         // 3. Obtener datos del contribuyente/comercio
@@ -230,6 +239,44 @@ class InvoiceController
             'total_amount' => floatval($invoice['subtotal']),
             'status' => $invoice['status']
         ];
+    }
+
+    /**
+     * Recalcula y persiste la mora/estado de todas las facturas pendientes o
+     * vencidas. Este es el ÚNICO lugar que debe escribir el resultado de
+     * calculateMora() en la base de datos: se llama explícitamente al
+     * principio de cada pantalla que muestra totales (dashboards, deuda,
+     * listado de facturas), en vez de hacerlo como efecto secundario de
+     * una descarga de PDF (una acción de solo lectura no debe modificar datos).
+     * Así los totales que se muestran siempre reflejan la mora actualizada,
+     * haya alguien abierto esa boleta en PDF o no.
+     */
+    public static function refreshOverdueStatuses(): void
+    {
+        $db = Database::getConnection();
+        $stmt = $db->query("SELECT * FROM invoices WHERE status IN ('pending', 'overdue')");
+        $invoices = $stmt->fetchAll();
+
+        $upStmt = $db->prepare("UPDATE invoices SET surcharge = :sur, total_amount = :tot, status = :status WHERE id = :id");
+
+        foreach ($invoices as $invoice) {
+            $moraData = self::calculateMora($invoice);
+
+            $sinCambios = $moraData['status'] === $invoice['status']
+                && round($moraData['surcharge'], 2) === round((float) $invoice['surcharge'], 2)
+                && round($moraData['total_amount'], 2) === round((float) $invoice['total_amount'], 2);
+
+            if ($sinCambios) {
+                continue;
+            }
+
+            $upStmt->execute([
+                ':sur'    => $moraData['surcharge'],
+                ':tot'    => $moraData['total_amount'],
+                ':status' => $moraData['status'],
+                ':id'     => $invoice['id'],
+            ]);
+        }
     }
 
     /**

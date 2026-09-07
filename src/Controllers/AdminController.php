@@ -17,6 +17,10 @@ class AdminController
     {
         $db = Database::getConnection();
 
+        // Sincroniza mora/estado antes de calcular cualquier total, para que
+        // los números reflejen facturas vencidas aunque nadie haya abierto su PDF.
+        \App\Controllers\InvoiceController::refreshOverdueStatuses();
+
         // Métricas rápidas
         $stats = [];
 
@@ -136,6 +140,10 @@ class AdminController
     {
         $db = Database::getConnection();
 
+        // Sincroniza mora/estado antes de listar, para que el importe
+        // mostrado coincida con el que se cobraría en ventanilla ahora mismo.
+        \App\Controllers\InvoiceController::refreshOverdueStatuses();
+
         $queryParams = $request->getQueryParams();
         $filterUserId = $queryParams['user_id'] ?? '';
         $filterPeriod = $queryParams['period'] ?? '';
@@ -203,6 +211,9 @@ class AdminController
     public function deuda(Request $request, Response $response): Response
     {
         $db = Database::getConnection();
+
+        // Sincroniza mora/estado antes de calcular cualquier total.
+        \App\Controllers\InvoiceController::refreshOverdueStatuses();
 
         // 1. Estadísticas globales de deuda
         $stats = [];
