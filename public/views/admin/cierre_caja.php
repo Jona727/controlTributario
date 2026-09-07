@@ -63,12 +63,12 @@ require __DIR__ . '/layout_header.php';
                 <tr>
                     <th>Hora</th>
                     <th>Comercio</th>
-                    <th>CUIT</th>
+                    <th class="col-secondary">CUIT</th>
                     <th>Nº Recibo</th>
-                    <th>Nº Factura</th>
-                    <th>Período</th>
-                    <th>Importe Base</th>
-                    <th>Mora Cobrada</th>
+                    <th class="col-secondary">Nº Factura</th>
+                    <th class="col-secondary">Período</th>
+                    <th class="col-secondary">Importe Base</th>
+                    <th class="col-secondary">Mora Cobrada</th>
                     <th>Total Cobrado</th>
                 </tr>
             </thead>
@@ -86,12 +86,12 @@ require __DIR__ . '/layout_header.php';
                             <div style="font-weight: 600;"><?= htmlspecialchars($c['business_name']) ?></div>
                             <div style="font-size: 0.72rem; color: var(--primary-600);"><?= htmlspecialchars($c['client_code']) ?></div>
                         </td>
-                        <td><?= htmlspecialchars($c['cuit']) ?></td>
+                        <td class="col-secondary"><?= htmlspecialchars($c['cuit']) ?></td>
                         <td style="font-weight: 600; color: var(--danger);"><?= htmlspecialchars($c['receipt_number']) ?></td>
-                        <td style="font-weight: 500;"><?= htmlspecialchars($c['invoice_number']) ?></td>
-                        <td><?= htmlspecialchars($c['period'] ?? '–') ?></td>
-                        <td>$ <?= number_format(floatval($c['amount_paid']) - floatval($c['surcharge_paid']), 2, ',', '.') ?></td>
-                        <td style="color: var(--danger-600); font-weight: 500;">$ <?= number_format(floatval($c['surcharge_paid']), 2, ',', '.') ?></td>
+                        <td class="col-secondary" style="font-weight: 500;"><?= htmlspecialchars($c['invoice_number']) ?></td>
+                        <td class="col-secondary"><?= htmlspecialchars($c['period'] ?? '–') ?></td>
+                        <td class="col-secondary">$ <?= number_format(floatval($c['amount_paid']) - floatval($c['surcharge_paid']), 2, ',', '.') ?></td>
+                        <td class="col-secondary" style="color: var(--danger-600); font-weight: 500;">$ <?= number_format(floatval($c['surcharge_paid']), 2, ',', '.') ?></td>
                         <td style="font-weight: bold; color: var(--success);">$ <?= number_format(floatval($c['amount_paid']), 2, ',', '.') ?></td>
                     </tr>
                 <?php endforeach; endif; ?>

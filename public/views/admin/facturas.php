@@ -77,11 +77,11 @@ require __DIR__ . '/layout_header.php';
             <input type="checkbox" id="check-all-facturas" class="form-checkbox">
         <?php endif; ?>
     </th>
-    <th># Factura</th><th>Comercio</th><th>CUIT</th><th>Período</th><th>Emisión</th><th>Vencimiento</th><th>Importe</th><th>Estado</th><th>Acciones</th>
+    <th># Factura</th><th>Comercio</th><th class="col-secondary">CUIT</th><th class="col-secondary">Emisión</th><th class="col-secondary">Vencimiento</th><th>Importe</th><th>Estado / Acciones</th>
 </tr></thead>
 <tbody>
 <?php if (empty($facturas)): ?>
-    <tr><td colspan="9" class="empty-state"><p>Sin facturas</p></td></tr>
+    <tr><td colspan="8" class="empty-state"><p>Sin facturas</p></td></tr>
 <?php else: foreach ($facturas as $f):
     $sc = match($f['status']) { 'paid'=>'status-paid','pending'=>'status-pending','overdue'=>'status-overdue',default=>'status-cancelled' };
     $sl = match($f['status']) { 'paid'=>'Pagado','pending'=>'Pendiente','overdue'=>'Vencido','cancelled'=>'Cancelado',default=>$f['status'] };
@@ -92,16 +92,18 @@ require __DIR__ . '/layout_header.php';
                 <input type="checkbox" class="form-checkbox check-factura" value="<?= $f['id'] ?>" data-user="<?= $f['user_id'] ?>" data-comercio="<?= htmlspecialchars($f['business_name']) ?>" data-monto="<?= floatval($f['subtotal']) ?>">
             <?php endif; ?>
         </td>
-        <td style="font-weight:600;"><?= htmlspecialchars($f['invoice_number']) ?></td>
-        <td><?= htmlspecialchars($f['business_name']) ?></td>
-        <td><?= htmlspecialchars($f['cuit']) ?></td>
-        <td><?= htmlspecialchars($f['period'] ?? '–') ?></td>
-        <td><?= date('d/m/Y', strtotime($f['issue_date'])) ?></td>
-        <td><?= date('d/m/Y', strtotime($f['due_date'])) ?></td>
-        <td style="font-weight:600;">$ <?= number_format((float)$f['total_amount'],2,',','.') ?></td>
-        <td><span class="status-badge <?= $sc ?>"><span class="status-dot"></span><?= $sl ?></span></td>
         <td>
-            <div style="display:flex;align-items:center;gap:0.35rem;">
+            <div style="font-weight:600;"><?= htmlspecialchars($f['invoice_number']) ?></div>
+            <div style="font-size:0.72rem;color:var(--slate-medium);"><?= htmlspecialchars($f['period'] ?? '–') ?></div>
+        </td>
+        <td><?= htmlspecialchars($f['business_name']) ?></td>
+        <td class="col-secondary"><?= htmlspecialchars($f['cuit']) ?></td>
+        <td class="col-secondary"><?= date('d/m/Y', strtotime($f['issue_date'])) ?></td>
+        <td class="col-secondary"><?= date('d/m/Y', strtotime($f['due_date'])) ?></td>
+        <td style="font-weight:600;">$ <?= number_format((float)$f['total_amount'],2,',','.') ?></td>
+        <td>
+            <div style="margin-bottom:0.35rem;"><span class="status-badge <?= $sc ?>"><span class="status-dot"></span><?= $sl ?></span></div>
+            <div class="cell-actions" style="display:flex;align-items:center;gap:0.35rem;">
                 <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/pdf/<?= $f['id'] ?>" class="btn btn-ghost btn-sm" title="Descargar PDF de Boleta" style="padding: 0.35rem 0.6rem;" target="_blank">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 </a>
@@ -146,7 +148,7 @@ require __DIR__ . '/layout_header.php';
                         <?php endif; ?>
                     </button>
                 <?php endif; ?>
-                <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/estado/<?= $f['id'] ?>" style="display:inline;margin:0;">
+                <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/estado/<?= $f['id'] ?>" class="col-secondary" style="margin:0;">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                     <select name="status" onchange="this.form.submit()" class="form-select" style="width:auto;padding:0.25rem 0.5rem;font-size:0.75rem;margin:0;">
                         <option value="">Estado...</option>

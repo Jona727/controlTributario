@@ -105,14 +105,14 @@ require __DIR__ . '/layout_header.php';
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Ranking</th>
+                    <th class="col-secondary">Ranking</th>
                     <th>Comercio</th>
-                    <th>CUIT</th>
-                    <th>Facturas Impagas</th>
-                    <th>Monto Vencido</th>
-                    <th>Monto Pendiente</th>
+                    <th class="col-secondary">CUIT</th>
+                    <th class="col-secondary">Facturas Impagas</th>
+                    <th class="col-secondary">Monto Vencido</th>
+                    <th class="col-secondary">Monto Pendiente</th>
                     <th style="font-weight: bold; color: var(--danger);">Deuda Total</th>
-                    <th>Contacto</th>
+                    <th class="col-secondary">Contacto</th>
                     <th>Acción</th>
                 </tr>
             </thead>
@@ -121,17 +121,17 @@ require __DIR__ . '/layout_header.php';
                     <tr><td colspan="9" class="empty-state"><p>No se registran comercios deudores en el sistema.</p></td></tr>
                 <?php else: $i = 1; foreach ($deudores as $d): ?>
                     <tr class="deudor-row">
-                        <td style="font-weight: bold; text-align: center; color: var(--gray-400); width: 60px;"># <?= $i++ ?></td>
+                        <td class="col-secondary" style="font-weight: bold; text-align: center; color: var(--gray-400); width: 60px;"># <?= $i++ ?></td>
                         <td>
                             <div style="font-weight: 600; color: var(--gray-900);"><?= htmlspecialchars($d['business_name']) ?></div>
                             <div style="font-size: 0.72rem; color: var(--primary-600);"><?= htmlspecialchars($d['client_code']) ?></div>
                         </td>
-                        <td><?= htmlspecialchars($d['cuit']) ?></td>
-                        <td style="text-align: center; font-weight: 600;"><?= $d['total_facturas'] ?></td>
-                        <td style="color: var(--danger);">$ <?= number_format((float)$d['monto_vencido'], 2, ',', '.') ?></td>
-                        <td style="color: var(--warning); font-weight: 500;">$ <?= number_format((float)$d['monto_pendiente'], 2, ',', '.') ?></td>
+                        <td class="col-secondary"><?= htmlspecialchars($d['cuit']) ?></td>
+                        <td class="col-secondary" style="text-align: center; font-weight: 600;"><?= $d['total_facturas'] ?></td>
+                        <td class="col-secondary" style="color: var(--danger);">$ <?= number_format((float)$d['monto_vencido'], 2, ',', '.') ?></td>
+                        <td class="col-secondary" style="color: var(--warning); font-weight: 500;">$ <?= number_format((float)$d['monto_pendiente'], 2, ',', '.') ?></td>
                         <td style="font-weight: 700; color: var(--danger); font-size: 0.9rem;">$ <?= number_format((float)$d['deuda_total'], 2, ',', '.') ?></td>
-                        <td>
+                        <td class="col-secondary">
                             <div style="font-size: 0.75rem;">✉ <?= htmlspecialchars($d['email']) ?></div>
                             <?php if (!empty($d['phone'])): ?>
                                 <div style="font-size: 0.75rem; color: var(--gray-500);">☎ <?= htmlspecialchars($d['phone']) ?></div>

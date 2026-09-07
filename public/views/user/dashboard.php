@@ -121,7 +121,7 @@ $activePage = 'dashboard';
                             <td style="font-weight:600;">$ <?= number_format((float)$displayTotal,2,',','.') ?></td>
                             <td><span class="status-badge <?= $sc ?>"><span class="status-dot"></span><?= $sl ?></span></td>
                             <td>
-                                <div style="display:flex;align-items:center;gap:0.35rem;">
+                                <div class="cell-actions" style="display:flex;align-items:center;gap:0.35rem;">
                                     <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/user/facturas/pdf/<?= $f['id'] ?>" class="btn btn-ghost btn-sm" title="Descargar PDF de Boleta" style="padding: 0.35rem 0.6rem;" target="_blank">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                     </a>

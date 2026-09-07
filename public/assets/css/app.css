@@ -1233,6 +1233,30 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Responsive */
 @media (max-width: 1024px) {
+    /* Columnas secundarias de tablas: se ocultan (no se eliminan del DOM) para
+       que las tablas de gestión entren sin scroll horizontal. */
+    .data-table .col-secondary {
+        display: none;
+    }
+    .data-table thead th,
+    .data-table tbody td {
+        padding-left: 0.4rem;
+        padding-right: 0.4rem;
+    }
+    .data-table .cell-actions {
+        flex-wrap: wrap;
+        max-width: 60px;
+    }
+    .data-table .status-badge {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.62rem;
+        letter-spacing: 0;
+        text-transform: none;
+        gap: 0.25rem;
+    }
+    .data-table .status-badge .status-dot {
+        display: none;
+    }
     .sidebar {
         top: 0; left: 0; bottom: 0;
         margin: 0;

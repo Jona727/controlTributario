@@ -26,19 +26,21 @@ require __DIR__ . '/layout_header.php';
 <div style="overflow-x:auto;">
 <table class="data-table">
 <thead><tr>
-    <th>Código</th><th>Razón Social</th><th>CUIT</th><th>Domicilio</th><th>Email</th><th>Tasa Base</th><th>Deuda</th><th>Estado</th><th>Acciones</th>
+    <th>Comercio</th><th class="col-secondary">CUIT</th><th class="col-secondary">Domicilio</th><th class="col-secondary">Email</th><th class="col-secondary">Tasa Base</th><th>Deuda</th><th>Estado</th><th>Acciones</th>
 </tr></thead>
 <tbody>
 <?php if (empty($comercios)): ?>
     <tr><td colspan="8" class="empty-state"><p>Sin comercios</p></td></tr>
 <?php else: foreach ($comercios as $c): ?>
     <tr class="comercio-row">
-        <td style="font-weight:600;color:var(--primary-600);"><?= htmlspecialchars($c['client_code']) ?></td>
-        <td style="font-weight:600;"><?= htmlspecialchars($c['business_name']) ?></td>
-        <td><?= htmlspecialchars($c['cuit']) ?></td>
-        <td><?= htmlspecialchars($c['address']) ?></td>
-        <td><?= htmlspecialchars($c['email']) ?></td>
-        <td style="font-weight:600;">$ <?= number_format((float)$c['base_rate'], 2, ',', '.') ?></td>
+        <td>
+            <div style="font-weight:600;"><?= htmlspecialchars($c['business_name']) ?></div>
+            <div style="font-size:0.72rem;color:var(--primary-600);font-family:monospace;"><?= htmlspecialchars($c['client_code']) ?></div>
+        </td>
+        <td class="col-secondary"><?= htmlspecialchars($c['cuit']) ?></td>
+        <td class="col-secondary"><?= htmlspecialchars($c['address']) ?></td>
+        <td class="col-secondary"><?= htmlspecialchars($c['email']) ?></td>
+        <td class="col-secondary" style="font-weight:600;">$ <?= number_format((float)$c['base_rate'], 2, ',', '.') ?></td>
         <td style="font-weight:600;color:<?= $c['deuda_pendiente'] > 0 ? 'var(--danger)' : 'var(--success)' ?>;">$ <?= number_format((float)$c['deuda_pendiente'],2,',','.') ?></td>
         <td><?php if($c['is_active']): ?><span class="status-badge status-paid"><span class="status-dot"></span>Activo</span><?php else: ?><span class="status-badge status-cancelled">Inactivo</span><?php endif; ?></td>
         <td style="white-space: nowrap;">
