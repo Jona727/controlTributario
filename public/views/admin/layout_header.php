@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?? 'Panel Admin' ?> – Control Tributario Municipal</title>
     <meta name="description" content="Panel de Administración del Sistema de Control Tributario Municipal">
-    <meta name="theme-color" content="#1b2129">
+    <meta name="theme-color" content="#6d1f2b">
     <meta name="app-base-path" content="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>">
     <meta name="csrf-token" content="<?= $_SESSION['csrf_token'] ?? '' ?>">
     <link rel="manifest" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/manifest.json">

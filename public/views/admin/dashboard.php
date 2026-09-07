@@ -238,10 +238,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Colores del Theme
     const colors = {
-        success: '#10b981',
-        warning: '#f59e0b',
-        danger: '#ef4444',
-        slate: '#94a3b8'
+        success: '#3f6b4a',
+        warning: '#c9a24b',
+        danger: '#8a2332',
+        slate: '#9c9188'
     };
 
     // 1. Gráfico Circular (Estado Global)

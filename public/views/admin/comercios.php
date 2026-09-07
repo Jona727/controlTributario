@@ -73,9 +73,9 @@ require __DIR__ . '/layout_header.php';
         <label class="form-label">Seleccionar Archivo CSV *</label>
         <input type="file" name="csv_file" class="form-input" accept=".csv" required style="padding: 0.5rem;">
     </div>
-    <div style="font-size: 0.75rem; background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 0.75rem; border-radius: 4px;">
+    <div style="font-size: 0.75rem; background-color: var(--slate-light); border: 1px solid var(--slate-border); padding: 0.75rem; border-radius: 4px;">
         <strong>Ejemplo de formato CSV:</strong><br>
-        <code style="font-size: 0.7rem; color: #1d4ed8;">codigo;razon_social;cuit;domicilio;telefono;email;tasa_base</code><br>
+        <code style="font-size: 0.7rem; color: var(--brand-primary);">codigo;razon_social;cuit;domicilio;telefono;email;tasa_base</code><br>
         <code style="font-size: 0.7rem;">COM-010;Tienda Ejemplo;20-98765432-1;Av. Ejemplo 123;0343-412345;tienda@email.com;4500.00</code>
     </div>
 </div>

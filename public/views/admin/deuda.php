@@ -197,13 +197,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 {
                     label: 'Recaudado ($)',
                     data: dataPagado,
-                    backgroundColor: '#10b981', // green
+                    backgroundColor: '#3f6b4a', // verde institucional
                     borderRadius: 4
                 },
                 {
                     label: 'Pendiente/Vencido ($)',
                     data: dataPendiente,
-                    backgroundColor: '#f59e0b', // orange
+                    backgroundColor: '#c9a24b', // dorado cálido
                     borderRadius: 4
                 }
             ]
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <?= (float)$stats['pendiente'] ?>,
                     <?= (float)$stats['vencido'] ?>
                 ],
-                backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                backgroundColor: ['#3f6b4a', '#c9a24b', '#8a2332'],
                 borderWidth: 2,
                 hoverOffset: 4
             }]

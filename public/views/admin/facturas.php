@@ -261,7 +261,7 @@ require __DIR__ . '/layout_header.php';
 <div class="modal-header"><h3>Revertir Pago de Boleta</h3><button class="modal-close" data-modal-close>&times;</button></div>
 <form id="form-revertir-factura" method="POST" action="">
 <div class="modal-body">
-    <div class="alert-info" style="background-color: var(--danger-light); color: var(--danger); border-color: #fca5a5;">
+    <div class="alert-info" style="background-color: var(--danger-light); color: var(--danger); border-color: rgba(138,35,50,0.35);">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <strong>¡Atención!</strong> Estás a punto de anular un pago registrado. La boleta volverá a estado "Pendiente", se borrará el recibo oficial y esto quedará registrado en auditoría.
     </div>
