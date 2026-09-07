@@ -149,38 +149,50 @@ class AdminController
         $filterPeriod = $queryParams['period'] ?? '';
         $tab = $queryParams['tab'] ?? 'pendientes';
 
+        // Condiciones WHERE compartidas entre el conteo (para la paginación)
+        // y el listado en sí, para que ambos siempre queden en sincro.
+        $where = "WHERE 1=1";
+        $params = [];
+        if ($filterUserId !== '') {
+            $where .= " AND i.user_id = :uid";
+            $params[':uid'] = $filterUserId;
+        }
+        if ($filterPeriod !== '') {
+            $where .= " AND i.period = :period";
+            $params[':period'] = $filterPeriod;
+        }
+        if ($tab === 'pagadas') {
+            $where .= " AND i.status = 'paid'";
+        } elseif ($tab === 'anuladas') {
+            $where .= " AND i.status = 'cancelled'";
+        } else {
+            $where .= " AND i.status IN ('pending', 'overdue')";
+        }
+
+        $countStmt = $db->prepare("SELECT COUNT(*) AS total FROM invoices i {$where}");
+        $countStmt->execute($params);
+        $totalFacturas = (int) $countStmt->fetch()['total'];
+
+        $perPage = 25;
+        $totalPages = max(1, (int) ceil($totalFacturas / $perPage));
+        $page = max(1, min($totalPages, (int) ($queryParams['page'] ?? 1)));
+        $offset = ($page - 1) * $perPage;
+
         $sql = "
             SELECT i.*, u.business_name, u.client_code, u.cuit, p.id AS payment_id,
                    EXISTS (
-                       SELECT 1 FROM invoices i2 
-                       WHERE i2.user_id = i.user_id 
-                         AND i2.status IN ('pending', 'overdue') 
+                       SELECT 1 FROM invoices i2
+                       WHERE i2.user_id = i.user_id
+                         AND i2.status IN ('pending', 'overdue')
                          AND i2.issue_date < i.issue_date
                    ) as has_older_debt
             FROM invoices i
             JOIN users u ON i.user_id = u.id
             LEFT JOIN payments p ON i.id = p.invoice_id
-            WHERE 1=1
+            {$where}
+            ORDER BY u.business_name ASC, i.created_at DESC
+            LIMIT {$perPage} OFFSET {$offset}
         ";
-        
-        $params = [];
-        if ($filterUserId !== '') {
-            $sql .= " AND i.user_id = :uid";
-            $params[':uid'] = $filterUserId;
-        }
-        if ($filterPeriod !== '') {
-            $sql .= " AND i.period = :period";
-            $params[':period'] = $filterPeriod;
-        }
-
-        if ($tab === 'pagadas') {
-            $sql .= " AND i.status = 'paid'";
-        } elseif ($tab === 'anuladas') {
-            $sql .= " AND i.status = 'cancelled'";
-        } else {
-            $sql .= " AND i.status IN ('pending', 'overdue')";
-        }
-        $sql .= " ORDER BY u.business_name ASC, i.created_at DESC";
 
         $stmt = $db->prepare($sql);
         $stmt->execute($params);

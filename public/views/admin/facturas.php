@@ -5,11 +5,11 @@ require __DIR__ . '/layout_header.php';
 ?>
 
 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.5rem;">
-    <p style="font-size:0.85rem; color:var(--gray-500);"><?= count($facturas) ?> factura(s)</p>
+    <p style="font-size:0.85rem; color:var(--gray-500);"><?= $totalFacturas ?> factura(s)</p>
     <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
         <div style="position:relative; flex:1 1 200px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="searchInput" class="form-input" placeholder="Buscar factura..." style="padding-left: 2.25rem; width: 100%; min-width: 160px; font-size: 0.85rem;">
+            <input type="text" id="searchInput" class="form-input" placeholder="Buscar en esta página..." style="padding-left: 2.25rem; width: 100%; min-width: 160px; font-size: 0.85rem;">
         </div>
         <?php if ($tab === 'pendientes'): ?>
         <button class="btn btn-success" id="btn-cobrar-lote" style="display:none;" data-modal-open="modal-cobrar-lote">
@@ -179,7 +179,9 @@ require __DIR__ . '/layout_header.php';
 <?php endforeach; endif; ?>
 </tbody>
 </table>
-</div></div>
+</div>
+<?php require __DIR__ . '/../partials/pagination.php'; ?>
+</div>
 
 <!-- Modal Crear Factura -->
 <div class="modal-overlay" id="modal-crear-factura"><div class="modal">
