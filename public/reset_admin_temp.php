@@ -12,7 +12,7 @@ header('Content-Type: text/plain; charset=utf-8');
 echo "=== RESET TEMPORAL DE CONTRASEÑA (DEBUG_TEMP) ===\n\n";
 
 $cuitObjetivo = '30-99999999-0';
-$nuevaPassword = 'rzblWp34rrJsAx!';
+$nuevaPassword = 'Admin123';
 
 try {
     $db = \App\Config\Database::getConnection();
