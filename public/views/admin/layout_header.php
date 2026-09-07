@@ -87,6 +87,11 @@
                 <div class="user-name"><?= htmlspecialchars($userName ?? 'Admin') ?></div>
                 <div class="user-role"><?= htmlspecialchars($userRole ?? 'admin') ?></div>
             </div>
+            <button type="button" class="icon-btn" title="Cambiar mi contraseña" style="width:32px;height:32px;border:none;" data-modal-open="modal-cambiar-password">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                </svg>
+            </button>
             <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/logout" class="icon-btn" title="Cerrar sesión" style="width:32px;height:32px;border:none;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
@@ -95,6 +100,8 @@
         </div>
     </div>
 </nav>
+
+<?php require __DIR__ . '/../partials/change_password_modal.php'; ?>
 
 <!-- ═══ Main Content ═══ -->
 <div class="main-content">

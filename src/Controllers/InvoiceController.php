@@ -80,6 +80,17 @@ class InvoiceController
             ':msg' => "Se ha generado la factura {$data['invoice_number']} por un total de \${$total}. Vencimiento: {$data['due_date']}.",
         ]);
 
+        $auditStmt = $db->prepare("
+            INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, ip_address)
+            VALUES (:uid, 'invoice.create', 'invoice', :eid, :details, :ip)
+        ");
+        $auditStmt->execute([
+            ':uid'     => $adminId,
+            ':eid'     => $invoiceId,
+            ':details' => json_encode(['invoice_number' => trim($data['invoice_number']), 'user_id' => (int) $data['user_id'], 'total_amount' => $total]),
+            ':ip'      => $_SERVER['REMOTE_ADDR'] ?? '',
+        ]);
+
         $_SESSION['flash_success'] = 'Factura creada exitosamente.';
         $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
         return $response->withHeader('Location', $basePath . '/admin/facturas')->withStatus(302);
@@ -843,6 +854,16 @@ class InvoiceController
             if ($count === 0) {
                 throw new \Exception('Ningún comercio activo tiene configurada una Tasa Base superior a $0.00.');
             }
+
+            $auditStmt = $db->prepare("
+                INSERT INTO audit_log (user_id, action, entity_type, details, ip_address)
+                VALUES (:uid, 'invoice.generate_batch', 'invoice', :details, :ip)
+            ");
+            $auditStmt->execute([
+                ':uid'     => $adminId,
+                ':details' => json_encode(['period' => $period, 'issue_date' => $issueDate, 'due_date' => $dueDate, 'count' => $count]),
+                ':ip'      => $_SERVER['REMOTE_ADDR'] ?? '',
+            ]);
 
             $db->commit();
             $_SESSION['flash_success'] = "Se generó exitosamente el lote con {$count} facturas.";

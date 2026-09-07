@@ -1202,6 +1202,7 @@ h1, h2, h3, h4, h5, h6 {
     padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--slate-light);
     transition: var(--transition);
+    cursor: pointer;
 }
 
 .notif-item:hover {

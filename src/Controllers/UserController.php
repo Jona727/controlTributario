@@ -101,10 +101,24 @@ class UserController
         ]);
 
         // Actualizar password si se proporcionó
+        $passwordChanged = false;
         if (!empty($data['password'])) {
             $stmt = $db->prepare("UPDATE users SET password_hash = :pass WHERE id = :id");
             $stmt->execute([':pass' => password_hash($data['password'], PASSWORD_DEFAULT), ':id' => $id]);
+            $passwordChanged = true;
         }
+
+        $adminId = $request->getAttribute('user_id');
+        $auditStmt = $db->prepare("
+            INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, ip_address)
+            VALUES (:uid, 'user.update', 'user', :eid, :details, :ip)
+        ");
+        $auditStmt->execute([
+            ':uid'     => $adminId,
+            ':eid'     => $id,
+            ':details' => json_encode(['client_code' => trim($data['client_code']), 'is_active' => isset($data['is_active']) ? 1 : 0, 'password_changed' => $passwordChanged]),
+            ':ip'      => $_SERVER['REMOTE_ADDR'] ?? '',
+        ]);
 
         $_SESSION['flash_success'] = 'Comercio actualizado exitosamente.';
         $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
@@ -121,6 +135,17 @@ class UserController
 
         $stmt = $db->prepare("UPDATE users SET is_active = 0 WHERE id = :id AND role_id = 3");
         $stmt->execute([':id' => $id]);
+
+        $adminId = $request->getAttribute('user_id');
+        $auditStmt = $db->prepare("
+            INSERT INTO audit_log (user_id, action, entity_type, entity_id, ip_address)
+            VALUES (:uid, 'user.deactivate', 'user', :eid, :ip)
+        ");
+        $auditStmt->execute([
+            ':uid' => $adminId,
+            ':eid' => $id,
+            ':ip'  => $_SERVER['REMOTE_ADDR'] ?? '',
+        ]);
 
         $_SESSION['flash_success'] = 'Comercio desactivado exitosamente.';
         $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';

@@ -41,12 +41,17 @@ $activePage = 'dashboard';
                 <div class="user-name"><?= htmlspecialchars($userName ?? '') ?></div>
                 <div class="user-role">Comercio</div>
             </div>
+            <button type="button" class="icon-btn" style="width:32px;height:32px;border:none;" title="Cambiar mi contraseña" data-modal-open="modal-cambiar-password">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            </button>
             <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/logout" class="icon-btn" style="width:32px;height:32px;border:none;" title="Salir">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </a>
         </div>
     </div>
 </nav>
+
+<?php require __DIR__ . '/../partials/change_password_modal.php'; ?>
 
 <div class="main-content">
     <header class="top-header">
@@ -65,9 +70,17 @@ $activePage = 'dashboard';
                     <?php if ($notifCount > 0): ?><span class="badge"><?= $notifCount ?></span><?php endif; ?>
                 </button>
                 <div class="notif-panel" id="notif-panel">
-                    <div class="notif-header">Notificaciones</div>
+                    <div class="notif-header" style="display:flex;align-items:center;justify-content:space-between;">
+                        <span>Notificaciones</span>
+                        <?php if ($notifCount > 0): ?>
+                            <button type="button" id="btn-marcar-todas-leidas" style="background:none;border:none;color:var(--brand-primary);font-size:0.68rem;text-transform:none;letter-spacing:0;cursor:pointer;padding:0;">Marcar todas como leídas</button>
+                        <?php endif; ?>
+                    </div>
+                    <?php if (empty($notificaciones)): ?>
+                        <div class="empty-state" style="padding:1.5rem;"><p>Sin notificaciones</p></div>
+                    <?php endif; ?>
                     <?php foreach ($notificaciones as $n): ?>
-                        <div class="notif-item <?= $n['is_read'] ? '' : 'unread' ?>">
+                        <div class="notif-item <?= $n['is_read'] ? '' : 'unread' ?>" data-notif-id="<?= $n['id'] ?>" data-read="<?= $n['is_read'] ? '1' : '0' ?>">
                             <div class="notif-title"><?= htmlspecialchars($n['title']) ?></div>
                             <div class="notif-text"><?= htmlspecialchars($n['message']) ?></div>
                             <div class="notif-time"><?= date('d/m/Y H:i', strtotime($n['created_at'])) ?></div>
@@ -79,6 +92,16 @@ $activePage = 'dashboard';
     </header>
 
     <div class="page-content">
+        <?php if (!empty($_SESSION['flash_success'])): ?>
+            <script>document.addEventListener('DOMContentLoaded', () => showToast(<?= json_encode($_SESSION['flash_success']) ?>, 'success'));</script>
+            <?php unset($_SESSION['flash_success']); ?>
+        <?php endif; ?>
+
+        <?php if (!empty($_SESSION['flash_error'])): ?>
+            <script>document.addEventListener('DOMContentLoaded', () => showToast(<?= json_encode($_SESSION['flash_error']) ?>, 'error'));</script>
+            <?php unset($_SESSION['flash_error']); ?>
+        <?php endif; ?>
+
         <!-- Stats -->
         <div class="stats-grid">
             <div class="stat-card stat-danger">

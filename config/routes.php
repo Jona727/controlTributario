@@ -8,6 +8,8 @@ use App\Controllers\AdminController;
 use App\Controllers\DashboardController;
 use App\Controllers\UserController;
 use App\Controllers\InvoiceController;
+use App\Controllers\ProfileController;
+use App\Controllers\NotificationController;
 use App\Middleware\JwtMiddleware;
 use App\Middleware\RoleMiddleware;
 
@@ -52,6 +54,18 @@ $app->group('/admin', function ($group) {
     $group->get('/cierre-caja/pdf',           [InvoiceController::class, 'downloadCierreCajaPdf']);
 })
 ->add(new RoleMiddleware(['admin', 'super']))
+->add(new JwtMiddleware());
+
+// ─── Ruta protegida compartida: cualquier usuario logueado ───
+$app->group('/perfil', function ($group) {
+    $group->post('/password', [ProfileController::class, 'changePassword']);
+})
+->add(new JwtMiddleware());
+
+$app->group('/notificaciones', function ($group) {
+    $group->post('/leer/{id}', [NotificationController::class, 'markAsRead']);
+    $group->post('/leer-todas', [NotificationController::class, 'markAllAsRead']);
+})
 ->add(new JwtMiddleware());
 
 // ─── Rutas protegidas: Usuario/Comercio ───

@@ -28,6 +28,52 @@ function initNotifications() {
             panel.classList.remove('active');
         }
     });
+
+    const metaBase = document.querySelector('meta[name="app-base-path"]');
+    const basePath = metaBase ? metaBase.content : '/tasas_municipales/public';
+    const metaCsrf = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = metaCsrf ? metaCsrf.content : '';
+
+    const updateBadge = () => {
+        const remaining = panel.querySelectorAll('.notif-item.unread').length;
+        const badge = bellBtn.querySelector('.badge');
+        if (remaining === 0 && badge) {
+            badge.remove();
+        } else if (badge) {
+            badge.textContent = remaining;
+        }
+    };
+
+    panel.querySelectorAll('.notif-item[data-notif-id]').forEach(item => {
+        item.addEventListener('click', () => {
+            if (item.dataset.read === '1') return;
+            fetch(`${basePath}/notificaciones/leer/${item.dataset.notifId}`, {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': csrfToken, 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(() => {
+                item.classList.remove('unread');
+                item.dataset.read = '1';
+                updateBadge();
+            }).catch(() => {});
+        });
+    });
+
+    const btnMarcarTodas = document.getElementById('btn-marcar-todas-leidas');
+    if (btnMarcarTodas) {
+        btnMarcarTodas.addEventListener('click', () => {
+            fetch(`${basePath}/notificaciones/leer-todas`, {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': csrfToken, 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(() => {
+                panel.querySelectorAll('.notif-item.unread').forEach(item => {
+                    item.classList.remove('unread');
+                    item.dataset.read = '1';
+                });
+                updateBadge();
+                btnMarcarTodas.style.display = 'none';
+            }).catch(() => {});
+        });
+    }
 }
 
 // ─── Modales ───
