@@ -37,7 +37,7 @@ require __DIR__ . '/layout_header.php';
 <div class="tabs" style="display:flex; border-bottom:1px solid var(--slate-border); margin-bottom:1.5rem; gap:1.5rem; flex-wrap:wrap;">
     <?php
         $tabExtra = '';
-        foreach (['user_id', 'period', 'tax_type'] as $qp) {
+        foreach (['user_id', 'period'] as $qp) {
             if (!empty($_GET[$qp])) {
                 $tabExtra .= '&' . $qp . '=' . urlencode($_GET[$qp]);
             }
@@ -74,17 +74,9 @@ require __DIR__ . '/layout_header.php';
         <label class="form-label">Período (Ej: 2026-07)</label>
         <input type="text" name="period" class="form-input" placeholder="AAAA-MM" value="<?= htmlspecialchars($_GET['period'] ?? '') ?>">
     </div>
-    <div class="form-group" style="margin-bottom:0; min-width: 180px;">
-        <label class="form-label">Tipo de Tasa</label>
-        <select name="tax_type" class="form-select">
-            <option value="">Todas</option>
-            <option value="comercial" <?= ($_GET['tax_type'] ?? '') === 'comercial' ? 'selected' : '' ?>>Tasa Comercial</option>
-            <option value="higiene_profilaxis" <?= ($_GET['tax_type'] ?? '') === 'higiene_profilaxis' ? 'selected' : '' ?>>Higiene y Profilaxis</option>
-        </select>
-    </div>
     <div style="display:flex; gap:0.5rem;">
         <button type="submit" class="btn btn-primary">Buscar</button>
-        <?php if (!empty($_GET['user_id']) || !empty($_GET['period']) || !empty($_GET['tax_type'])): ?>
+        <?php if (!empty($_GET['user_id']) || !empty($_GET['period'])): ?>
             <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas?tab=<?= htmlspecialchars($tab) ?>" class="btn btn-ghost">Limpiar</a>
         <?php endif; ?>
     </div>
@@ -119,14 +111,7 @@ require __DIR__ . '/layout_header.php';
         </td>
         <td>
             <div style="font-weight:600;"><?= htmlspecialchars($f['invoice_number']) ?></div>
-            <div style="font-size:0.72rem;color:var(--slate-medium);">
-                <?= htmlspecialchars($f['period'] ?? '–') ?>
-                <?php if (!empty($f['tax_type'])): ?>
-                    <span style="display:table;margin-top:0.15rem;padding:0.05rem 0.35rem;border-radius:4px;background:var(--slate-light);border:1px solid var(--slate-border);font-size:0.62rem;color:var(--slate-medium);white-space:nowrap;">
-                        <?= $f['tax_type'] === 'higiene_profilaxis' ? 'Higiene y Prof.' : htmlspecialchars($f['tax_type']) ?>
-                    </span>
-                <?php endif; ?>
-            </div>
+            <div style="font-size:0.72rem;color:var(--slate-medium);"><?= htmlspecialchars($f['period'] ?? '–') ?></div>
         </td>
         <td><?= htmlspecialchars($f['business_name']) ?></td>
         <td class="col-secondary"><?= htmlspecialchars($f['cuit']) ?></td>
@@ -241,7 +226,7 @@ require __DIR__ . '/layout_header.php';
         <div class="form-group"><label class="form-label">Monto *</label><input type="number" name="total_amount" class="form-input" step="0.01" required></div>
         <div class="form-group"><label class="form-label">Recargo</label><input type="number" name="surcharge" class="form-input" step="0.01" value="0"></div>
     </div>
-    <div class="form-group"><label class="form-label">Descripción</label><input type="text" name="item_description" class="form-input" placeholder="Tasa de Seguridad e Higiene"></div>
+    <div class="form-group"><label class="form-label">Descripción</label><input type="text" name="item_description" class="form-input" placeholder="Tasa de Higiene y Profilaxis"></div>
     <div class="form-group"><label class="form-label">Notas</label><textarea name="notes" class="form-textarea" rows="2"></textarea></div>
 </div>
 <div class="modal-footer"><button type="button" class="btn btn-ghost" data-modal-close>Cancelar</button><button type="submit" class="btn btn-primary">Crear Factura</button></div>

@@ -61,7 +61,7 @@ class InvoiceController
         $invoiceId = (int) $db->lastInsertId();
 
         // Crear item por defecto
-        $desc = $data['item_description'] ?? 'Tasa de Seguridad e Higiene - ' . ($data['period'] ?? '');
+        $desc = $data['item_description'] ?? 'Tasa de Higiene y Profilaxis - ' . ($data['period'] ?? '');
         $stmt = $db->prepare("
             INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, line_total)
             VALUES (:iid, :desc, 1, :price, :total)
@@ -297,16 +297,14 @@ class InvoiceController
     }
 
     /**
-     * Calcula dinámicamente los recargos por mora acumulados a la fecha.
-     *
-     * La Tasa Comercial (tax_type NULL, la única que existía hasta ahora) usa
-     * 3% mensual prorrateado por día. La Tasa de Higiene y Profilaxis, migrada
-     * del sistema anterior, usa la fórmula que ya traía ese padrón: 8% mensual
-     * fijo, por mes calendario completo (sin prorrateo diario) — así que un
-     * comercio que se atrasa un día ya devenga el mes entero, igual que en el
-     * sistema viejo. No es una elección nuestra: es la que ya venían usando.
+     * Calcula dinámicamente los recargos por mora acumulados a la fecha:
+     * 8% mensual fijo, por mes calendario completo (sin prorrateo diario)
+     * — un comercio que se atrasa un día ya devenga el mes entero. Es la
+     * misma fórmula que ya usaba el sistema anterior para esta tasa (la
+     * Tasa Comercial y la Tasa de Higiene y Profilaxis son la misma tasa,
+     * con dos nombres distintos entre sistemas).
      */
-    public static function calculateMora(array $invoice, float $tasaMensual = 3.0): array
+    public static function calculateMora(array $invoice): array
     {
         if ($invoice['status'] === 'paid' || $invoice['status'] === 'cancelled') {
             return [
@@ -321,18 +319,9 @@ class InvoiceController
         $hoy = new \DateTime('today');
 
         if ($hoy > $vencimiento) {
-            if (($invoice['tax_type'] ?? null) === 'higiene_profilaxis') {
-                $mesesVencidos = self::mesesCompletosVencidos($vencimiento, $hoy);
-                $diff = $hoy->diff($vencimiento);
-                $diasMora = $diff->days;
-                $surcharge = floatval($invoice['subtotal']) * 0.08 * $mesesVencidos;
-            } else {
-                $diff = $hoy->diff($vencimiento);
-                $diasMora = $diff->days;
-                $tasaDiaria = ($tasaMensual / 100) / 30;
-                $surcharge = floatval($invoice['subtotal']) * ($tasaDiaria * $diasMora);
-            }
-
+            $mesesVencidos = self::mesesCompletosVencidos($vencimiento, $hoy);
+            $diasMora = $hoy->diff($vencimiento)->days;
+            $surcharge = floatval($invoice['subtotal']) * 0.08 * $mesesVencidos;
             $total = floatval($invoice['subtotal']) + $surcharge;
 
             return [
@@ -951,7 +940,7 @@ class InvoiceController
                 ");
                 $stmtItem->execute([
                     ':iid'   => $invoiceId,
-                    ':desc'  => "Tasa de Seguridad e Higiene - Período " . $period,
+                    ':desc'  => "Tasa de Higiene y Profilaxis - Período " . $period,
                     ':price' => $subtotal,
                     ':total' => $subtotal
                 ]);

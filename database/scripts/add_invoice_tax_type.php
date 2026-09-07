@@ -23,7 +23,7 @@ try {
         $db->exec("
             ALTER TABLE invoices
             ADD COLUMN tax_type VARCHAR(50) DEFAULT NULL
-                COMMENT 'NULL = Tasa Comercial. Otro valor = otra tasa con su propia fórmula de mora, ej: higiene_profilaxis'
+                COMMENT 'De qué tributo es la boleta. Hoy solo existe uno (Tasa de Higiene y Profilaxis); queda preparado por si en el futuro se suma otro con su propia fórmula de mora'
                 AFTER status
         ");
         echo "OK.\n";

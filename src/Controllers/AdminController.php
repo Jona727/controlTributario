@@ -166,7 +166,6 @@ class AdminController
         $queryParams = $request->getQueryParams();
         $filterUserId = $queryParams['user_id'] ?? '';
         $filterPeriod = $queryParams['period'] ?? '';
-        $filterTaxType = $queryParams['tax_type'] ?? '';
         $tab = $queryParams['tab'] ?? 'pendientes';
 
         // Condiciones WHERE compartidas entre el conteo (para la paginación)
@@ -180,12 +179,6 @@ class AdminController
         if ($filterPeriod !== '') {
             $where .= " AND i.period = :period";
             $params[':period'] = $filterPeriod;
-        }
-        if ($filterTaxType === 'comercial') {
-            $where .= " AND i.tax_type IS NULL";
-        } elseif ($filterTaxType !== '') {
-            $where .= " AND i.tax_type = :tax_type";
-            $params[':tax_type'] = $filterTaxType;
         }
         if ($tab === 'pagadas') {
             $where .= " AND i.status = 'paid'";

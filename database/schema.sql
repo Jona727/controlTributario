@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS invoices (
     surcharge DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Recargos por mora',
     total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     status ENUM('pending','paid','overdue','cancelled') NOT NULL DEFAULT 'pending',
-    tax_type VARCHAR(50) DEFAULT NULL COMMENT 'NULL = Tasa Comercial (la original). Otro valor = otra tasa con su propia fórmula de mora, ej: higiene_profilaxis',
+    tax_type VARCHAR(50) DEFAULT NULL COMMENT 'De qué tributo es la boleta. Hoy solo existe uno (Tasa de Higiene y Profilaxis); queda preparado por si en el futuro se suma otro con su propia fórmula de mora',
     notes TEXT DEFAULT NULL,
     pdf_path VARCHAR(500) DEFAULT NULL,
     created_by INT DEFAULT NULL COMMENT 'Admin que generó la factura',

@@ -642,7 +642,7 @@ class PdfService
                     </thead>
                     <tbody>
                         <tr>
-                            <td><strong>Tasa de Seguridad e Higiene (Boleta {$invoice['invoice_number']})</strong></td>
+                            <td><strong>Tasa de Higiene y Profilaxis (Boleta {$invoice['invoice_number']})</strong></td>
                             <td style='text-align: center;'>{$invoice['period']}</td>
                             <td style='text-align: right;'>{$dueDate}</td>
                         </tr>
@@ -676,7 +676,7 @@ class PdfService
 
                 <div style='width: 60%; float: left; margin-top: 30px; font-size: 9px; color: #6b7280; line-height: 1.4;'>
                     <strong>Nota Impositiva Importante:</strong><br>
-                    El presente recibo oficial constituye constancia legal y suficiente de cancelación y libre deuda para la Tasa de Seguridad e Higiene correspondiente al período fiscal <strong>{$invoice['period']}</strong>. Guarde este documento como comprobante de pago oficial ante cualquier inspección municipal.
+                    El presente recibo oficial constituye constancia legal y suficiente de cancelación y libre deuda para la Tasa de Higiene y Profilaxis correspondiente al período fiscal <strong>{$invoice['period']}</strong>. Guarde este documento como comprobante de pago oficial ante cualquier inspección municipal.
                 </div>
 
                 <div class='clear'></div>
@@ -714,7 +714,7 @@ class PdfService
             
             $detailsRows .= "
             <tr>
-                <td><strong>Tasa de Seguridad e Higiene (Boleta {$inv['invoice_number']})</strong></td>
+                <td><strong>Tasa de Higiene y Profilaxis (Boleta {$inv['invoice_number']})</strong></td>
                 <td style='text-align: center;'>{$inv['period']}</td>
                 <td style='text-align: right;'>{$dueDate}</td>
                 <td style='text-align: right;'>$ " . number_format($pBase, 2, ',', '.') . "</td>
