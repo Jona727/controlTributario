@@ -102,7 +102,10 @@ require __DIR__ . '/layout_header.php';
                     </thead>
                     <tbody>
                         <?php if (empty($cobrosRecientes)): ?>
-                            <tr><td colspan="5" class="empty-state"><p>No se registran cobros recientes hoy.</p></td></tr>
+                            <tr><td colspan="5" class="empty-state">
+                                <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+                                <p>No se registran cobros recientes hoy.</p>
+                            </td></tr>
                         <?php else: ?>
                             <?php foreach ($cobrosRecientes as $c): ?>
                                 <tr>
@@ -149,7 +152,10 @@ require __DIR__ . '/layout_header.php';
                         </thead>
                         <tbody>
                             <?php if (empty($morosos)): ?>
-                                <tr><td colspan="4" class="empty-state"><p>No se registran comercios en mora activa.</p></td></tr>
+                                <tr><td colspan="4" class="empty-state empty-success">
+                                    <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                    <p>No se registran comercios en mora activa.</p>
+                                </td></tr>
                             <?php else: ?>
                                 <?php foreach ($morosos as $m): ?>
                                     <tr>
@@ -313,7 +319,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         // Hide canvas if no data
         document.getElementById('morososChart').style.display = 'none';
-        document.getElementById('morososChart').parentElement.innerHTML = '<div class="empty-state" style="padding-top:4rem;"><p>No hay datos suficientes para graficar.</p></div>';
+        document.getElementById('morososChart').parentElement.innerHTML = '<div class="empty-state"><svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg><p>No hay datos suficientes para graficar.</p></div>';
     }
 });
 </script>

@@ -118,7 +118,10 @@ require __DIR__ . '/layout_header.php';
             </thead>
             <tbody>
                 <?php if (empty($deudores)): ?>
-                    <tr><td colspan="9" class="empty-state"><p>No se registran comercios deudores en el sistema.</p></td></tr>
+                    <tr><td colspan="9" class="empty-state empty-success">
+                        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        <p>No se registran comercios deudores en el sistema.</p>
+                    </td></tr>
                 <?php else: $i = 1; foreach ($deudores as $d): ?>
                     <tr class="deudor-row">
                         <td class="col-secondary" style="font-weight: bold; text-align: center; color: var(--gray-400); width: 60px;"># <?= $i++ ?></td>

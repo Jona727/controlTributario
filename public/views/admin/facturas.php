@@ -81,7 +81,10 @@ require __DIR__ . '/layout_header.php';
 </tr></thead>
 <tbody>
 <?php if (empty($facturas)): ?>
-    <tr><td colspan="8" class="empty-state"><p>Sin facturas</p></td></tr>
+    <tr><td colspan="8" class="empty-state">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+        <p>Sin facturas</p>
+    </td></tr>
 <?php else: foreach ($facturas as $f):
     $sc = match($f['status']) { 'paid'=>'status-paid','pending'=>'status-pending','overdue'=>'status-overdue',default=>'status-cancelled' };
     $sl = match($f['status']) { 'paid'=>'Pagado','pending'=>'Pendiente','overdue'=>'Vencido','cancelled'=>'Cancelado',default=>$f['status'] };
@@ -242,12 +245,12 @@ require __DIR__ . '/layout_header.php';
 <!-- Modal Generar Lote Mensual -->
 <div class="modal-overlay" id="modal-generar-lote"><div class="modal">
 <div class="modal-header"><h3>Facturación Masiva (Generar Lote)</h3><button class="modal-close" data-modal-close>&times;</button></div>
-<form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/generar-lote" onsubmit="confirmarLote(event, this)">
+<form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/generar-lote" onsubmit="return iniciarEnvioLote(event, this)">
 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 <div class="modal-body">
-    <div class="alert-info">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        Se generará una boleta para cada comercio activo usando su Tasa Base Fija configurada.
+    <div class="alert-warning">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Se generará una boleta para cada comercio activo usando su Tasa Base Fija configurada. Este proceso no se puede deshacer de forma automática.
     </div>
     <div class="form-group">
         <label class="form-label">Período Fiscal *</label>
@@ -304,7 +307,7 @@ require __DIR__ . '/layout_header.php';
 <div class="modal-header"><h3>Revertir Pago de Boleta</h3><button class="modal-close" data-modal-close>&times;</button></div>
 <form id="form-revertir-factura" method="POST" action="">
 <div class="modal-body">
-    <div class="alert-info" style="background-color: var(--danger-light); color: var(--danger); border-color: rgba(138,35,50,0.35);">
+    <div class="alert-danger">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <strong>¡Atención!</strong> Estás a punto de anular un pago registrado. La boleta volverá a estado "Pendiente", se borrará el recibo oficial y esto quedará registrado en auditoría.
     </div>
@@ -453,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Recargar la ventana para actualizar listas
                     window.location.reload();
                 } else {
-                    alert('Error: ' + (result.error || 'No se pudo procesar el pago.'));
+                    showToast('Error: ' + (result.error || 'No se pudo procesar el pago.'), 'error');
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = `
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -462,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error(error);
-                alert('Ocurrió un error inesperado al procesar el pago.');
+                showToast('Ocurrió un error inesperado al procesar el pago.', 'error');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -495,10 +498,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
                 
                 if (result.success) {
-                    alert(result.message);
+                    showToast(result.message, 'success');
                     window.location.reload();
                 } else {
-                    alert('Error: ' + (result.error || 'No se pudo revertir el pago.'));
+                    showToast('Error: ' + (result.error || 'No se pudo revertir el pago.'), 'error');
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = `
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
@@ -507,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error(error);
-                alert('Ocurrió un error inesperado.');
+                showToast('Ocurrió un error inesperado.', 'error');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
@@ -557,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const checked = document.querySelectorAll('.check-factura:checked');
             if (checked.length < 2) {
                 e.preventDefault();
-                alert('Debe seleccionar al menos 2 facturas para el cobro en lote.');
+                showToast('Debe seleccionar al menos 2 facturas para el cobro en lote.', 'warning');
                 return;
             }
 
@@ -582,7 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!isValid) {
                 e.preventDefault();
-                alert('Solo puede seleccionar facturas de un mismo comercio para realizar un pago en lote.');
+                showToast('Solo puede seleccionar facturas de un mismo comercio para realizar un pago en lote.', 'warning');
                 e.stopPropagation();
                 
                 // Cerrar modal automáticamente ya que se abriría por el data-modal-open
@@ -630,13 +633,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.open(`<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/recibo/${result.payment_id}`, '_blank');
                     window.location.reload();
                 } else {
-                    alert('Error: ' + (result.error || 'No se pudo procesar el pago en lote.'));
+                    showToast('Error: ' + (result.error || 'No se pudo procesar el pago en lote.'), 'error');
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = 'Confirmar y Emitir Recibo Único';
                 }
             } catch (error) {
                 console.error(error);
-                alert('Ocurrió un error inesperado al procesar el pago en lote.');
+                showToast('Ocurrió un error inesperado al procesar el pago en lote.', 'error');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Confirmar y Emitir Recibo Único';
             }
@@ -645,14 +648,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-function confirmarLote(e, form) {
-    if (!confirm("¿Está seguro de generar la facturación en lote para todos los comercios activos? Este proceso no se puede deshacer de forma automática.")) {
-        e.preventDefault();
-        return;
-    }
+function iniciarEnvioLote(e, form) {
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Procesando lote...';
+    return true;
 }
 </script>
 

@@ -4,12 +4,74 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+    initThemeToggle();
     initNotifications();
     initModals();
+    initConfirmForms();
     initFlashMessages();
     initMobileMenu();
     initServiceWorker();
 });
+
+// ─── Tema claro / oscuro ───
+function initThemeToggle() {
+    const STORAGE_KEY = 'ct-theme';
+    const toggle = document.getElementById('theme-toggle');
+    if (!toggle) return;
+
+    const apply = (theme) => {
+        if (theme === 'light' || theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', theme);
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+    };
+
+    toggle.addEventListener('click', () => {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const current = document.documentElement.getAttribute('data-theme') || (prefersDark ? 'dark' : 'light');
+        const next = current === 'dark' ? 'light' : 'dark';
+        apply(next);
+        try { localStorage.setItem(STORAGE_KEY, next); } catch (e) { /* ignore */ }
+    });
+}
+
+// ─── Confirmación de acciones destructivas (reemplaza confirm() nativo) ───
+function initConfirmForms() {
+    const modal = document.getElementById('modal-confirm-generic');
+    if (!modal) return;
+
+    const titleEl = modal.querySelector('#confirm-generic-title');
+    const msgEl = modal.querySelector('#confirm-generic-message');
+    const confirmBtn = modal.querySelector('#confirm-generic-btn');
+    let pendingForm = null;
+
+    document.querySelectorAll('form[data-confirm-submit]').forEach(form => {
+        form.addEventListener('submit', (e) => {
+            if (form.dataset.confirmed === '1') return;
+            e.preventDefault();
+            pendingForm = form;
+            titleEl.textContent = form.dataset.confirmTitle || 'Confirmar acción';
+            msgEl.textContent = form.dataset.confirmMessage || '¿Confirmás esta acción?';
+            confirmBtn.textContent = form.dataset.confirmLabel || 'Confirmar';
+            modal.classList.add('active');
+        });
+    });
+
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', () => {
+            if (!pendingForm) return;
+            modal.classList.remove('active');
+            pendingForm.dataset.confirmed = '1';
+            if (pendingForm.requestSubmit) {
+                pendingForm.requestSubmit();
+            } else {
+                pendingForm.submit();
+            }
+            pendingForm = null;
+        });
+    }
+}
 
 // ─── Notificaciones ───
 function initNotifications() {
@@ -164,7 +226,3 @@ function formatCurrency(amount) {
     }).format(amount);
 }
 
-// ─── Utilidad: Confirmar acción ───
-function confirmAction(message) {
-    return confirm(message);
-}

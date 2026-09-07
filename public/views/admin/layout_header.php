@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <script>(function(){try{var t=localStorage.getItem('ct-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?? 'Panel Admin' ?> – Control Tributario Municipal</title>
     <meta name="description" content="Panel de Administración del Sistema de Control Tributario Municipal">
@@ -17,7 +18,7 @@
     <link rel="stylesheet" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/css/app.css">
     <script src="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/js/toast.js" defer></script>
 </head>
-<body>
+<body class="app-shell">
 
 <!-- ═══ Sidebar ═══ -->
 <nav class="sidebar" id="sidebar">
@@ -114,6 +115,7 @@
 </nav>
 
 <?php require __DIR__ . '/../partials/change_password_modal.php'; ?>
+<?php require __DIR__ . '/../partials/confirm_modal.php'; ?>
 
 <!-- ═══ Main Content ═══ -->
 <div class="main-content">
@@ -133,6 +135,11 @@
                 <!-- Botón de acción contextual se inyecta en cada vista -->
             <?php endif; ?>
 
+            <button class="icon-btn theme-toggle" id="theme-toggle" title="Cambiar tema claro/oscuro">
+                <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+            </button>
+
             <div style="position:relative;">
                 <button class="icon-btn" id="notif-bell">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -147,7 +154,8 @@
                     <div class="notif-header">Notificaciones</div>
                     <div style="max-height:300px;overflow-y:auto;">
                         <?php if (empty($notificaciones ?? [])): ?>
-                            <div class="empty-state" style="padding:1.5rem;">
+                            <div class="empty-state">
+                                <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
                                 <p>Sin notificaciones</p>
                             </div>
                         <?php endif; ?>

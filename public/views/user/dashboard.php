@@ -6,6 +6,7 @@ $activePage = 'dashboard';
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <script>(function(){try{var t=localStorage.getItem('ct-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?> – Control Tributario Municipal</title>
     <meta name="theme-color" content="#6d1f2b">
@@ -18,7 +19,7 @@ $activePage = 'dashboard';
     <link rel="stylesheet" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/css/app.css">
     <script src="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/js/toast.js" defer></script>
 </head>
-<body>
+<body class="app-shell">
 
 <nav class="sidebar">
     <div class="sidebar-logo">
@@ -64,6 +65,10 @@ $activePage = 'dashboard';
             <h2><?= $pageTitle ?></h2>
         </div>
         <div class="header-actions">
+            <button class="icon-btn theme-toggle" id="theme-toggle" title="Cambiar tema claro/oscuro">
+                <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+            </button>
             <div style="position:relative;">
                 <button class="icon-btn" id="notif-bell">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
@@ -77,7 +82,10 @@ $activePage = 'dashboard';
                         <?php endif; ?>
                     </div>
                     <?php if (empty($notificaciones)): ?>
-                        <div class="empty-state" style="padding:1.5rem;"><p>Sin notificaciones</p></div>
+                        <div class="empty-state">
+                            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+                            <p>Sin notificaciones</p>
+                        </div>
                     <?php endif; ?>
                     <?php foreach ($notificaciones as $n): ?>
                         <div class="notif-item <?= $n['is_read'] ? '' : 'unread' ?>" data-notif-id="<?= $n['id'] ?>" data-read="<?= $n['is_read'] ? '1' : '0' ?>">

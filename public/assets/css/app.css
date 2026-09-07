@@ -52,6 +52,106 @@
     /* Propiedades Glassmorphism (heredadas, ya no se usan en login) */
     --glass-bg: #ffffff;
     --glass-border: rgba(15, 23, 42, 0.06);
+
+    /* ── Tokens de superficie (paneles internos: admin/comercio) ── */
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --input-bg: #f1f5f9;
+    --input-border: #cbd5e1;
+    --input-text: var(--brand-primary);
+    --table-head-text: #4b5563;
+    --table-text: #334155;
+    --table-text-hover: #0f172a;
+    --table-row-border: #f1f5f9;
+    --icon-muted: #9c9188;
+
+    --alert-success-bg: var(--success-light);
+    --alert-success-text: #065f46;
+    --alert-success-border: #a7f3d0;
+    --alert-warning-bg: var(--warning-light);
+    --alert-warning-text: #92590c;
+    --alert-warning-border: #fde3ad;
+    --alert-danger-bg: var(--danger-light);
+    --alert-danger-text: #991b1b;
+    --alert-danger-border: #fca5a5;
+
+    --status-paid-bg: #ecfdf5;       --status-paid-text: #047857;    --status-paid-border: #d1fae5;
+    --status-pending-bg: #fffbeb;    --status-pending-text: #b45309; --status-pending-border: #fef3c7;
+    --status-overdue-bg: #fff1f2;    --status-overdue-text: #be123c; --status-overdue-border: #ffe4e6;
+    --status-cancelled-bg: #f1f5f9;  --status-cancelled-text: #475569; --status-cancelled-border: #e2e8f0;
+
+    --body-text: #333d47;
+}
+
+/* ── Modo oscuro: alcanzado solo al panel interno (body.app-shell), nunca al portal público ── */
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) body.app-shell {
+        --slate-light: #211a17;
+        --slate-border: #3a2f29;
+        --slate-dark: #f3ece2;
+        --slate-medium: #b9ab9c;
+        --slate-medium-hover: #d6c9ba;
+        --body-text: #e9ded1;
+
+        --surface: #271f1c;
+        --surface-alt: #2c2420;
+        --input-bg: #2c2420;
+        --input-border: #4a3d36;
+        --input-text: #f0e6da;
+        --table-head-text: #c9bcae;
+        --table-text: #ded2c4;
+        --table-text-hover: #faf5ec;
+        --table-row-border: #372c27;
+        --icon-muted: #8f8378;
+
+        --alert-success-bg: rgba(63, 107, 74, 0.18);   --alert-success-text: #86d49b; --alert-success-border: rgba(134, 212, 155, 0.3);
+        --alert-warning-bg: rgba(168, 120, 31, 0.18);  --alert-warning-text: #e8b95e; --alert-warning-border: rgba(232, 185, 94, 0.3);
+        --alert-danger-bg: rgba(138, 35, 50, 0.2);     --alert-danger-text: #f0919c; --alert-danger-border: rgba(240, 145, 156, 0.32);
+
+        --status-paid-bg: rgba(16, 185, 129, 0.15);      --status-paid-text: #6ee7b7;      --status-paid-border: rgba(16, 185, 129, 0.32);
+        --status-pending-bg: rgba(245, 158, 11, 0.15);   --status-pending-text: #fbbf24;   --status-pending-border: rgba(245, 158, 11, 0.32);
+        --status-overdue-bg: rgba(244, 63, 94, 0.15);    --status-overdue-text: #fb7185;   --status-overdue-border: rgba(244, 63, 94, 0.32);
+        --status-cancelled-bg: rgba(148, 163, 184, 0.15); --status-cancelled-text: #cbd5e1; --status-cancelled-border: rgba(148, 163, 184, 0.3);
+
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+}
+html[data-theme="dark"] body.app-shell {
+    --slate-light: #211a17;
+    --slate-border: #3a2f29;
+    --slate-dark: #f3ece2;
+    --slate-medium: #b9ab9c;
+    --slate-medium-hover: #d6c9ba;
+
+    --surface: #271f1c;
+    --surface-alt: #2c2420;
+    --input-bg: #2c2420;
+    --input-border: #4a3d36;
+    --input-text: #f0e6da;
+    --table-head-text: #c9bcae;
+    --table-text: #ded2c4;
+    --table-text-hover: #faf5ec;
+    --table-row-border: #372c27;
+    --icon-muted: #8f8378;
+
+    --alert-success-bg: rgba(63, 107, 74, 0.18);   --alert-success-text: #86d49b; --alert-success-border: rgba(134, 212, 155, 0.3);
+    --alert-warning-bg: rgba(168, 120, 31, 0.18);  --alert-warning-text: #e8b95e; --alert-warning-border: rgba(232, 185, 94, 0.3);
+    --alert-danger-bg: rgba(138, 35, 50, 0.2);     --alert-danger-text: #f0919c; --alert-danger-border: rgba(240, 145, 156, 0.32);
+
+    --status-paid-bg: rgba(16, 185, 129, 0.15);      --status-paid-text: #6ee7b7;      --status-paid-border: rgba(16, 185, 129, 0.32);
+    --status-pending-bg: rgba(245, 158, 11, 0.15);   --status-pending-text: #fbbf24;   --status-pending-border: rgba(245, 158, 11, 0.32);
+    --status-overdue-bg: rgba(244, 63, 94, 0.15);    --status-overdue-text: #fb7185;   --status-overdue-border: rgba(244, 63, 94, 0.32);
+    --status-cancelled-bg: rgba(148, 163, 184, 0.15); --status-cancelled-text: #cbd5e1; --status-cancelled-border: rgba(148, 163, 184, 0.3);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+body.app-shell {
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* ── Reset & Base ── */
@@ -60,7 +160,7 @@
 body {
     font-family: var(--font-body);
     background-color: var(--slate-light);
-    color: #333d47;
+    color: var(--body-text);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
 }
@@ -166,9 +266,37 @@ h1, h2, h3, h4, h5, h6 {
     margin-bottom: 1.25rem;
     padding: 0.75rem 1rem;
     border-radius: 6px;
-    background-color: var(--success-light);
-    border: 1px solid #a7f3d0;
-    color: #065f46;
+    background-color: var(--alert-success-bg);
+    border: 1px solid var(--alert-success-border);
+    color: var(--alert-success-text);
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    line-height: 1.4;
+}
+
+.alert-warning {
+    margin-bottom: 1.25rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    background-color: var(--alert-warning-bg);
+    border: 1px solid var(--alert-warning-border);
+    color: var(--alert-warning-text);
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    line-height: 1.4;
+}
+
+.alert-danger {
+    margin-bottom: 1.25rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    background-color: var(--alert-danger-bg);
+    border: 1px solid var(--alert-danger-border);
+    color: var(--alert-danger-text);
     font-size: 0.8rem;
     display: flex;
     align-items: center;
@@ -202,9 +330,9 @@ h1, h2, h3, h4, h5, h6 {
 .form-textarea {
     width: 100%;
     padding: 0.75rem 1rem;
-    border: 1px solid #cbd5e1; /* slate-300 */
-    background-color: #f1f5f9; /* slate-100 */
-    color: var(--brand-primary);
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--input-text);
     font-family: var(--font-body);
     font-size: 0.88rem;
     border-radius: 8px;
@@ -785,7 +913,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Elegant Header */
 .top-header {
     height: var(--header-height);
-    background: #ffffff;
+    background: var(--surface);
     border-bottom: 1px solid var(--slate-border);
     border-radius: 0 0 12px 12px;
     display: flex;
@@ -832,7 +960,7 @@ h1, h2, h3, h4, h5, h6 {
 .stats-grid .stat-card:nth-child(n+5) { animation-delay: 0.22s; }
 
 .stat-card {
-    background: #ffffff;
+    background: var(--surface);
     padding: 0.6rem 0.85rem;
     border: 1px solid var(--slate-border);
     border-radius: 8px;
@@ -916,7 +1044,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ── Paneles Clásicos Premium ── */
 .card {
-    background: #ffffff;
+    background: var(--surface);
     border: 1px solid var(--slate-border);
     border-radius: 8px;
     box-shadow: var(--shadow-sm);
@@ -937,7 +1065,7 @@ h1, h2, h3, h4, h5, h6 {
     gap: 0.75rem;
     padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--slate-border);
-    background-color: #ffffff;
+    background-color: var(--surface);
 }
 
 .card-header h3 {
@@ -965,8 +1093,8 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #4b5563;
-    background: #f8fafc;
+    color: var(--table-head-text);
+    background: var(--surface-alt);
     border-bottom: 1px solid var(--slate-border);
 }
 
@@ -981,8 +1109,8 @@ h1, h2, h3, h4, h5, h6 {
 .data-table tbody td {
     padding: 0.75rem 0.75rem;
     font-size: 0.82rem;
-    color: #334155;
-    border-bottom: 1px solid #f1f5f9;
+    color: var(--table-text);
+    border-bottom: 1px solid var(--table-row-border);
     vertical-align: middle;
 }
 
@@ -991,11 +1119,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .data-table tbody tr:hover {
-    background-color: #f8fafc;
+    background-color: var(--surface-alt);
 }
 
 .data-table tbody tr:hover td {
-    color: #0f172a;
+    color: var(--table-text-hover);
 }
 
 .data-table tbody tr:last-child td {
@@ -1017,27 +1145,27 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .status-paid {
-    background: #ecfdf5;
-    color: #047857;
-    border: 1px solid #d1fae5;
+    background: var(--status-paid-bg);
+    color: var(--status-paid-text);
+    border: 1px solid var(--status-paid-border);
 }
 
 .status-pending {
-    background: #fffbeb;
-    color: #b45309;
-    border: 1px solid #fef3c7;
+    background: var(--status-pending-bg);
+    color: var(--status-pending-text);
+    border: 1px solid var(--status-pending-border);
 }
 
 .status-overdue {
-    background: #fff1f2;
-    color: #be123c;
-    border: 1px solid #ffe4e6;
+    background: var(--status-overdue-bg);
+    color: var(--status-overdue-text);
+    border: 1px solid var(--status-overdue-border);
 }
 
 .status-cancelled {
-    background: #f1f5f9;
-    color: #475569;
-    border: 1px solid #e2e8f0;
+    background: var(--status-cancelled-bg);
+    color: var(--status-cancelled-text);
+    border: 1px solid var(--status-cancelled-border);
 }
 
 .status-dot {
@@ -1050,6 +1178,44 @@ h1, h2, h3, h4, h5, h6 {
 .status-pending .status-dot  { background: #f59e0b; }
 .status-overdue .status-dot  { background: #f43f5e; }
 .status-cancelled .status-dot{ background: #94a3b8; }
+
+/* ── Estados Vacíos ── */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--slate-medium);
+}
+
+.empty-state .empty-icon {
+    width: 38px;
+    height: 38px;
+    margin: 0 auto 0.85rem;
+    color: var(--slate-border);
+}
+
+.empty-state p {
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.empty-state.empty-success .empty-icon {
+    color: var(--success);
+}
+
+/* ── Selector de Tema (claro / oscuro) ── */
+/* Por defecto se asume claro: se ve la luna (acción = pasar a oscuro). */
+.theme-toggle .icon-sun { display: none; }
+.theme-toggle .icon-moon { display: block; }
+
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) .theme-toggle .icon-sun { display: block; }
+    html:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+}
+html[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+/* ── Modal de confirmación (chico) ── */
+.modal-sm { max-width: 420px; }
 
 /* ── Modales Clásicos ── */
 .modal-overlay {
@@ -1070,7 +1236,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .modal {
-    background: #ffffff;
+    background: var(--surface);
     border: 1px solid var(--slate-border);
     box-shadow: var(--shadow-lg);
     width: 100%;
@@ -1142,15 +1308,15 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .flash-success {
-    background: var(--success-light);
-    color: #065f46;
-    border-color: #a7f3d0;
+    background: var(--alert-success-bg);
+    color: var(--alert-success-text);
+    border-color: var(--alert-success-border);
 }
 
 .flash-error {
-    background: var(--danger-light);
-    color: #991b1b;
-    border-color: #fca5a5;
+    background: var(--alert-danger-bg);
+    color: var(--alert-danger-text);
+    border-color: var(--alert-danger-border);
 }
 
 .icon-btn {
@@ -1160,7 +1326,7 @@ h1, h2, h3, h4, h5, h6 {
     align-items: center;
     justify-content: center;
     border: 1px solid var(--slate-border);
-    background: #fff;
+    background: var(--surface);
     cursor: pointer;
     transition: var(--transition);
     color: var(--slate-medium);
@@ -1176,7 +1342,7 @@ h1, h2, h3, h4, h5, h6 {
     position: absolute;
     top: 50px; right: 0;
     width: 340px;
-    background: #ffffff;
+    background: var(--surface);
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--slate-border);
     z-index: 50;
@@ -1222,13 +1388,13 @@ h1, h2, h3, h4, h5, h6 {
 
 .notif-item .notif-text {
     font-size: 0.76rem;
-    color: #4a545e;
+    color: var(--slate-medium);
     line-height: 1.4;
 }
 
 .notif-item .notif-time {
     font-size: 0.68rem;
-    color: #8c9ba5;
+    color: var(--slate-medium);
     margin-top: 0.4rem;
 }
 
@@ -1332,7 +1498,7 @@ h1, h2, h3, h4, h5, h6 {
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
-    background: #ffffff;
+    background: var(--surface);
     border: 1px solid var(--slate-border);
     border-left: 4px solid var(--brand-accent);
     box-shadow: var(--shadow-lg);
@@ -1371,7 +1537,7 @@ h1, h2, h3, h4, h5, h6 {
 .toast .toast-close {
     background: none;
     border: none;
-    color: #9c9188;
+    color: var(--icon-muted);
     cursor: pointer;
     font-size: 1rem;
     line-height: 1;

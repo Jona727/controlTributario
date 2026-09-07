@@ -24,7 +24,10 @@ require __DIR__ . '/layout_header.php';
 </tr></thead>
 <tbody>
 <?php if (empty($usuarios)): ?>
-    <tr><td colspan="7" class="empty-state"><p>Sin usuarios</p></td></tr>
+    <tr><td colspan="7" class="empty-state">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+        <p>Sin usuarios</p>
+    </td></tr>
 <?php else: foreach ($usuarios as $u): ?>
     <tr>
         <td style="font-weight:600;color:var(--primary-600);"><?= htmlspecialchars($u['client_code']) ?></td>
@@ -39,7 +42,11 @@ require __DIR__ . '/layout_header.php';
         <td><?php if ($u['is_active']): ?><span class="status-badge status-paid"><span class="status-dot"></span>Activo</span><?php else: ?><span class="status-badge status-cancelled">Inactivo</span><?php endif; ?></td>
         <td>
             <?php if ((int)$u['id'] !== (int)$userId): ?>
-                <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/usuarios/eliminar/<?= $u['id'] ?>" style="display:inline;" onsubmit="return confirm('¿Desactivar a <?= htmlspecialchars(addslashes($u['business_name'])) ?>?')">
+                <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/usuarios/eliminar/<?= $u['id'] ?>" style="display:inline;"
+                      data-confirm-submit
+                      data-confirm-title="Desactivar usuario admin"
+                      data-confirm-message="Vas a desactivar a «<?= htmlspecialchars($u['business_name']) ?>». Va a perder acceso al panel de administración. ¿Confirmás?"
+                      data-confirm-label="Desactivar">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                     <button type="submit" class="icon-btn" title="Desactivar" style="color:var(--danger);">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
