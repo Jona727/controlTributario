@@ -5,43 +5,43 @@
 
 /* Tipografias gestionadas globalmente */
 
-/* ── Variables CSS de Inspiración Clásica ── */
+/* ── Variables CSS: Paleta tomada del edificio real de la Estación El Pingo ── */
 :root {
-    /* Paleta Institucional (El Pingo) */
-    --brand-primary: #be185d;      /* Fucsia */
-    --brand-primary-hover: #9f1239;
-    --brand-secondary: #eab308;    /* Amarillo */
-    --brand-accent: #0f766e;       /* Teal discreto y profesional */
-    --brand-accent-hover: #0d5e58;
-    
+    /* Paleta Institucional (El Pingo) — bordó de cartel + gris pizarra de fachada */
+    --brand-primary: #6d1f2b;      /* Bordó institucional */
+    --brand-primary-hover: #4f151e;
+    --brand-secondary: #c9a24b;    /* Bronce/dorado, cálido */
+    --brand-accent: #52565c;       /* Gris pizarra de la fachada */
+    --brand-accent-hover: #3d4045;
+
     /* Variables del Sistema Compatibles */
-    --slate-dark: var(--brand-primary);
-    --slate-medium: #475569;       /* Slate gris medio */
-    --slate-medium-hover: #334155;
-    --slate-light: #f8fafc;        /* Fondo neutro claro */
-    --slate-accent: #0f766e;       /* Teal discreto */
-    --slate-border: #e2e8f0;       /* Bordes grises sutiles estándar */
-    
-    --success: #0f766e;            /* Verde sobrio para estados correctos */
-    --success-light: #f0fdf4;
-    --warning: #d97706;            /* Amarillo opaco */
-    --warning-light: #fffbeb;
-    --danger: #be123c;             /* Rojo sobrio institucional */
-    --danger-light: #fff1f2;
-    
+    --slate-dark: #33262a;         /* Casi-negro con tinte cálido, para textos fuertes */
+    --slate-medium: #5b5650;       /* Gris cálido medio */
+    --slate-medium-hover: #3d3a36;
+    --slate-light: #f7f4f0;        /* Fondo neutro cálido (no blanco frío) */
+    --slate-accent: #52565c;
+    --slate-border: #e5ded4;       /* Bordes cálidos sutiles */
+
+    --success: #3f6b4a;
+    --success-light: #f0f6f1;
+    --warning: #a8781f;
+    --warning-light: #fbf3e4;
+    --danger: #8a2332;
+    --danger-light: #fbecee;
+
     --font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
-    --font-heading: 'Montserrat', sans-serif;
+    --font-heading: 'Roboto Slab', Georgia, serif;
     --font-body: 'Montserrat', -apple-system, sans-serif;
-    
+
     --sidebar-width: 260px;
     --header-height: 70px;         /* Compact header */
     --transition: all 0.2s ease-in-out;
-    
-    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05);
-    --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.08);
-    
-    /* Propiedades Glassmorphism */
+
+    --shadow-sm: 0 1px 2px rgba(30, 20, 15, 0.06);
+    --shadow-md: 0 4px 12px rgba(30, 20, 15, 0.07);
+    --shadow-lg: 0 10px 25px rgba(30, 20, 15, 0.12);
+
+    /* Propiedades Glassmorphism (heredadas, ya no se usan en login) */
     --glass-bg: #ffffff;
     --glass-border: rgba(15, 23, 42, 0.06);
 }
@@ -88,12 +88,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary {
-    background-color: var(--brand-accent);
+    background-color: var(--brand-primary);
     color: #ffffff;
 }
 
 .btn-primary:hover {
-    background-color: var(--brand-accent-hover);
+    background-color: var(--brand-primary-hover);
     color: #ffffff;
 }
 
@@ -709,7 +709,7 @@ h1, h2, h3, h4, h5, h6 {
     position: absolute;
     left: 0; top: 25%; bottom: 25%;
     width: 3px;
-    background-color: var(--brand-accent);
+    background-color: var(--brand-secondary);
     border-radius: 0 2px 2px 0;
 }
 
@@ -1251,4 +1251,103 @@ h1, h2, h3, h4, h5, h6 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
+}
+
+/* =====================================================
+   TOASTS (notificaciones flotantes)
+   ===================================================== */
+#toast-container {
+    position: fixed;
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    pointer-events: none;
+    max-width: min(360px, calc(100vw - 2.5rem));
+}
+
+.toast {
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background: #ffffff;
+    border: 1px solid var(--slate-border);
+    border-left: 4px solid var(--brand-accent);
+    box-shadow: var(--shadow-lg);
+    padding: 0.9rem 1rem;
+    font-size: 0.84rem;
+    color: var(--slate-dark);
+    line-height: 1.4;
+    border-radius: 4px;
+    opacity: 0;
+    transform: translateX(24px);
+    animation: toastIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast.toast-leaving {
+    animation: toastOut 0.25s ease-in forwards;
+}
+
+.toast-success { border-left-color: var(--success); }
+.toast-error   { border-left-color: var(--danger); }
+.toast-warning { border-left-color: var(--warning); }
+.toast-info    { border-left-color: var(--brand-accent); }
+
+.toast .toast-icon {
+    flex-shrink: 0;
+    width: 20px; height: 20px;
+    margin-top: 0.1rem;
+}
+
+.toast-success .toast-icon { color: var(--success); }
+.toast-error .toast-icon   { color: var(--danger); }
+.toast-warning .toast-icon { color: var(--warning); }
+.toast-info .toast-icon    { color: var(--brand-accent); }
+
+.toast .toast-body { flex: 1; }
+
+.toast .toast-close {
+    background: none;
+    border: none;
+    color: #9c9188;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.toast .toast-close:hover { color: var(--slate-dark); }
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toastOut {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(24px) scale(0.98); }
+}
+
+/* =====================================================
+   UTILIDADES DE ANIMACIÓN (sutiles, con propósito)
+   ===================================================== */
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.anim-in {
+    animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .anim-in, .toast, .toast.toast-leaving {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
 }

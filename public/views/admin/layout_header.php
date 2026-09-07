@@ -12,18 +12,17 @@
     <link rel="apple-touch-icon" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/images/icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Roboto+Slab:wght@600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/css/app.css">
+    <script src="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/js/toast.js" defer></script>
 </head>
 <body>
 
 <!-- ═══ Sidebar ═══ -->
 <nav class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-        <div style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; margin-right: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex-shrink: 0; background-color: #fff;">
-            <img src="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/images/logo-pingo.jpg" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
-        </div>
+        <img src="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/images/logo-pingo-light.png" alt="Logo" style="width: 46px; height: auto; flex-shrink: 0;">
         <h1>
             Control Tributario
             <span>Municipio de El Pingo</span>
@@ -142,18 +141,12 @@
     <!-- Page Content -->
     <div class="page-content">
         <?php if (!empty($_SESSION['flash_success'])): ?>
-            <div class="flash-message flash-success">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <?= htmlspecialchars($_SESSION['flash_success']) ?>
-            </div>
+            <script>document.addEventListener('DOMContentLoaded', () => showToast(<?= json_encode($_SESSION['flash_success']) ?>, 'success'));</script>
             <?php unset($_SESSION['flash_success']); ?>
         <?php endif; ?>
 
         <?php if (!empty($_SESSION['flash_error'])): ?>
-            <div class="flash-message flash-error">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
-                <?= htmlspecialchars($_SESSION['flash_error']) ?>
-            </div>
+            <script>document.addEventListener('DOMContentLoaded', () => showToast(<?= json_encode($_SESSION['flash_error']) ?>, 'error'));</script>
             <?php unset($_SESSION['flash_error']); ?>
         <?php endif; ?>
 
