@@ -135,14 +135,13 @@ require __DIR__ . '/layout_header.php';
         <td style="font-weight:600;">$ <?= number_format((float)$f['total_amount'],2,',','.') ?></td>
         <td>
             <div style="margin-bottom:0.35rem;"><span class="status-badge <?= $sc ?>"><span class="status-dot"></span><?= $sl ?></span></div>
-            <div class="cell-actions" style="display:flex;align-items:center;gap:0.35rem;">
-                <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/pdf/<?= $f['id'] ?>" class="btn btn-ghost btn-sm" title="Descargar PDF de Boleta" style="padding: 0.35rem 0.6rem;" target="_blank">
+            <div class="cell-actions row-actions">
+                <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/pdf/<?= $f['id'] ?>" class="btn-row-icon" title="Descargar PDF de Boleta" target="_blank">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 </a>
                 <?php if ($f['status'] === 'pending' || $f['status'] === 'overdue'): ?>
-                    <button class="btn btn-ghost btn-sm btn-editar-factura"
+                    <button class="btn-row-icon btn-editar-factura"
                             title="Editar Factura"
-                            style="padding: 0.35rem 0.6rem;"
                             data-id="<?= $f['id'] ?>"
                             data-period="<?= htmlspecialchars($f['period'] ?? '') ?>"
                             data-issue="<?= htmlspecialchars($f['issue_date']) ?>"
@@ -156,12 +155,12 @@ require __DIR__ . '/layout_header.php';
                     </button>
                 <?php endif; ?>
                 <?php if ($f['status'] === 'paid' && !empty($f['payment_id'])): ?>
-                    <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/recibo/<?= $f['payment_id'] ?>" class="btn btn-ghost btn-sm" title="Descargar Recibo de Caja" style="padding: 0.35rem 0.6rem;" target="_blank">
+                    <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/recibo/<?= $f['payment_id'] ?>" class="btn-row-icon" title="Descargar Recibo de Caja" target="_blank">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                     </a>
-                    <button class="btn btn-ghost btn-sm btn-revertir" 
+                    <button class="btn-row-icon btn-revertir"
                             title="Revertir Pago"
-                            style="padding: 0.35rem 0.6rem; color: var(--danger);"
+                            style="color: var(--danger);"
                             data-id="<?= $f['id'] ?>"
                             data-numero="<?= htmlspecialchars($f['invoice_number']) ?>"
                             data-comercio="<?= htmlspecialchars($f['business_name']) ?>"
@@ -175,9 +174,9 @@ require __DIR__ . '/layout_header.php';
                     $btnColor = $f['has_older_debt'] ? 'var(--slate-medium)' : 'var(--success)';
                     $btnTitle = $f['has_older_debt'] ? 'Cobro bloqueado: Deuda anterior impaga' : 'Cobrar en Ventanilla';
                 ?>
-                    <button class="btn btn-ghost btn-sm btn-caja" 
+                    <button class="btn-row-icon btn-caja"
                             title="<?= $btnTitle ?>"
-                            style="padding: 0.35rem 0.6rem; color: <?= $btnColor ?>;"
+                            style="color: <?= $btnColor ?>;"
                             <?= $btnDisabled ?>
                             data-id="<?= $f['id'] ?>"
                             data-numero="<?= htmlspecialchars($f['invoice_number']) ?>"
@@ -198,7 +197,7 @@ require __DIR__ . '/layout_header.php';
                 <?php endif; ?>
                 <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/estado/<?= $f['id'] ?>" class="col-secondary" style="margin:0;">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                    <select name="status" onchange="this.form.submit()" class="form-select" style="width:auto;padding:0.25rem 0.5rem;font-size:0.75rem;margin:0;">
+                    <select name="status" onchange="this.form.submit()" class="status-select" title="Cambiar estado">
                         <option value="">Estado...</option>
                         <option value="pending">Pendiente</option>
                         <option value="overdue">Vencido</option>

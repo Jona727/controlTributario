@@ -310,6 +310,65 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 6px;
 }
 
+/* ── Acciones compactas en filas de tabla ──
+   Sin recuadro por ícono (evita el "amontonamiento" de bordes de bajo
+   contraste en modo oscuro): solo un fondo sutil al pasar el mouse. */
+.row-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.1rem;
+    flex-wrap: wrap;
+}
+
+.row-actions .btn-row-icon {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    color: var(--slate-medium);
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.row-actions .btn-row-icon:hover {
+    background: var(--slate-light);
+    color: var(--brand-primary);
+}
+
+.row-actions .btn-row-icon:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.row-actions .btn-row-icon:disabled:hover {
+    background: transparent;
+    color: var(--slate-medium);
+}
+
+.row-actions .status-select {
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--slate-medium);
+    font-size: 0.72rem;
+    padding: 0 0.35rem;
+    border-radius: 6px;
+    cursor: pointer;
+    max-width: 90px;
+}
+
+.row-actions .status-select:hover,
+.row-actions .status-select:focus {
+    background: var(--slate-light);
+    outline: none;
+}
+
 /* ── Inputs Elegantes ── */
 .form-group {
     margin-bottom: 1.25rem;
