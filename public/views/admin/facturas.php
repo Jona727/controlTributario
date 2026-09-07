@@ -107,6 +107,22 @@ require __DIR__ . '/layout_header.php';
                 <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/pdf/<?= $f['id'] ?>" class="btn btn-ghost btn-sm" title="Descargar PDF de Boleta" style="padding: 0.35rem 0.6rem;" target="_blank">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 </a>
+                <?php if ($f['status'] === 'pending' || $f['status'] === 'overdue'): ?>
+                    <button class="btn btn-ghost btn-sm btn-editar-factura"
+                            title="Editar Factura"
+                            style="padding: 0.35rem 0.6rem;"
+                            data-id="<?= $f['id'] ?>"
+                            data-period="<?= htmlspecialchars($f['period'] ?? '') ?>"
+                            data-issue="<?= htmlspecialchars($f['issue_date']) ?>"
+                            data-due="<?= htmlspecialchars($f['due_date']) ?>"
+                            data-subtotal="<?= floatval($f['subtotal']) ?>"
+                            data-notes="<?= htmlspecialchars($f['notes'] ?? '') ?>"
+                            data-numero="<?= htmlspecialchars($f['invoice_number']) ?>"
+                            data-comercio="<?= htmlspecialchars($f['business_name']) ?>"
+                            data-modal-open="modal-editar-factura">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                <?php endif; ?>
                 <?php if ($f['status'] === 'paid' && !empty($f['payment_id'])): ?>
                     <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/recibo/<?= $f['payment_id'] ?>" class="btn btn-ghost btn-sm" title="Descargar Recibo de Caja" style="padding: 0.35rem 0.6rem;" target="_blank">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -196,6 +212,29 @@ require __DIR__ . '/layout_header.php';
     <div class="form-group"><label class="form-label">Notas</label><textarea name="notes" class="form-textarea" rows="2"></textarea></div>
 </div>
 <div class="modal-footer"><button type="button" class="btn btn-ghost" data-modal-close>Cancelar</button><button type="submit" class="btn btn-primary">Crear Factura</button></div>
+</form></div></div>
+
+<!-- Modal Editar Factura -->
+<div class="modal-overlay" id="modal-editar-factura"><div class="modal">
+<div class="modal-header"><h3>Editar Factura</h3><button class="modal-close" data-modal-close>&times;</button></div>
+<form method="POST" id="form-editar-factura" action="">
+<input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+<div class="modal-body">
+    <div class="alert-info">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Editando <strong id="editar-numero"></strong> de <strong id="editar-comercio"></strong>. La mora se recalcula sola según la nueva fecha de vencimiento.
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label class="form-label">Período</label><input type="text" name="period" id="editar-period" class="form-input" placeholder="2026-07"></div>
+        <div class="form-group"><label class="form-label">Monto *</label><input type="number" name="total_amount" id="editar-subtotal" class="form-input" step="0.01" required></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label class="form-label">Fecha Emisión *</label><input type="date" name="issue_date" id="editar-issue" class="form-input" required></div>
+        <div class="form-group"><label class="form-label">Fecha Vencimiento *</label><input type="date" name="due_date" id="editar-due" class="form-input" required></div>
+    </div>
+    <div class="form-group" style="margin-bottom:0;"><label class="form-label">Notas</label><textarea name="notes" id="editar-notes" class="form-textarea" rows="2"></textarea></div>
+</div>
+<div class="modal-footer"><button type="button" class="btn btn-ghost" data-modal-close>Cancelar</button><button type="submit" class="btn btn-primary">Guardar Cambios</button></div>
 </form></div></div>
 
 <!-- Modal Generar Lote Mensual -->
@@ -355,9 +394,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
+    const btnsEditar = document.querySelectorAll('.btn-editar-factura');
+    const formEditar = document.getElementById('form-editar-factura');
+
+    btnsEditar.forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('editar-numero').textContent = btn.dataset.numero;
+            document.getElementById('editar-comercio').textContent = btn.dataset.comercio;
+            document.getElementById('editar-period').value = btn.dataset.period;
+            document.getElementById('editar-issue').value = btn.dataset.issue;
+            document.getElementById('editar-due').value = btn.dataset.due;
+            document.getElementById('editar-subtotal').value = btn.dataset.subtotal;
+            document.getElementById('editar-notes').value = btn.dataset.notes;
+            formEditar.action = `<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/editar/${btn.dataset.id}`;
+        });
+    });
+
     const btnsRevertir = document.querySelectorAll('.btn-revertir');
     const formRevertir = document.getElementById('form-revertir-factura');
-    
+
     btnsRevertir.forEach(btn => {
         btn.addEventListener('click', () => {
             document.getElementById('revert-comercio').textContent = btn.dataset.comercio;

@@ -218,6 +218,7 @@ class UserController
 
         $imported = 0;
         $errors = [];
+        $credenciales = [];
         $lineNum = 1;
 
         try {
@@ -255,9 +256,10 @@ class UserController
                     continue;
                 }
 
-                // Generar password_hash usando el CUIT sin guiones por defecto
-                $cuitClean = str_replace('-', '', $cuit);
-                $passHash = password_hash($cuitClean, PASSWORD_DEFAULT);
+                // Generar una contraseña temporal aleatoria (no predecible: antes se
+                // usaba el CUIT sin guiones, un dato prácticamente público).
+                $tempPassword = self::generateTempPassword();
+                $passHash = password_hash($tempPassword, PASSWORD_DEFAULT);
 
                 // Insertar comercio
                 $stmtInsert->execute([
@@ -276,6 +278,7 @@ class UserController
                 // Crear notificación
                 $stmtNotif->execute([':uid' => $newId]);
 
+                $credenciales[] = ['code' => $code, 'name' => $name, 'password' => $tempPassword];
                 $imported++;
             }
 
@@ -285,11 +288,14 @@ class UserController
 
             $db->commit();
             
-            $msg = "Se importaron con éxito {$imported} comercios.";
+            $msg = "Se importaron con éxito {$imported} comercios. Anotá o copiá las contraseñas temporales de abajo antes de salir de esta pantalla: no se van a volver a mostrar.";
             if (!empty($errors)) {
                 $msg .= "<br>Algunos registros omitidos por duplicación:<br>" . implode("<br>", $errors);
             }
             $_SESSION['flash_success'] = $msg;
+            if (!empty($credenciales)) {
+                $_SESSION['flash_credentials'] = $credenciales;
+            }
 
         } catch (\Exception $e) {
             $db->rollBack();
@@ -300,5 +306,19 @@ class UserController
         unlink($filePath);
 
         return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
+    }
+
+    /**
+     * Genera una contraseña temporal aleatoria, legible (sin caracteres
+     * ambiguos como 0/O o 1/l/I), para asignar a comercios importados por CSV.
+     */
+    private static function generateTempPassword(int $length = 8): string
+    {
+        $alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+        $password = '';
+        for ($i = 0; $i < $length; $i++) {
+            $password .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+        }
+        return $password;
     }
 }

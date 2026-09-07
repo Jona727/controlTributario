@@ -40,6 +40,7 @@ $app->group('/admin', function ($group) {
 
     // CRUD Facturas
     $group->post('/facturas/crear',           [InvoiceController::class, 'store']);
+    $group->post('/facturas/editar/{id}',     [InvoiceController::class, 'update']);
     $group->post('/facturas/estado/{id}',     [InvoiceController::class, 'updateStatus']);
     $group->get('/facturas/pdf/{id}',         [InvoiceController::class, 'downloadPdf']);
     $group->post('/facturas/pagar/{id}',      [InvoiceController::class, 'payInVentanilla']);

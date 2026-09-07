@@ -97,6 +97,90 @@ class InvoiceController
     }
 
     /**
+     * Editar una factura ya creada (POST /admin/facturas/editar/{id}).
+     * Solo permitido mientras está pendiente/vencida: una vez pagada, hay
+     * que usar Revertir Pago primero (así el recibo emitido nunca queda
+     * desincronizado del monto real de la factura).
+     */
+    public function update(Request $request, Response $response, array $args): Response
+    {
+        $id       = (int) $args['id'];
+        $data     = $request->getParsedBody();
+        $db       = Database::getConnection();
+        $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
+
+        $stmt = $db->prepare("SELECT * FROM invoices WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        $invoice = $stmt->fetch();
+
+        if (!$invoice) {
+            $_SESSION['flash_error'] = 'Factura no encontrada.';
+            return $response->withHeader('Location', $basePath . '/admin/facturas')->withStatus(302);
+        }
+
+        if ($invoice['status'] === 'paid') {
+            $_SESSION['flash_error'] = 'Esta boleta está pagada. Revertí el pago primero si necesitás corregirla.';
+            return $response->withHeader('Location', $basePath . '/admin/facturas')->withStatus(302);
+        }
+
+        $required = ['period', 'issue_date', 'due_date', 'total_amount'];
+        foreach ($required as $field) {
+            if (empty($data[$field] ?? '')) {
+                $_SESSION['flash_error'] = "El campo {$field} es obligatorio.";
+                return $response->withHeader('Location', $basePath . '/admin/facturas')->withStatus(302);
+            }
+        }
+
+        $newSubtotal = floatval($data['total_amount']);
+
+        // Se resetea la mora: si cambió el vencimiento (o el monto), la mora
+        // vieja ya no es válida. refreshOverdueStatuses() la vuelve a
+        // calcular correctamente la próxima vez que se muestre un total.
+        $stmt = $db->prepare("
+            UPDATE invoices
+            SET period = :period, issue_date = :issue, due_date = :due,
+                subtotal = :sub, surcharge = 0.00, total_amount = :sub,
+                status = 'pending', notes = :notes
+            WHERE id = :id
+        ");
+        $stmt->execute([
+            ':period' => trim($data['period']),
+            ':issue'  => $data['issue_date'],
+            ':due'    => $data['due_date'],
+            ':sub'    => $newSubtotal,
+            ':notes'  => trim($data['notes'] ?? ($invoice['notes'] ?? '')),
+            ':id'     => $id,
+        ]);
+
+        // Mantener el ítem principal (no los recargos por mora) en línea con el nuevo monto.
+        $itemStmt = $db->prepare("
+            UPDATE invoice_items SET unit_price = :price, line_total = :price
+            WHERE invoice_id = :iid AND description NOT LIKE 'Recargo por mora%'
+            LIMIT 1
+        ");
+        $itemStmt->execute([':price' => $newSubtotal, ':iid' => $id]);
+
+        $adminId = $request->getAttribute('user_id');
+        $auditStmt = $db->prepare("
+            INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, ip_address)
+            VALUES (:uid, 'invoice.update', 'invoice', :eid, :details, :ip)
+        ");
+        $auditStmt->execute([
+            ':uid'     => $adminId,
+            ':eid'     => $id,
+            ':details' => json_encode([
+                'invoice_number' => $invoice['invoice_number'],
+                'before' => ['period' => $invoice['period'], 'due_date' => $invoice['due_date'], 'subtotal' => $invoice['subtotal']],
+                'after'  => ['period' => trim($data['period']), 'due_date' => $data['due_date'], 'subtotal' => $newSubtotal],
+            ]),
+            ':ip' => $_SERVER['REMOTE_ADDR'] ?? '',
+        ]);
+
+        $_SESSION['flash_success'] = 'Factura actualizada exitosamente.';
+        return $response->withHeader('Location', $basePath . '/admin/facturas')->withStatus(302);
+    }
+
+    /**
      * Cambiar estado de factura (POST /admin/facturas/estado/{id}).
      */
     public function updateStatus(Request $request, Response $response, array $args): Response

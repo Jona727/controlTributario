@@ -4,6 +4,35 @@ $activePage = 'comercios';
 require __DIR__ . '/layout_header.php';
 ?>
 
+<?php if (!empty($_SESSION['flash_credentials'])): ?>
+    <div class="card" style="border: 2px solid var(--brand-secondary); margin-bottom: 1.5rem;">
+        <div class="card-header">
+            <h3>Contraseñas temporales generadas</h3>
+        </div>
+        <div class="card-body" style="padding: 1rem 1.5rem;">
+            <div class="alert-info" style="margin-bottom: 1rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Estas contraseñas solo se muestran una vez. Copiálas o entregáselas a cada comercio antes de salir de esta pantalla — al recargar, desaparecen.
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="data-table">
+                    <thead><tr><th>Código</th><th>Razón Social</th><th>Contraseña Temporal</th></tr></thead>
+                    <tbody>
+                        <?php foreach ($_SESSION['flash_credentials'] as $cred): ?>
+                            <tr>
+                                <td style="font-weight:600;"><?= htmlspecialchars($cred['code']) ?></td>
+                                <td><?= htmlspecialchars($cred['name']) ?></td>
+                                <td style="font-family:monospace;font-weight:700;color:var(--brand-primary);"><?= htmlspecialchars($cred['password']) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <?php unset($_SESSION['flash_credentials']); ?>
+<?php endif; ?>
+
 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.5rem;">
     <p style="font-size:0.85rem; color:var(--gray-500);"><?= count($comercios) ?> comercio(s)</p>
     <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
