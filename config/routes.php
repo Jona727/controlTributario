@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Slim\App;
 use App\Controllers\AuthController;
 use App\Controllers\AdminController;
+use App\Controllers\AdminUserController;
 use App\Controllers\DashboardController;
 use App\Controllers\UserController;
 use App\Controllers\InvoiceController;
@@ -55,6 +56,15 @@ $app->group('/admin', function ($group) {
     $group->get('/cierre-caja/pdf',           [InvoiceController::class, 'downloadCierreCajaPdf']);
 })
 ->add(new RoleMiddleware(['admin', 'super']))
+->add(new JwtMiddleware());
+
+// ─── Rutas protegidas: solo Super Administrador ───
+$app->group('/admin/usuarios', function ($group) {
+    $group->get('',           [AdminUserController::class, 'index']);
+    $group->post('/crear',    [AdminUserController::class, 'store']);
+    $group->post('/eliminar/{id}', [AdminUserController::class, 'delete']);
+})
+->add(new RoleMiddleware(['super']))
 ->add(new JwtMiddleware());
 
 // ─── Ruta protegida compartida: cualquier usuario logueado ───
