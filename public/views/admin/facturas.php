@@ -97,7 +97,14 @@ require __DIR__ . '/layout_header.php';
         </td>
         <td>
             <div style="font-weight:600;"><?= htmlspecialchars($f['invoice_number']) ?></div>
-            <div style="font-size:0.72rem;color:var(--slate-medium);"><?= htmlspecialchars($f['period'] ?? '–') ?></div>
+            <div style="font-size:0.72rem;color:var(--slate-medium);">
+                <?= htmlspecialchars($f['period'] ?? '–') ?>
+                <?php if (!empty($f['tax_type'])): ?>
+                    <span style="display:inline-block;margin-left:0.35rem;padding:0.05rem 0.4rem;border-radius:4px;background:var(--slate-light);border:1px solid var(--slate-border);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.03em;">
+                        <?= $f['tax_type'] === 'higiene_profilaxis' ? 'Higiene y Profilaxis' : htmlspecialchars($f['tax_type']) ?>
+                    </span>
+                <?php endif; ?>
+            </div>
         </td>
         <td><?= htmlspecialchars($f['business_name']) ?></td>
         <td class="col-secondary"><?= htmlspecialchars($f['cuit']) ?></td>

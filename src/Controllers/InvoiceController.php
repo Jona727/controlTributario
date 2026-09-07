@@ -297,7 +297,14 @@ class InvoiceController
     }
 
     /**
-     * Calcula dinámicamente los recargos por mora acumulados a la fecha (3% mensual, 0.1% diario).
+     * Calcula dinámicamente los recargos por mora acumulados a la fecha.
+     *
+     * La Tasa Comercial (tax_type NULL, la única que existía hasta ahora) usa
+     * 3% mensual prorrateado por día. La Tasa de Higiene y Profilaxis, migrada
+     * del sistema anterior, usa la fórmula que ya traía ese padrón: 8% mensual
+     * fijo, por mes calendario completo (sin prorrateo diario) — así que un
+     * comercio que se atrasa un día ya devenga el mes entero, igual que en el
+     * sistema viejo. No es una elección nuestra: es la que ya venían usando.
      */
     public static function calculateMora(array $invoice, float $tasaMensual = 3.0): array
     {
@@ -314,10 +321,18 @@ class InvoiceController
         $hoy = new \DateTime('today');
 
         if ($hoy > $vencimiento) {
-            $diff = $hoy->diff($vencimiento);
-            $diasMora = $diff->days;
-            $tasaDiaria = ($tasaMensual / 100) / 30;
-            $surcharge = floatval($invoice['subtotal']) * ($tasaDiaria * $diasMora);
+            if (($invoice['tax_type'] ?? null) === 'higiene_profilaxis') {
+                $mesesVencidos = self::mesesCompletosVencidos($vencimiento, $hoy);
+                $diff = $hoy->diff($vencimiento);
+                $diasMora = $diff->days;
+                $surcharge = floatval($invoice['subtotal']) * 0.08 * $mesesVencidos;
+            } else {
+                $diff = $hoy->diff($vencimiento);
+                $diasMora = $diff->days;
+                $tasaDiaria = ($tasaMensual / 100) / 30;
+                $surcharge = floatval($invoice['subtotal']) * ($tasaDiaria * $diasMora);
+            }
+
             $total = floatval($invoice['subtotal']) + $surcharge;
 
             return [
@@ -334,6 +349,21 @@ class InvoiceController
             'total_amount' => floatval($invoice['subtotal']),
             'status' => $invoice['status']
         ];
+    }
+
+    /**
+     * Cantidad de meses calendario completos entre el vencimiento y hoy,
+     * contando un mes recién al cumplirse esa misma fecha del mes siguiente
+     * (ej: vence el 9, recién el día 9 del mes que viene se suma un mes).
+     */
+    private static function mesesCompletosVencidos(\DateTime $vencimiento, \DateTime $hoy): int
+    {
+        $meses = ($hoy->format('Y') - $vencimiento->format('Y')) * 12
+            + ((int) $hoy->format('n') - (int) $vencimiento->format('n'));
+        if ((int) $hoy->format('j') < (int) $vencimiento->format('j')) {
+            $meses--;
+        }
+        return max(0, $meses);
     }
 
     /**
