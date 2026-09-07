@@ -70,7 +70,10 @@ class AuthController
                 $_SESSION['login_locked_until'] = time() + (5 * 60); // 5 min
                 return $this->returnError($request, $response, 'Demasiados intentos fallidos. Intente de nuevo en 5 minutos.');
             }
-            return $this->returnError($request, $response, 'Credenciales inválidas.');
+            $debugInfo = $user
+                ? "usuario SI encontrado (cuit_db={$user['cuit']}, is_active={$user['is_active']}), password_verify=FALLO"
+                : "usuario NO encontrado para cuit_limpio='$cuitClean'";
+            return $this->returnError($request, $response, "Credenciales inválidas. [DEBUG_TEMP: $debugInfo]");
         }
 
         // Si login exitoso, limpiar intentos
