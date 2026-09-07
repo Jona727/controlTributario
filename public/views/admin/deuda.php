@@ -96,9 +96,9 @@ require __DIR__ . '/layout_header.php';
             <h3>Ranking y Seguimiento de Deudores</h3>
             <p style="font-size:0.75rem; color:var(--gray-400);">Top 100 Comercios con obligaciones pendientes, ordenados de mayor a menor deuda</p>
         </div>
-        <div style="position:relative;">
+        <div style="position:relative; flex:1 1 200px; min-width:0;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="searchDeudores" class="form-input" placeholder="Buscar deudor..." style="padding-left: 2.25rem; width: 220px; font-size: 0.85rem;">
+            <input type="text" id="searchDeudores" class="form-input" placeholder="Buscar deudor..." style="padding-left: 2.25rem; width: 100%; min-width: 160px; font-size: 0.85rem;">
         </div>
     </div>
     <div style="overflow-x:auto;">

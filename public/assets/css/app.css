@@ -28,6 +28,14 @@
     --warning-light: #fbf3e4;
     --danger: #8a2332;
     --danger-light: #fbecee;
+    --danger-600: #8a2332;
+
+    /* Alias de compatibilidad (usados en algunas vistas) */
+    --gray-400: #a89e94;
+    --gray-500: #5b5650;
+    --gray-900: #33262a;
+    --primary-600: #6d1f2b;
+    --primary-200: #d9b8bd;
 
     --font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
     --font-heading: 'Roboto Slab', Georgia, serif;
@@ -925,6 +933,8 @@ h1, h2, h3, h4, h5, h6 {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
     padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--slate-border);
     background-color: #ffffff;

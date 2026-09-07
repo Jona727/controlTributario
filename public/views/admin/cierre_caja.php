@@ -4,7 +4,7 @@ $activePage = 'cierre-caja';
 require __DIR__ . '/layout_header.php';
 ?>
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.5rem;">
     <p style="font-size:0.85rem; color:var(--gray-500);">Resumen de recaudación para el día de hoy: <strong><?= date('d/m/Y') ?></strong></p>
     <?php if (!empty($cobros)): ?>
         <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/cierre-caja/pdf" class="btn btn-danger" target="_blank">
@@ -52,9 +52,9 @@ require __DIR__ . '/layout_header.php';
 <div class="card">
     <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
         <h3>Detalle de Transacciones del Día</h3>
-        <div style="position:relative;">
+        <div style="position:relative; flex:1 1 220px; min-width:0;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="searchCaja" class="form-input" placeholder="Buscar recibo, comercio o CUIT..." style="padding-left: 2.25rem; width: 260px; font-size: 0.85rem;">
+            <input type="text" id="searchCaja" class="form-input" placeholder="Buscar recibo, comercio o CUIT..." style="padding-left: 2.25rem; width: 100%; min-width: 160px; font-size: 0.85rem;">
         </div>
     </div>
     <div style="overflow-x:auto;">

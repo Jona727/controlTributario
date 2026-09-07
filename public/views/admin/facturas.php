@@ -4,12 +4,12 @@ $activePage = 'facturas';
 require __DIR__ . '/layout_header.php';
 ?>
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.5rem;">
     <p style="font-size:0.85rem; color:var(--gray-500);"><?= count($facturas) ?> factura(s)</p>
-    <div style="display:flex; gap:0.5rem; align-items:center;">
-        <div style="position:relative;">
+    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+        <div style="position:relative; flex:1 1 200px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="searchInput" class="form-input" placeholder="Buscar factura..." style="padding-left: 2.25rem; width: 220px; font-size: 0.85rem;">
+            <input type="text" id="searchInput" class="form-input" placeholder="Buscar factura..." style="padding-left: 2.25rem; width: 100%; min-width: 160px; font-size: 0.85rem;">
         </div>
         <?php if ($tab === 'pendientes'): ?>
         <button class="btn btn-success" id="btn-cobrar-lote" style="display:none;" data-modal-open="modal-cobrar-lote">
@@ -28,7 +28,7 @@ require __DIR__ . '/layout_header.php';
     </div>
 </div>
 
-<div class="tabs" style="display:flex; border-bottom:1px solid var(--slate-border); margin-bottom:1.5rem; gap:1.5rem;">
+<div class="tabs" style="display:flex; border-bottom:1px solid var(--slate-border); margin-bottom:1.5rem; gap:1.5rem; flex-wrap:wrap;">
     <a href="?tab=pendientes<?= !empty($_GET['user_id']) ? '&user_id='.$_GET['user_id'] : '' ?><?= !empty($_GET['period']) ? '&period='.$_GET['period'] : '' ?>" 
        style="padding:0.75rem 0; font-weight:600; color:<?= $tab === 'pendientes' ? 'var(--brand-primary)' : 'var(--slate-medium)' ?>; border-bottom:2px solid <?= $tab === 'pendientes' ? 'var(--brand-primary)' : 'transparent' ?>; text-decoration:none;">
        Pendientes / Vencidas
