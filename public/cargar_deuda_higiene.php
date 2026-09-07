@@ -302,11 +302,11 @@ try {
     $stmtDup  = $db->prepare("SELECT id FROM invoices WHERE invoice_number = :num");
     $stmtInsertInvoice = $db->prepare("
         INSERT INTO invoices (user_id, invoice_number, period, issue_date, due_date, subtotal, surcharge, total_amount, status, tax_type)
-        VALUES (:uid, :num, :period, :issue, :due, :sub, 0.00, :sub, 'pending', 'higiene_profilaxis')
+        VALUES (:uid, :num, :period, :issue, :due, :sub, 0.00, :sub2, 'pending', 'higiene_profilaxis')
     ");
     $stmtInsertItem = $db->prepare("
         INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, line_total)
-        VALUES (:iid, :desc, 1, :price, :price)
+        VALUES (:iid, :desc, 1, :price, :price2)
     ");
 
     $creadas = 0;
@@ -338,13 +338,15 @@ try {
             ':issue'  => $d['due_date'],
             ':due'    => $d['due_date'],
             ':sub'    => $d['subtotal'],
+            ':sub2'   => $d['subtotal'],
         ]);
         $invoiceId = (int) $db->lastInsertId();
 
         $stmtInsertItem->execute([
-            ':iid'   => $invoiceId,
-            ':desc'  => 'Tasa Higiene y Profilaxis - ' . $d['period'],
-            ':price' => $d['subtotal'],
+            ':iid'    => $invoiceId,
+            ':desc'   => 'Tasa Higiene y Profilaxis - ' . $d['period'],
+            ':price'  => $d['subtotal'],
+            ':price2' => $d['subtotal'],
         ]);
 
         $creadas++;
