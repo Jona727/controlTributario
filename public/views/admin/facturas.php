@@ -5,7 +5,13 @@ require __DIR__ . '/layout_header.php';
 ?>
 
 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.5rem;">
-    <p style="font-size:0.85rem; color:var(--gray-500);"><?= $totalFacturas ?> factura(s)</p>
+    <p style="font-size:0.85rem; color:var(--gray-500);">
+        <?= $totalFacturas ?> factura(s)
+        <?php if ($totalFacturas > 0): ?>
+            <span style="color:var(--slate-dark); font-weight:600;">— $ <?= number_format($montoTotalTab, 2, ',', '.') ?></span>
+            <?= $tab === 'pendientes' ? 'en total' : ($tab === 'pagadas' ? 'cobrado' : '') ?>
+        <?php endif; ?>
+    </p>
     <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
         <div style="position:relative; flex:1 1 200px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -29,15 +35,23 @@ require __DIR__ . '/layout_header.php';
 </div>
 
 <div class="tabs" style="display:flex; border-bottom:1px solid var(--slate-border); margin-bottom:1.5rem; gap:1.5rem; flex-wrap:wrap;">
-    <a href="?tab=pendientes<?= !empty($_GET['user_id']) ? '&user_id='.$_GET['user_id'] : '' ?><?= !empty($_GET['period']) ? '&period='.$_GET['period'] : '' ?>" 
+    <?php
+        $tabExtra = '';
+        foreach (['user_id', 'period', 'tax_type'] as $qp) {
+            if (!empty($_GET[$qp])) {
+                $tabExtra .= '&' . $qp . '=' . urlencode($_GET[$qp]);
+            }
+        }
+    ?>
+    <a href="?tab=pendientes<?= $tabExtra ?>"
        style="padding:0.75rem 0; font-weight:600; color:<?= $tab === 'pendientes' ? 'var(--brand-primary)' : 'var(--slate-medium)' ?>; border-bottom:2px solid <?= $tab === 'pendientes' ? 'var(--brand-primary)' : 'transparent' ?>; text-decoration:none;">
        Pendientes / Vencidas
     </a>
-    <a href="?tab=pagadas<?= !empty($_GET['user_id']) ? '&user_id='.$_GET['user_id'] : '' ?><?= !empty($_GET['period']) ? '&period='.$_GET['period'] : '' ?>" 
+    <a href="?tab=pagadas<?= $tabExtra ?>"
        style="padding:0.75rem 0; font-weight:600; color:<?= $tab === 'pagadas' ? 'var(--brand-primary)' : 'var(--slate-medium)' ?>; border-bottom:2px solid <?= $tab === 'pagadas' ? 'var(--brand-primary)' : 'transparent' ?>; text-decoration:none;">
        Historial (Pagadas)
     </a>
-    <a href="?tab=anuladas<?= !empty($_GET['user_id']) ? '&user_id='.$_GET['user_id'] : '' ?><?= !empty($_GET['period']) ? '&period='.$_GET['period'] : '' ?>" 
+    <a href="?tab=anuladas<?= $tabExtra ?>"
        style="padding:0.75rem 0; font-weight:600; color:<?= $tab === 'anuladas' ? 'var(--brand-primary)' : 'var(--slate-medium)' ?>; border-bottom:2px solid <?= $tab === 'anuladas' ? 'var(--brand-primary)' : 'transparent' ?>; text-decoration:none;">
        Anuladas
     </a>
@@ -60,9 +74,17 @@ require __DIR__ . '/layout_header.php';
         <label class="form-label">Período (Ej: 2026-07)</label>
         <input type="text" name="period" class="form-input" placeholder="AAAA-MM" value="<?= htmlspecialchars($_GET['period'] ?? '') ?>">
     </div>
+    <div class="form-group" style="margin-bottom:0; min-width: 180px;">
+        <label class="form-label">Tipo de Tasa</label>
+        <select name="tax_type" class="form-select">
+            <option value="">Todas</option>
+            <option value="comercial" <?= ($_GET['tax_type'] ?? '') === 'comercial' ? 'selected' : '' ?>>Tasa Comercial</option>
+            <option value="higiene_profilaxis" <?= ($_GET['tax_type'] ?? '') === 'higiene_profilaxis' ? 'selected' : '' ?>>Higiene y Profilaxis</option>
+        </select>
+    </div>
     <div style="display:flex; gap:0.5rem;">
         <button type="submit" class="btn btn-primary">Buscar</button>
-        <?php if (!empty($_GET['user_id']) || !empty($_GET['period'])): ?>
+        <?php if (!empty($_GET['user_id']) || !empty($_GET['period']) || !empty($_GET['tax_type'])): ?>
             <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas?tab=<?= htmlspecialchars($tab) ?>" class="btn btn-ghost">Limpiar</a>
         <?php endif; ?>
     </div>
@@ -100,8 +122,8 @@ require __DIR__ . '/layout_header.php';
             <div style="font-size:0.72rem;color:var(--slate-medium);">
                 <?= htmlspecialchars($f['period'] ?? '–') ?>
                 <?php if (!empty($f['tax_type'])): ?>
-                    <span style="display:inline-block;margin-left:0.35rem;padding:0.05rem 0.4rem;border-radius:4px;background:var(--slate-light);border:1px solid var(--slate-border);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.03em;">
-                        <?= $f['tax_type'] === 'higiene_profilaxis' ? 'Higiene y Profilaxis' : htmlspecialchars($f['tax_type']) ?>
+                    <span style="display:table;margin-top:0.15rem;padding:0.05rem 0.35rem;border-radius:4px;background:var(--slate-light);border:1px solid var(--slate-border);font-size:0.62rem;color:var(--slate-medium);white-space:nowrap;">
+                        <?= $f['tax_type'] === 'higiene_profilaxis' ? 'Higiene y Prof.' : htmlspecialchars($f['tax_type']) ?>
                     </span>
                 <?php endif; ?>
             </div>

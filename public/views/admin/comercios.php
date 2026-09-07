@@ -33,6 +33,37 @@ require __DIR__ . '/layout_header.php';
     <?php unset($_SESSION['flash_credentials']); ?>
 <?php endif; ?>
 
+<div class="stats-grid" style="margin-bottom: 1.5rem;">
+    <div class="stat-card stat-primary">
+        <div class="stat-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div class="stat-label">Comercios Activos</div>
+        <div class="stat-value"><?= (int) $comerciosStats['activos'] ?></div>
+    </div>
+    <div class="stat-card stat-danger">
+        <div class="stat-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+        <div class="stat-label">Con Deuda Pendiente</div>
+        <div class="stat-value"><?= (int) $comerciosStats['con_deuda'] ?></div>
+    </div>
+    <div class="stat-card stat-warning">
+        <div class="stat-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="stat-label">Datos por Validar</div>
+        <div class="stat-value"><?= (int) $comerciosStats['por_validar'] ?></div>
+    </div>
+    <div class="stat-card stat-success">
+        <div class="stat-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+        <div class="stat-label">Deuda Total (todos)</div>
+        <div class="stat-value">$ <?= number_format((float) $comerciosStats['deuda_total'], 0, ',', '.') ?></div>
+    </div>
+</div>
+
 <?php $comerciosRevision = array_filter($comercios, fn($c) => !empty($c['needs_data_review'])); ?>
 <?php if (!empty($comerciosRevision)): ?>
     <div class="alert-warning" style="align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
@@ -77,22 +108,25 @@ require __DIR__ . '/layout_header.php';
 <?php else: foreach ($comercios as $c): ?>
     <tr class="comercio-row" data-needs-review="<?= !empty($c['needs_data_review']) ? '1' : '0' ?>">
         <td>
-            <div style="display:flex; align-items:center; gap:0.4rem;">
-                <span style="font-weight:600;"><?= htmlspecialchars($c['business_name']) ?></span>
-                <?php if (!empty($c['needs_data_review'])): ?>
-                    <span class="icon-btn" title="<?= htmlspecialchars($c['data_review_reason'] ?? 'Datos provisorios, requiere validación') ?>" style="width:20px;height:20px;border:none;background:none;color:var(--warning);cursor:help;padding:0;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    </span>
-                <?php endif; ?>
-            </div>
+            <div style="font-weight:600;"><?= htmlspecialchars($c['business_name']) ?></div>
             <div style="font-size:0.72rem;color:var(--primary-600);font-family:monospace;"><?= htmlspecialchars($c['client_code']) ?></div>
         </td>
         <td class="col-secondary"><?= htmlspecialchars($c['cuit']) ?></td>
         <td class="col-secondary"><?= htmlspecialchars($c['address']) ?></td>
         <td class="col-secondary"><?= htmlspecialchars($c['email']) ?></td>
-        <td class="col-secondary" style="font-weight:600;">$ <?= number_format((float)$c['base_rate'], 2, ',', '.') ?></td>
+        <td class="col-secondary" style="font-weight:600;">
+            <?= (float) $c['base_rate'] > 0 ? '$ ' . number_format((float) $c['base_rate'], 2, ',', '.') : '<span style="color:var(--slate-medium);font-weight:400;">— (otra tasa)</span>' ?>
+        </td>
         <td style="font-weight:600;color:<?= $c['deuda_pendiente'] > 0 ? 'var(--danger)' : 'var(--success)' ?>;">$ <?= number_format((float)$c['deuda_pendiente'],2,',','.') ?></td>
-        <td><?php if($c['is_active']): ?><span class="status-badge status-paid"><span class="status-dot"></span>Activo</span><?php else: ?><span class="status-badge status-cancelled">Inactivo</span><?php endif; ?></td>
+        <td>
+            <div style="margin-bottom:0.3rem;"><?php if($c['is_active']): ?><span class="status-badge status-paid"><span class="status-dot"></span>Activo</span><?php else: ?><span class="status-badge status-cancelled">Inactivo</span><?php endif; ?></div>
+            <?php if (!empty($c['needs_data_review'])): ?>
+                <span title="<?= htmlspecialchars($c['data_review_reason'] ?? 'Datos provisorios, requiere validación') ?>" style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.68rem;color:var(--warning);cursor:help;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Por validar
+                </span>
+            <?php endif; ?>
+        </td>
         <td style="white-space: nowrap;">
             <button class="icon-btn" onclick='openEditModal(<?= json_encode($c) ?>)' title="Editar" style="color:var(--primary-600); margin-right: 0.25rem;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>

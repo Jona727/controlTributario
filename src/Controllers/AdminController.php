@@ -114,9 +114,28 @@ class AdminController
             FROM users u
             JOIN roles r ON u.role_id = r.id
             WHERE u.role_id = 3
-            ORDER BY u.business_name ASC
+            ORDER BY deuda_pendiente DESC, u.business_name ASC
         ");
         $comercios = $stmt->fetchAll();
+
+        $comerciosStats = [
+            'activos'     => 0,
+            'con_deuda'   => 0,
+            'por_validar' => 0,
+            'deuda_total' => 0.0,
+        ];
+        foreach ($comercios as $c) {
+            if (!empty($c['is_active'])) {
+                $comerciosStats['activos']++;
+            }
+            if ((float) $c['deuda_pendiente'] > 0) {
+                $comerciosStats['con_deuda']++;
+            }
+            if (!empty($c['needs_data_review'])) {
+                $comerciosStats['por_validar']++;
+            }
+            $comerciosStats['deuda_total'] += (float) $c['deuda_pendiente'];
+        }
 
         $userName = $request->getAttribute('user_name');
         $userRole = $request->getAttribute('user_role');
@@ -147,6 +166,7 @@ class AdminController
         $queryParams = $request->getQueryParams();
         $filterUserId = $queryParams['user_id'] ?? '';
         $filterPeriod = $queryParams['period'] ?? '';
+        $filterTaxType = $queryParams['tax_type'] ?? '';
         $tab = $queryParams['tab'] ?? 'pendientes';
 
         // Condiciones WHERE compartidas entre el conteo (para la paginación)
@@ -161,6 +181,12 @@ class AdminController
             $where .= " AND i.period = :period";
             $params[':period'] = $filterPeriod;
         }
+        if ($filterTaxType === 'comercial') {
+            $where .= " AND i.tax_type IS NULL";
+        } elseif ($filterTaxType !== '') {
+            $where .= " AND i.tax_type = :tax_type";
+            $params[':tax_type'] = $filterTaxType;
+        }
         if ($tab === 'pagadas') {
             $where .= " AND i.status = 'paid'";
         } elseif ($tab === 'anuladas') {
@@ -169,9 +195,11 @@ class AdminController
             $where .= " AND i.status IN ('pending', 'overdue')";
         }
 
-        $countStmt = $db->prepare("SELECT COUNT(*) AS total FROM invoices i {$where}");
+        $countStmt = $db->prepare("SELECT COUNT(*) AS total, COALESCE(SUM(i.total_amount), 0) AS monto_total FROM invoices i {$where}");
         $countStmt->execute($params);
-        $totalFacturas = (int) $countStmt->fetch()['total'];
+        $countRow = $countStmt->fetch();
+        $totalFacturas = (int) $countRow['total'];
+        $montoTotalTab = (float) $countRow['monto_total'];
 
         $perPage = 25;
         $totalPages = max(1, (int) ceil($totalFacturas / $perPage));
@@ -190,7 +218,7 @@ class AdminController
             JOIN users u ON i.user_id = u.id
             LEFT JOIN payments p ON i.id = p.invoice_id
             {$where}
-            ORDER BY u.business_name ASC, i.created_at DESC
+            ORDER BY u.business_name ASC, i.due_date ASC
             LIMIT {$perPage} OFFSET {$offset}
         ";
 
@@ -262,17 +290,19 @@ class AdminController
         ");
         $deudores = $stmt->fetchAll();
 
-        // 3. Recaudación histórica por meses (últimos 6 meses)
+        // 3. Recaudación histórica por meses (últimos 6 meses reales, no los
+        // primeros 6 que existan: con el padrón migrado hay facturas desde
+        // 2021, así que "ORDER BY mes ASC LIMIT 6" mostraría siempre 2021).
         $stmt = $db->query("
             SELECT DATE_FORMAT(issue_date, '%Y-%m') as mes,
                    SUM(CASE WHEN status = 'paid' THEN total_amount ELSE 0 END) as pagado,
                    SUM(CASE WHEN status IN ('pending', 'overdue') THEN total_amount ELSE 0 END) as pendiente
             FROM invoices
             GROUP BY mes
-            ORDER BY mes ASC
+            ORDER BY mes DESC
             LIMIT 6
         ");
-        $historico = $stmt->fetchAll();
+        $historico = array_reverse($stmt->fetchAll());
 
         $userName = $request->getAttribute('user_name');
         $userRole = $request->getAttribute('user_role');
