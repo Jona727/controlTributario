@@ -76,28 +76,40 @@ class UserController
         $data = $request->getParsedBody();
         $db   = Database::getConnection();
 
+        $ownerName = trim($data['owner_name'] ?? '');
+        $activityCategory = trim($data['activity_category'] ?? '');
+
         $stmt = $db->prepare("
-            UPDATE users SET 
-                client_code   = :code,
-                business_name = :name,
-                cuit          = :cuit,
-                address       = :addr,
-                phone         = :phone,
-                email         = :email,
-                is_active     = :active,
-                base_rate     = :base_rate
+            UPDATE users SET
+                client_code       = :code,
+                business_name     = :name,
+                cuit              = :cuit,
+                address           = :addr,
+                phone             = :phone,
+                email             = :email,
+                is_active         = :active,
+                base_rate         = :base_rate,
+                owner_name        = :owner,
+                activity_category = :rubro,
+                needs_data_review = :needs_review,
+                data_review_reason = CASE WHEN :needs_review2 = 0 THEN NULL ELSE data_review_reason END
             WHERE id = :id AND role_id = 3
         ");
+        $needsReview = isset($data['needs_data_review']) ? 1 : 0;
         $stmt->execute([
-            ':code'      => trim($data['client_code']),
-            ':name'      => trim($data['business_name']),
-            ':cuit'      => trim($data['cuit']),
-            ':addr'      => trim($data['address']),
-            ':phone'     => trim($data['phone'] ?? ''),
-            ':email'     => trim($data['email']),
-            ':active'    => isset($data['is_active']) ? 1 : 0,
-            ':base_rate' => floatval($data['base_rate'] ?? 0.00),
-            ':id'        => $id,
+            ':code'          => trim($data['client_code']),
+            ':name'          => trim($data['business_name']),
+            ':cuit'          => trim($data['cuit']),
+            ':addr'          => trim($data['address']),
+            ':phone'         => trim($data['phone'] ?? ''),
+            ':email'         => trim($data['email']),
+            ':active'        => isset($data['is_active']) ? 1 : 0,
+            ':base_rate'     => floatval($data['base_rate'] ?? 0.00),
+            ':owner'         => $ownerName !== '' ? $ownerName : null,
+            ':rubro'         => $activityCategory !== '' ? $activityCategory : null,
+            ':needs_review'  => $needsReview,
+            ':needs_review2' => $needsReview,
+            ':id'            => $id,
         ]);
 
         // Actualizar password si se proporcionó
@@ -198,21 +210,29 @@ class UserController
         }, $header);
 
         // Mapeo esperado de columnas: codigo, razon_social, cuit, domicilio, telefono, email, tasa_base
+        // Columnas opcionales para padrones migrados de otros sistemas: titular, rubro, fecha_inicio, activo
         $indices = [
-            'code'  => array_search('codigo', $header),
-            'name'  => array_search('razon_social', $header),
-            'cuit'  => array_search('cuit', $header),
-            'addr'  => array_search('domicilio', $header),
-            'phone' => array_search('telefono', $header),
-            'email' => array_search('email', $header),
-            'rate'  => array_search('tasa_base', $header),
+            'code'    => array_search('codigo', $header),
+            'name'    => array_search('razon_social', $header),
+            'cuit'    => array_search('cuit', $header),
+            'addr'    => array_search('domicilio', $header),
+            'phone'   => array_search('telefono', $header),
+            'email'   => array_search('email', $header),
+            'rate'    => array_search('tasa_base', $header),
+            'owner'   => array_search('titular', $header),
+            'rubro'   => array_search('rubro', $header),
+            'inicio'  => array_search('fecha_inicio', $header),
+            'activo'  => array_search('activo', $header),
+            'legacy'  => array_search('registro_legado', $header),
         ];
 
-        // Validaciones básicas de columnas requeridas
-        if ($indices['code'] === false || $indices['name'] === false || $indices['cuit'] === false || $indices['email'] === false) {
+        // Validaciones básicas de columnas requeridas. El email ya no es obligatorio:
+        // los padrones migrados de sistemas anteriores casi nunca lo tienen, así que
+        // si falta se genera uno provisorio y el comercio queda marcado para revisión.
+        if ($indices['code'] === false || $indices['name'] === false || $indices['cuit'] === false) {
             fclose($file);
             unlink($filePath);
-            $_SESSION['flash_error'] = 'El CSV debe contener al menos las columnas: codigo, razon_social, cuit, email.';
+            $_SESSION['flash_error'] = 'El CSV debe contener al menos las columnas: codigo, razon_social, cuit.';
             return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
         }
 
@@ -226,8 +246,16 @@ class UserController
 
             $stmtCheck = $db->prepare("SELECT id FROM users WHERE email = :email OR cuit = :cuit OR client_code = :code");
             $stmtInsert = $db->prepare("
-                INSERT INTO users (client_code, business_name, cuit, address, phone, email, password_hash, base_rate, role_id)
-                VALUES (:code, :name, :cuit, :addr, :phone, :email, :pass, :base_rate, 3)
+                INSERT INTO users (
+                    client_code, business_name, cuit, address, phone, email, password_hash, base_rate, role_id,
+                    is_active, owner_name, activity_category, activity_start_date,
+                    needs_data_review, data_review_reason, legacy_registro
+                )
+                VALUES (
+                    :code, :name, :cuit, :addr, :phone, :email, :pass, :base_rate, 3,
+                    :active, :owner, :rubro, :inicio,
+                    :needs_review, :review_reason, :legacy
+                )
             ");
             $stmtNotif = $db->prepare("INSERT INTO notifications (user_id, type, title, message) VALUES (:uid, 'system', 'Bienvenido', 'Su cuenta ha sido creada exitosamente en el Sistema de Control Tributario Municipal.')");
 
@@ -237,17 +265,58 @@ class UserController
 
             while (($row = fgetcsv($file, 1000, $delimiter)) !== false) {
                 $lineNum++;
-                if (count($row) < 4 || empty(trim($row[$indices['code']] ?? ''))) {
+                if (count($row) < 3 || empty(trim($row[$indices['code']] ?? ''))) {
                     continue;
                 }
 
                 $code  = trim($row[$indices['code']]);
                 $name  = trim($row[$indices['name']]);
                 $cuit  = trim($row[$indices['cuit']]);
-                $email = trim($row[$indices['email']]);
+                $email = ($indices['email'] !== false) ? trim($row[$indices['email']]) : '';
                 $addr  = ($indices['addr'] !== false) ? trim($row[$indices['addr']]) : 'Domicilio Comercial';
                 $phone = ($indices['phone'] !== false) ? trim($row[$indices['phone']]) : '';
                 $rate  = ($indices['rate'] !== false) ? floatval(str_replace(',', '.', trim($row[$indices['rate']]))) : 0.00;
+                $owner  = ($indices['owner'] !== false) ? trim($row[$indices['owner']]) : '';
+                $rubro  = ($indices['rubro'] !== false) ? trim($row[$indices['rubro']]) : '';
+                $inicio = ($indices['inicio'] !== false) ? trim($row[$indices['inicio']]) : '';
+                $legacy = ($indices['legacy'] !== false) ? trim($row[$indices['legacy']]) : '';
+                $activoRaw = ($indices['activo'] !== false) ? strtolower(trim($row[$indices['activo']])) : '1';
+                $active = in_array($activoRaw, ['0', 'false', 'no', 'inactivo'], true) ? 0 : 1;
+
+                // Fecha de inicio: solo se guarda si viene en formato reconocible.
+                $inicioDate = null;
+                if ($inicio !== '' && preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $inicio)) {
+                    $inicioDate = $inicio;
+                } elseif ($inicio !== '' && preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $inicio, $m)) {
+                    $inicioDate = "{$m[3]}-{$m[2]}-{$m[1]}";
+                }
+
+                $reviewReasons = [];
+
+                // Email: los padrones migrados casi nunca lo traen. Se genera uno
+                // provisorio, obviamente falso, y se marca el comercio para revisión.
+                if ($email === '') {
+                    $email = 'sin-email.' . preg_replace('/[^a-z0-9]+/', '-', strtolower($code)) . '@controltributario.local';
+                    $reviewReasons[] = 'Sin email de contacto (se generó uno provisorio)';
+                }
+
+                // CUIT: si falta o tiene un formato claramente incompleto, no se
+                // rechaza el registro — se guarda lo que haya (o un placeholder
+                // único basado en el código) y se marca para revisión.
+                $cuitDigits = preg_replace('/\D/', '', $cuit);
+                if ($cuitDigits === '' || $cuitDigits === '0') {
+                    // Placeholder que entra en el VARCHAR(13) de la columna cuit,
+                    // construido a partir del código (que ya es único) en vez de
+                    // un valor fijo, para no chocar con la restricción UNIQUE.
+                    $codeAlnum = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $code));
+                    $cuit = 'SC-' . substr($codeAlnum, -10);
+                    $reviewReasons[] = 'Falta el CUIT';
+                } elseif (strlen($cuitDigits) !== 11) {
+                    $reviewReasons[] = 'CUIT con formato incompleto, verificar con el comercio';
+                }
+
+                $needsReview = !empty($reviewReasons) ? 1 : 0;
+                $reviewReason = !empty($reviewReasons) ? implode('; ', $reviewReasons) : null;
 
                 // Validar si ya existe
                 $stmtCheck->execute([':email' => $email, ':cuit' => $cuit, ':code' => $code]);
@@ -263,14 +332,21 @@ class UserController
 
                 // Insertar comercio
                 $stmtInsert->execute([
-                    ':code'      => $code,
-                    ':name'      => $name,
-                    ':cuit'      => $cuit,
-                    ':addr'      => $addr,
-                    ':phone'     => $phone,
-                    ':email'     => $email,
-                    ':pass'      => $passHash,
-                    ':base_rate' => $rate,
+                    ':code'          => $code,
+                    ':name'          => $name,
+                    ':cuit'          => $cuit,
+                    ':addr'          => $addr,
+                    ':phone'         => $phone,
+                    ':email'         => $email,
+                    ':pass'          => $passHash,
+                    ':base_rate'     => $rate,
+                    ':active'        => $active,
+                    ':owner'         => $owner !== '' ? $owner : null,
+                    ':rubro'         => $rubro !== '' ? $rubro : null,
+                    ':inicio'        => $inicioDate,
+                    ':needs_review'  => $needsReview,
+                    ':review_reason' => $reviewReason,
+                    ':legacy'        => $legacy !== '' ? $legacy : null,
                 ]);
 
                 $newId = (int)$db->lastInsertId();

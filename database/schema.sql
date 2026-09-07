@@ -35,6 +35,12 @@ CREATE TABLE IF NOT EXISTS users (
     role_id INT NOT NULL DEFAULT 2,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     base_rate DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Tasa Base Fija',
+    owner_name VARCHAR(255) DEFAULT NULL COMMENT 'Titular (persona física), distinto de la Razón Social',
+    activity_category VARCHAR(150) DEFAULT NULL COMMENT 'Rubro de actividad comercial',
+    activity_start_date DATE DEFAULT NULL COMMENT 'Fecha de inicio de la actividad comercial',
+    needs_data_review TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'El comercio debe validar/corregir sus datos',
+    data_review_reason VARCHAR(255) DEFAULT NULL COMMENT 'Motivo de la marca de revisión (ej: sin email real, CUIT incompleto)',
+    legacy_registro VARCHAR(20) DEFAULT NULL COMMENT 'ID en el sistema anterior, para trazabilidad de migraciones',
     last_login DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -42,7 +48,8 @@ CREATE TABLE IF NOT EXISTS users (
         ON DELETE RESTRICT ON UPDATE CASCADE,
     INDEX idx_users_cuit (cuit),
     INDEX idx_users_client_code (client_code),
-    INDEX idx_users_role (role_id)
+    INDEX idx_users_role (role_id),
+    INDEX idx_users_needs_review (needs_data_review)
 ) ENGINE=InnoDB;
 
 -- =====================================================

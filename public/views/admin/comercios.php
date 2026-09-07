@@ -33,6 +33,17 @@ require __DIR__ . '/layout_header.php';
     <?php unset($_SESSION['flash_credentials']); ?>
 <?php endif; ?>
 
+<?php $comerciosRevision = array_filter($comercios, fn($c) => !empty($c['needs_data_review'])); ?>
+<?php if (!empty($comerciosRevision)): ?>
+    <div class="alert-warning" style="align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span><strong><?= count($comerciosRevision) ?> comercio(s)</strong> tienen datos provisorios (importados sin email real y/o con CUIT incompleto) — hay que pedirles que los validen.</span>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-filtrar-revision">Ver solo estos</button>
+    </div>
+<?php endif; ?>
+
 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.5rem;">
     <p style="font-size:0.85rem; color:var(--gray-500);"><?= count($comercios) ?> comercio(s)</p>
     <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
@@ -64,9 +75,16 @@ require __DIR__ . '/layout_header.php';
         <p>Sin comercios</p>
     </td></tr>
 <?php else: foreach ($comercios as $c): ?>
-    <tr class="comercio-row">
+    <tr class="comercio-row" data-needs-review="<?= !empty($c['needs_data_review']) ? '1' : '0' ?>">
         <td>
-            <div style="font-weight:600;"><?= htmlspecialchars($c['business_name']) ?></div>
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+                <span style="font-weight:600;"><?= htmlspecialchars($c['business_name']) ?></span>
+                <?php if (!empty($c['needs_data_review'])): ?>
+                    <span class="icon-btn" title="<?= htmlspecialchars($c['data_review_reason'] ?? 'Datos provisorios, requiere validación') ?>" style="width:20px;height:20px;border:none;background:none;color:var(--warning);cursor:help;padding:0;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </span>
+                <?php endif; ?>
+            </div>
             <div style="font-size:0.72rem;color:var(--primary-600);font-family:monospace;"><?= htmlspecialchars($c['client_code']) ?></div>
         </td>
         <td class="col-secondary"><?= htmlspecialchars($c['cuit']) ?></td>
@@ -104,8 +122,8 @@ require __DIR__ . '/layout_header.php';
 <div class="modal-body">
     <div class="alert-info">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        El archivo CSV debe incluir las cabeceras: <strong>codigo; razon_social; cuit; domicilio; telefono; email; tasa_base</strong>.<br>
-        Se usará el CUIT del comercio (sin guiones) como contraseña de acceso por defecto.
+        Columnas obligatorias: <strong>codigo; razon_social; cuit</strong>. El resto es opcional — <strong>email</strong> y <strong>cuit</strong> pueden venir vacíos o incompletos (por ejemplo, al migrar un padrón de otro sistema): el comercio se importa igual, con datos provisorios, y queda marcado para pedirle que los valide.<br>
+        Se genera una contraseña temporal aleatoria por comercio.
     </div>
     <div class="form-group">
         <label class="form-label">Seleccionar Archivo CSV *</label>
@@ -113,8 +131,8 @@ require __DIR__ . '/layout_header.php';
     </div>
     <div style="font-size: 0.75rem; background-color: var(--slate-light); border: 1px solid var(--slate-border); padding: 0.75rem; border-radius: 4px;">
         <strong>Ejemplo de formato CSV:</strong><br>
-        <code style="font-size: 0.7rem; color: var(--brand-primary);">codigo;razon_social;cuit;domicilio;telefono;email;tasa_base</code><br>
-        <code style="font-size: 0.7rem;">COM-010;Tienda Ejemplo;20-98765432-1;Av. Ejemplo 123;0343-412345;tienda@email.com;4500.00</code>
+        <code style="font-size: 0.7rem; color: var(--brand-primary);">codigo;razon_social;cuit;domicilio;telefono;email;tasa_base;titular;rubro;fecha_inicio;activo</code><br>
+        <code style="font-size: 0.7rem;">COM-010;Tienda Ejemplo;20-98765432-1;Av. Ejemplo 123;0343-412345;tienda@email.com;4500.00;Juan Pérez;Kiosco;2020-07-01;1</code>
     </div>
 </div>
 <div class="modal-footer">
@@ -173,7 +191,12 @@ require __DIR__ . '/layout_header.php';
             </div>
         </div>
     </div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Titular</label><input type="text" name="owner_name" id="edit-owner-name" class="form-input" placeholder="Persona física dueña del comercio"></div><div class="form-group"><label class="form-label">Rubro</label><input type="text" name="activity_category" id="edit-activity-category" class="form-input"></div></div>
     <label style="display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" name="is_active" id="edit-is-active" value="1"> Activo</label>
+    <div id="edit-review-wrap" style="display:none; margin-top:0.75rem; padding:0.75rem; background:var(--alert-warning-bg); border:1px solid var(--alert-warning-border); border-radius:6px;">
+        <p id="edit-review-reason" style="font-size:0.78rem; color:var(--alert-warning-text); margin:0 0 0.5rem;"></p>
+        <label style="display:flex;align-items:center;gap:0.5rem; font-size:0.85rem;"><input type="checkbox" name="needs_data_review" id="edit-needs-review" value="1"> Sigue pendiente de validar sus datos</label>
+    </div>
 </div>
 <div class="modal-footer"><button type="button" class="btn btn-ghost" data-modal-close>Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>
 </form></div></div>
@@ -189,6 +212,19 @@ function openEditModal(d) {
     document.getElementById('edit-email').value = d.email;
     document.getElementById('edit-base-rate').value = d.base_rate;
     document.getElementById('edit-is-active').checked = d.is_active == 1;
+    document.getElementById('edit-owner-name').value = d.owner_name || '';
+    document.getElementById('edit-activity-category').value = d.activity_category || '';
+
+    const reviewWrap = document.getElementById('edit-review-wrap');
+    if (d.needs_data_review == 1) {
+        reviewWrap.style.display = 'block';
+        document.getElementById('edit-review-reason').textContent = d.data_review_reason || 'Datos provisorios, requiere validación.';
+        document.getElementById('edit-needs-review').checked = true;
+    } else {
+        reviewWrap.style.display = 'none';
+        document.getElementById('edit-needs-review').checked = false;
+    }
+
     document.getElementById('modal-editar-comercio').classList.add('active');
 }
 
@@ -209,6 +245,19 @@ document.addEventListener('DOMContentLoaded', () => {
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+    }
+
+    // Filtro "Ver solo estos" (comercios con datos pendientes de revisión)
+    const btnFiltrarRevision = document.getElementById('btn-filtrar-revision');
+    if (btnFiltrarRevision) {
+        let soloRevision = false;
+        btnFiltrarRevision.addEventListener('click', function() {
+            soloRevision = !soloRevision;
+            this.textContent = soloRevision ? 'Ver todos' : 'Ver solo estos';
+            rows.forEach(row => {
+                row.style.display = (!soloRevision || row.dataset.needsReview === '1') ? '' : 'none';
             });
         });
     }
