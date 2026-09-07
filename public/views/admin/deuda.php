@@ -138,7 +138,7 @@ require __DIR__ . '/layout_header.php';
                             <?php endif; ?>
                         </td>
                         <td>
-                            <a href="mailto:<?= $d['email'] ?>?subject=Recordatorio%20de%20Pago%20-%20Tasas%20Municipales&body=Estimado%20Contribuyente%20de%20<?= rawurlencode($d['business_name']) ?>%2C%20le%20escribimos%20desde%20la%20Municipalidad%20para%20recordarle%20que%20registra%20una%20deuda%20de%20%24<?= number_format((float)$d['deuda_total'], 2, ',', '.') ?>%20en%20concepto%20de%20Tasas%20de%20Seguridad%20e%20Higiene.%20Por%20favor%20ingrese%20al%20sistema%20para%20regularizar." 
+                            <a href="mailto:<?= $d['email'] ?>?subject=Recordatorio%20de%20Pago%20-%20Tasas%20Municipales&body=Estimado%20responsable%20de%20<?= rawurlencode($d['business_name']) ?>%2C%20le%20escribimos%20desde%20la%20Municipalidad%20para%20recordarle%20que%20registra%20una%20deuda%20de%20%24<?= number_format((float)$d['deuda_total'], 2, ',', '.') ?>%20en%20concepto%20de%20Tasas%20de%20Seguridad%20e%20Higiene.%20Por%20favor%20ingrese%20al%20sistema%20para%20regularizar."
                                class="btn btn-ghost btn-sm" 
                                style="padding: 0.35rem 0.6rem; color: var(--primary-600); border-color: var(--primary-200);"
                                title="Enviar Notificación de Cobro" target="_blank">

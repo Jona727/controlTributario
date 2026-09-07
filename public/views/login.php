@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso al Contribuyente – Municipio de El Pingo</title>
+    <title>Acceso al Comercio – Municipio de El Pingo</title>
     <meta name="description" content="Acceso al Sistema de Control Tributario Municipal">
     <meta name="theme-color" content="#6d1f2b">
     <meta name="app-base-path" content="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>">
@@ -239,14 +239,14 @@
         <!-- Panel de formulario -->
         <div class="login-form-panel">
             <div class="login-form-wrap anim-in" style="animation-delay: 0.1s;">
-                <h1>Acceso Contribuyente</h1>
+                <h1>Acceso al Comercio</h1>
                 <p class="login-subtitle">Ingresá con tu CUIT y contraseña para continuar.</p>
 
                 <form id="login-form" autocomplete="off">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 
                     <div class="form-group">
-                        <label class="form-label" for="cuit">CUIT del Comercio / Contribuyente</label>
+                        <label class="form-label" for="cuit">CUIT del Comercio</label>
                         <input type="text" id="cuit" name="cuit" class="form-input"
                                placeholder="20-12345678-9" required autofocus>
                         <span style="font-size: 0.7rem; color: var(--slate-medium); display: block; margin-top: 0.25rem;">
