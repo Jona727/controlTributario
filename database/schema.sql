@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS users (
     needs_data_review TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'El comercio debe validar/corregir sus datos',
     data_review_reason VARCHAR(255) DEFAULT NULL COMMENT 'Motivo de la marca de revisión (ej: sin email real, CUIT incompleto)',
     legacy_registro VARCHAR(20) DEFAULT NULL COMMENT 'ID en el sistema anterior, para trazabilidad de migraciones',
+    rubro_code VARCHAR(20) DEFAULT NULL COMMENT 'Código de rubro del Código Tributario Municipal (tabla tarifas), define la cuota de la Tasa de Higiene y Profilaxis',
     last_login DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -50,6 +51,22 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_users_client_code (client_code),
     INDEX idx_users_role (role_id),
     INDEX idx_users_needs_review (needs_data_review)
+) ENGINE=InnoDB;
+
+-- =====================================================
+-- Tabla: tarifas
+-- Tarifario por rubro del Código Tributario Municipal (Título II, Art. 6°),
+-- fuente de verdad para el monto de la Tasa de Higiene y Profilaxis.
+-- =====================================================
+CREATE TABLE IF NOT EXISTS tarifas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(20) NOT NULL UNIQUE COMMENT 'Código de rubro de la ordenanza',
+    rubro VARCHAR(255) NOT NULL,
+    categoria VARCHAR(150) DEFAULT NULL,
+    alicuota VARCHAR(50) DEFAULT NULL COMMENT 'Si se cobra por alícuota en vez de cuota fija (ej: combustible, 6%)',
+    cuota_fija DECIMAL(12,2) DEFAULT NULL COMMENT 'Cuota fija bimestral en pesos, NULL si se cobra por alícuota',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- =====================================================
