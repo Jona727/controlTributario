@@ -38,6 +38,7 @@ $app->group('/admin', function ($group) {
     $group->post('/comercios/editar/{id}',    [UserController::class, 'update']);
     $group->post('/comercios/eliminar/{id}',  [UserController::class, 'delete']);
     $group->post('/comercios/importar',       [UserController::class, 'importCsv']);
+    $group->post('/comercios/resetear-passwords', [UserController::class, 'resetAllPasswords']);
 
     // CRUD Facturas
     $group->post('/facturas/crear',           [InvoiceController::class, 'store']);

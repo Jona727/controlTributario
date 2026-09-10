@@ -431,6 +431,72 @@ class UserController
     }
 
     /**
+     * Resetea la contraseña de TODOS los comercios activos a una nueva
+     * aleatoria, y entrega el listado completo como CSV para descargar
+     * (POST /admin/comercios/resetear-passwords). Requiere sesión de
+     * admin — a diferencia de los scripts de una sola vez, esto queda
+     * protegido por el login normal del panel.
+     */
+    public function resetAllPasswords(Request $request, Response $response): Response
+    {
+        $db = Database::getConnection();
+        $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
+
+        $stmt = $db->query("SELECT id, client_code, business_name, cuit FROM users WHERE role_id = 3 AND is_active = 1 ORDER BY client_code ASC");
+        $comercios = $stmt->fetchAll();
+
+        if (empty($comercios)) {
+            $_SESSION['flash_error'] = 'No hay comercios activos para resetear.';
+            return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
+        }
+
+        try {
+            $db->beginTransaction();
+
+            $stmtUpdate = $db->prepare("UPDATE users SET password_hash = :hash WHERE id = :id");
+            $filas = [];
+            foreach ($comercios as $c) {
+                $passwordNueva = self::generateTempPassword();
+                $stmtUpdate->execute([
+                    ':hash' => password_hash($passwordNueva, PASSWORD_DEFAULT),
+                    ':id'   => $c['id'],
+                ]);
+                $filas[] = [$c['client_code'], $c['business_name'], $c['cuit'], $passwordNueva];
+            }
+
+            $adminId = $request->getAttribute('user_id');
+            $auditStmt = $db->prepare("
+                INSERT INTO audit_log (user_id, action, entity_type, details, ip_address)
+                VALUES (:uid, 'users.bulk_reset_passwords', 'user', :details, :ip)
+            ");
+            $auditStmt->execute([
+                ':uid'     => $adminId,
+                ':details' => json_encode(['cantidad' => count($filas)]),
+                ':ip'      => $_SERVER['REMOTE_ADDR'] ?? '',
+            ]);
+
+            $db->commit();
+        } catch (\Exception $e) {
+            $db->rollBack();
+            $_SESSION['flash_error'] = 'Error al resetear contraseñas: ' . $e->getMessage();
+            return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
+        }
+
+        $csv = "\xEF\xBB\xBF" . "Codigo;Comercio;Usuario (CUIT);Contrasena Nueva\r\n";
+        foreach ($filas as $f) {
+            $escaped = array_map(function ($v) {
+                return '"' . str_replace('"', '""', (string) $v) . '"';
+            }, $f);
+            $csv .= implode(';', $escaped) . "\r\n";
+        }
+
+        $response->getBody()->write($csv);
+        return $response
+            ->withHeader('Content-Type', 'text/csv; charset=utf-8')
+            ->withHeader('Content-Disposition', 'attachment; filename="credenciales_comercios.csv"');
+    }
+
+    /**
      * Genera una contraseña temporal aleatoria, legible (sin caracteres
      * ambiguos como 0/O o 1/l/I), para asignar a comercios importados por CSV.
      */
