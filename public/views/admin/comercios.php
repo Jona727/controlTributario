@@ -82,17 +82,10 @@ require __DIR__ . '/layout_header.php';
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="searchInput" class="form-input" placeholder="Buscar comercio..." style="padding-left: 2.25rem; width: 100%; min-width: 160px; font-size: 0.85rem;">
         </div>
-        <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios/resetear-passwords" style="display:inline;"
-              data-confirm-submit
-              data-confirm-title="Resetear todas las contraseñas"
-              data-confirm-message="Se le va a generar una contraseña nueva, al azar, a los <?= count($comercios) ?> comercios activos — las contraseñas actuales dejan de funcionar en el momento. Se va a descargar un archivo con la lista completa para repartir. ¿Confirmás?"
-              data-confirm-label="Resetear todas">
-            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-            <button type="submit" class="btn btn-secondary" title="Genera una contraseña nueva para cada comercio activo y descarga la lista">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-                Resetear Contraseñas
-            </button>
-        </form>
+        <button type="button" class="btn btn-secondary" data-modal-open="modal-reset-passwords" title="Asignar una contraseña genérica a todos los comercios">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            Resetear Contraseñas
+        </button>
         <button class="btn btn-secondary" data-modal-open="modal-importar-csv">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             Importar CSV
@@ -171,6 +164,28 @@ require __DIR__ . '/layout_header.php';
 </tbody>
 </table>
 </div></div>
+
+<!-- Modal Resetear Contraseñas -->
+<div class="modal-overlay" id="modal-reset-passwords"><div class="modal">
+<div class="modal-header"><h3>Resetear Contraseñas</h3><button class="modal-close" data-modal-close>&times;</button></div>
+<form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios/resetear-passwords">
+<input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+<div class="modal-body">
+    <div class="alert-warning" style="margin-bottom:1rem;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Esta contraseña se le asigna a los <?= count($comercios) ?> comercios activos por igual — la contraseña actual de cada uno deja de funcionar en el momento. Cada comercio puede cambiarla después por la suya desde su cuenta.
+    </div>
+    <div class="form-group">
+        <label class="form-label">Contraseña para todos *</label>
+        <div style="position:relative; display:flex; gap:0.5rem;">
+            <input type="text" name="password" id="reset-generic-password" class="form-input" required minlength="6" placeholder="Ej: ElPingo2026" style="flex:1;">
+            <button type="button" class="btn btn-ghost" id="btn-sugerir-password">Sugerir</button>
+        </div>
+    </div>
+    <p style="font-size:0.78rem; color:var(--gray-500); margin:0.5rem 0 0;">Al confirmar se descarga un archivo con el código y el usuario (CUIT) de cada comercio, para que sepas con qué usuario entra cada uno — la contraseña es la que escribiste arriba, para todos por igual.</p>
+</div>
+<div class="modal-footer"><button type="button" class="btn btn-ghost" data-modal-close>Cancelar</button><button type="submit" class="btn btn-primary">Aplicar a todos</button></div>
+</form></div></div>
 
 <!-- Modal Importar CSV -->
 <div class="modal-overlay" id="modal-importar-csv"><div class="modal">
@@ -312,6 +327,17 @@ function iniciarImportacion(e, form) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Sugerir una contraseña genérica legible para todos los comercios
+    const btnSugerir = document.getElementById('btn-sugerir-password');
+    if (btnSugerir) {
+        btnSugerir.addEventListener('click', function() {
+            const palabras = ['Pingo', 'Tasa', 'Comercio', 'Tributo', 'Vecino', 'Municipio'];
+            const palabra = palabras[Math.floor(Math.random() * palabras.length)];
+            const numero = Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('reset-generic-password').value = palabra + numero;
+        });
+    }
+
     // Al elegir un rubro del tarifario, sugerir su cuota fija en Tasa Base
     const rubroSelect = document.getElementById('edit-rubro-code');
     if (rubroSelect) {
