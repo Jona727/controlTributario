@@ -188,7 +188,11 @@ require __DIR__ . '/layout_header.php';
 <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios/crear">
 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 <div class="modal-body">
-    <div class="form-row"><div class="form-group"><label class="form-label">Código *</label><input type="text" name="client_code" class="form-input" required></div><div class="form-group"><label class="form-label">CUIT *</label><input type="text" id="create-cuit" name="cuit" class="form-input cuit-mask" placeholder="20-12345678-9" required></div></div>
+    <div class="alert-info" style="margin-bottom:1rem;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        El código de comercio se asigna automáticamente al crearlo (por ejemplo, COM-000112) y no se puede cambiar después.
+    </div>
+    <div class="form-group"><label class="form-label">CUIT *</label><input type="text" id="create-cuit" name="cuit" class="form-input cuit-mask" placeholder="20-12345678-9" required></div>
     <div class="form-group"><label class="form-label">Razón Social *</label><input type="text" name="business_name" class="form-input" required></div>
     <div class="form-group"><label class="form-label">Domicilio *</label><input type="text" name="address" class="form-input" required></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Teléfono</label><input type="text" name="phone" class="form-input"></div><div class="form-group"><label class="form-label">Email *</label><input type="email" name="email" class="form-input" required></div></div>
@@ -214,7 +218,7 @@ require __DIR__ . '/layout_header.php';
 <form method="POST" id="form-editar-comercio">
 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 <div class="modal-body">
-    <div class="form-row"><div class="form-group"><label class="form-label">Código *</label><input type="text" name="client_code" id="edit-client-code" class="form-input" required></div><div class="form-group"><label class="form-label">CUIT *</label><input type="text" name="cuit" id="edit-cuit" class="form-input cuit-mask" required></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Código</label><input type="text" id="edit-client-code" class="form-input" disabled title="El código de comercio se asigna una sola vez y no se puede editar."></div><div class="form-group"><label class="form-label">CUIT *</label><input type="text" name="cuit" id="edit-cuit" class="form-input cuit-mask" required></div></div>
     <div class="form-group"><label class="form-label">Razón Social *</label><input type="text" name="business_name" id="edit-business-name" class="form-input" required></div>
     <div class="form-group"><label class="form-label">Domicilio *</label><input type="text" name="address" id="edit-address" class="form-input" required></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Teléfono</label><input type="text" name="phone" id="edit-phone" class="form-input"></div><div class="form-group"><label class="form-label">Email *</label><input type="email" name="email" id="edit-email" class="form-input" required></div></div>

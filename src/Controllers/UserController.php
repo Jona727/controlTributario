@@ -18,7 +18,7 @@ class UserController
         $data = $request->getParsedBody();
         $db   = Database::getConnection();
 
-        $required = ['client_code', 'business_name', 'cuit', 'address', 'email', 'password'];
+        $required = ['business_name', 'cuit', 'address', 'email', 'password'];
         foreach ($required as $field) {
             if (empty(trim($data[$field] ?? ''))) {
                 $_SESSION['flash_error'] = "El campo {$field} es obligatorio.";
@@ -28,20 +28,22 @@ class UserController
         }
 
         // Verificar duplicados
-        $stmt = $db->prepare("SELECT id FROM users WHERE email = :email OR cuit = :cuit OR client_code = :code");
-        $stmt->execute([':email' => $data['email'], ':cuit' => $data['cuit'], ':code' => $data['client_code']]);
+        $stmt = $db->prepare("SELECT id FROM users WHERE email = :email OR cuit = :cuit");
+        $stmt->execute([':email' => $data['email'], ':cuit' => $data['cuit']]);
         if ($stmt->fetch()) {
-            $_SESSION['flash_error'] = 'Ya existe un comercio con ese email, CUIT o código de cliente.';
+            $_SESSION['flash_error'] = 'Ya existe un comercio con ese email o CUIT.';
             $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
             return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
         }
+
+        $clientCode = self::generateNextClientCode($db);
 
         $stmt = $db->prepare("
             INSERT INTO users (client_code, business_name, cuit, address, phone, email, password_hash, base_rate, role_id)
             VALUES (:code, :name, :cuit, :addr, :phone, :email, :pass, :base_rate, 3)
         ");
         $stmt->execute([
-            ':code'      => trim($data['client_code']),
+            ':code'      => $clientCode,
             ':name'      => trim($data['business_name']),
             ':cuit'      => trim($data['cuit']),
             ':addr'      => trim($data['address']),
@@ -62,9 +64,35 @@ class UserController
         $stmt = $db->prepare("INSERT INTO audit_log (user_id, action, entity_type, entity_id, ip_address) VALUES (:uid, 'user.create', 'user', :eid, :ip)");
         $stmt->execute([':uid' => $adminId, ':eid' => $newUserId, ':ip' => $_SERVER['REMOTE_ADDR'] ?? '']);
 
-        $_SESSION['flash_success'] = 'Comercio creado exitosamente.';
+        $_SESSION['flash_success'] = "Comercio creado exitosamente. Código asignado: {$clientCode}.";
         $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
         return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
+    }
+
+    /**
+     * Genera el próximo código de comercio disponible (COM-000001, COM-000002, ...),
+     * a partir del mayor número ya usado. El código de comercio funciona como un
+     * identificador fijo: se asigna una sola vez acá y nunca se vuelve a editar.
+     */
+    private static function generateNextClientCode(\PDO $db): string
+    {
+        $stmt = $db->query("SELECT client_code FROM users WHERE client_code REGEXP '^COM-[0-9]+$'");
+        $max = 0;
+        foreach ($stmt->fetchAll(\PDO::FETCH_COLUMN) as $code) {
+            $num = (int) substr($code, 4);
+            if ($num > $max) {
+                $max = $num;
+            }
+        }
+
+        $stmtCheck = $db->prepare("SELECT id FROM users WHERE client_code = :code");
+        do {
+            $max++;
+            $candidate = 'COM-' . str_pad((string) $max, 6, '0', STR_PAD_LEFT);
+            $stmtCheck->execute([':code' => $candidate]);
+        } while ($stmtCheck->fetch());
+
+        return $candidate;
     }
 
     /**
@@ -81,7 +109,6 @@ class UserController
 
         $stmt = $db->prepare("
             UPDATE users SET
-                client_code       = :code,
                 business_name     = :name,
                 cuit              = :cuit,
                 address           = :addr,
@@ -97,7 +124,6 @@ class UserController
         ");
         $needsReview = isset($data['needs_data_review']) ? 1 : 0;
         $stmt->execute([
-            ':code'          => trim($data['client_code']),
             ':name'          => trim($data['business_name']),
             ':cuit'          => trim($data['cuit']),
             ':addr'          => trim($data['address']),
