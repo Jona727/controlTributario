@@ -105,7 +105,25 @@ class UserController
         $db   = Database::getConnection();
 
         $ownerName = trim($data['owner_name'] ?? '');
-        $activityCategory = trim($data['activity_category'] ?? '');
+        $rubroCode = trim($data['rubro_code'] ?? '');
+
+        // El rubro se elige de la tabla tarifas (fuente de verdad de la
+        // ordenanza) — de ahí sale también el nombre que se guarda en
+        // activity_category, para que quede consistente con el código.
+        $activityCategory = null;
+        if ($rubroCode !== '') {
+            $stmtTarifa = $db->prepare("SELECT rubro FROM tarifas WHERE codigo = :codigo");
+            $stmtTarifa->execute([':codigo' => $rubroCode]);
+            $tarifa = $stmtTarifa->fetch();
+            if (!$tarifa) {
+                $_SESSION['flash_error'] = 'El rubro seleccionado no existe en el tarifario.';
+                $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
+                return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
+            }
+            $activityCategory = $tarifa['rubro'];
+        } else {
+            $rubroCode = null;
+        }
 
         $stmt = $db->prepare("
             UPDATE users SET
@@ -117,6 +135,7 @@ class UserController
                 is_active         = :active,
                 base_rate         = :base_rate,
                 owner_name        = :owner,
+                rubro_code        = :rubro_code,
                 activity_category = :rubro,
                 needs_data_review = :needs_review,
                 data_review_reason = CASE WHEN :needs_review2 = 0 THEN NULL ELSE data_review_reason END
@@ -132,7 +151,8 @@ class UserController
             ':active'        => isset($data['is_active']) ? 1 : 0,
             ':base_rate'     => floatval($data['base_rate'] ?? 0.00),
             ':owner'         => $ownerName !== '' ? $ownerName : null,
-            ':rubro'         => $activityCategory !== '' ? $activityCategory : null,
+            ':rubro_code'    => $rubroCode,
+            ':rubro'         => $activityCategory,
             ':needs_review'  => $needsReview,
             ':needs_review2' => $needsReview,
             ':id'            => $id,

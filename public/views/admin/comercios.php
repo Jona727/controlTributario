@@ -234,7 +234,22 @@ require __DIR__ . '/layout_header.php';
             </div>
         </div>
     </div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Titular</label><input type="text" name="owner_name" id="edit-owner-name" class="form-input" placeholder="Persona física dueña del comercio"></div><div class="form-group"><label class="form-label">Rubro</label><input type="text" name="activity_category" id="edit-activity-category" class="form-input"></div></div>
+    <div class="form-row">
+        <div class="form-group"><label class="form-label">Titular</label><input type="text" name="owner_name" id="edit-owner-name" class="form-input" placeholder="Persona física dueña del comercio"></div>
+        <div class="form-group">
+            <label class="form-label">Rubro (Tarifario)</label>
+            <select name="rubro_code" id="edit-rubro-code" class="form-input">
+                <option value="">— Sin asignar —</option>
+                <?php foreach ($tarifasDisponibles as $t): ?>
+                    <option value="<?= htmlspecialchars($t['codigo']) ?>"
+                            data-cuota="<?= $t['cuota_fija'] !== null ? (float) $t['cuota_fija'] : '' ?>">
+                        <?= htmlspecialchars($t['codigo']) ?> — <?= htmlspecialchars($t['rubro']) ?><?= $t['cuota_fija'] !== null ? ' ($ ' . number_format((float) $t['cuota_fija'], 0, ',', '.') . ')' : ($t['alicuota'] ? ' (' . htmlspecialchars($t['alicuota']) . ')' : '') ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <p style="font-size:0.72rem; color:var(--gray-400); margin:0.3rem 0 0;">Al elegir un rubro se sugiere su cuota en "Tasa Base Fija" — podés ajustarla igual si hace falta.</p>
+        </div>
+    </div>
     <label style="display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" name="is_active" id="edit-is-active" value="1"> Activo</label>
     <div id="edit-review-wrap" style="display:none; margin-top:0.75rem; padding:0.75rem; background:var(--alert-warning-bg); border:1px solid var(--alert-warning-border); border-radius:6px;">
         <p id="edit-review-reason" style="font-size:0.78rem; color:var(--alert-warning-text); margin:0 0 0.5rem;"></p>
@@ -256,7 +271,7 @@ function openEditModal(d) {
     document.getElementById('edit-base-rate').value = d.base_rate;
     document.getElementById('edit-is-active').checked = d.is_active == 1;
     document.getElementById('edit-owner-name').value = d.owner_name || '';
-    document.getElementById('edit-activity-category').value = d.activity_category || '';
+    document.getElementById('edit-rubro-code').value = d.rubro_code || '';
 
     const reviewWrap = document.getElementById('edit-review-wrap');
     if (d.needs_data_review == 1) {
@@ -278,10 +293,22 @@ function iniciarImportacion(e, form) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Al elegir un rubro del tarifario, sugerir su cuota fija en Tasa Base
+    const rubroSelect = document.getElementById('edit-rubro-code');
+    if (rubroSelect) {
+        rubroSelect.addEventListener('change', function() {
+            const opt = this.options[this.selectedIndex];
+            const cuota = opt ? opt.getAttribute('data-cuota') : '';
+            if (cuota) {
+                document.getElementById('edit-base-rate').value = cuota;
+            }
+        });
+    }
+
     // Live Search
     const searchInput = document.getElementById('searchInput');
     const rows = document.querySelectorAll('.comercio-row');
-    
+
     if(searchInput) {
         searchInput.addEventListener('input', function() {
             const term = this.value.toLowerCase().trim();

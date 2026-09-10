@@ -118,6 +118,9 @@ class AdminController
         ");
         $comercios = $stmt->fetchAll();
 
+        $stmt = $db->query("SELECT codigo, rubro, cuota_fija, alicuota FROM tarifas ORDER BY rubro ASC");
+        $tarifasDisponibles = $stmt->fetchAll();
+
         $comerciosStats = [
             'activos'     => 0,
             'con_deuda'   => 0,
