@@ -52,7 +52,7 @@ try {
     }
 
     $stmtSelect = $db->prepare("SELECT id, business_name, owner_name FROM users WHERE legacy_registro = :reg AND role_id = 3");
-    $stmtUpdate = $db->prepare("UPDATE users SET business_name = :name, owner_name = :name WHERE id = :id");
+    $stmtUpdate = $db->prepare("UPDATE users SET business_name = :name, owner_name = :name2 WHERE id = :id");
 
     $corregidos = 0;
     $sinComercio = [];
@@ -67,7 +67,7 @@ try {
 
         echo "COM-{$reg}: '{$user['business_name']}' → '{$nombre}'";
         if ($confirmar) {
-            $stmtUpdate->execute([':name' => $nombre, ':id' => $user['id']]);
+            $stmtUpdate->execute([':name' => $nombre, ':name2' => $nombre, ':id' => $user['id']]);
             echo " (aplicado)\n";
         } else {
             echo " (se aplicaría)\n";
