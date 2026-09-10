@@ -60,6 +60,13 @@
                 </svg>
                 Facturación
             </a>
+
+            <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/tarifario" class="nav-link <?= ($activePage ?? '') === 'tarifario' ? 'active' : '' ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+                </svg>
+                Tarifario
+            </a>
         </div>
 
         <div class="nav-section">

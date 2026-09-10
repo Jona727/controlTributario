@@ -313,6 +313,86 @@ class AdminController
     }
 
     /**
+     * Tarifario por rubro (GET /admin/tarifario).
+     */
+    public function tarifario(Request $request, Response $response): Response
+    {
+        $db = Database::getConnection();
+
+        $stmt = $db->query("
+            SELECT t.*,
+                   (SELECT COUNT(*) FROM users WHERE rubro_code = t.codigo AND role_id = 3) as comercios_asignados
+            FROM tarifas t
+            ORDER BY t.codigo ASC
+        ");
+        $tarifas = $stmt->fetchAll();
+
+        $stmt = $db->query("SELECT COUNT(*) as total FROM users WHERE role_id = 3 AND rubro_code IS NOT NULL");
+        $comerciosConRubro = (int) $stmt->fetch()['total'];
+
+        $stmt = $db->query("SELECT COUNT(*) as total FROM users WHERE role_id = 3 AND rubro_code IS NULL");
+        $comerciosSinRubro = (int) $stmt->fetch()['total'];
+
+        $tarifarioStats = [
+            'total_codigos'      => count($tarifas),
+            'comercios_con_rubro' => $comerciosConRubro,
+            'comercios_sin_rubro' => $comerciosSinRubro,
+        ];
+
+        $userName = $request->getAttribute('user_name');
+        $userRole = $request->getAttribute('user_role');
+        $userId   = $request->getAttribute('user_id');
+
+        $stmtN = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
+        $stmtN->execute([':uid' => $userId]);
+        $notifCount = $stmtN->fetch()['total'];
+
+        ob_start();
+        require __DIR__ . '/../../public/views/admin/tarifario.php';
+        $html = ob_get_clean();
+        $response->getBody()->write($html);
+        return $response;
+    }
+
+    /**
+     * Editar una tarifa por rubro (POST /admin/tarifario/editar/{id}).
+     */
+    public function tarifarioUpdate(Request $request, Response $response, array $args): Response
+    {
+        $db = Database::getConnection();
+        $data = $request->getParsedBody();
+        $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
+        $id = (int) $args['id'];
+
+        $rubro = trim($data['rubro'] ?? '');
+        $categoria = trim($data['categoria'] ?? '');
+        $alicuota = trim($data['alicuota'] ?? '');
+        $cuotaFijaRaw = trim($data['cuota_fija'] ?? '');
+
+        if ($rubro === '') {
+            $_SESSION['flash_error'] = 'El nombre del rubro es obligatorio.';
+            return $response->withHeader('Location', $basePath . '/admin/tarifario')->withStatus(302);
+        }
+
+        $cuotaFija = $cuotaFijaRaw !== '' ? floatval(str_replace(',', '.', $cuotaFijaRaw)) : null;
+
+        $stmt = $db->prepare("
+            UPDATE tarifas SET rubro = :rubro, categoria = :categoria, alicuota = :alicuota, cuota_fija = :cuota_fija
+            WHERE id = :id
+        ");
+        $stmt->execute([
+            ':rubro'      => $rubro,
+            ':categoria'  => $categoria !== '' ? $categoria : null,
+            ':alicuota'   => $alicuota !== '' ? $alicuota : null,
+            ':cuota_fija' => $cuotaFija,
+            ':id'         => $id,
+        ]);
+
+        $_SESSION['flash_success'] = 'Tarifa actualizada correctamente.';
+        return $response->withHeader('Location', $basePath . '/admin/tarifario')->withStatus(302);
+    }
+
+    /**
      * Cierre de Caja Diario (GET /admin/cierre-caja).
      */
     public function cierreCaja(Request $request, Response $response): Response

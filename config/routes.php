@@ -50,6 +50,10 @@ $app->group('/admin', function ($group) {
     $group->get('/facturas/recibo/{id}',      [InvoiceController::class, 'downloadReceiptPdf']);
     $group->post('/facturas/generar-lote',    [InvoiceController::class, 'generateBatchInvoices']);
     
+    // Tarifario por rubro
+    $group->get('/tarifario',                 [AdminController::class, 'tarifario']);
+    $group->post('/tarifario/editar/{id}',    [AdminController::class, 'tarifarioUpdate']);
+
     // Deuda & Indicadores
     $group->get('/deuda',                     [AdminController::class, 'deuda']);
     $group->get('/cierre-caja',               [AdminController::class, 'cierreCaja']);
