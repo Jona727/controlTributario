@@ -1,0 +1,443 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use App\Config\Database;
+
+class AdminController
+{
+    /**
+     * Dashboard del administrador.
+     */
+    public function dashboard(Request $request, Response $response): Response
+    {
+        $db = Database::getConnection();
+
+        // Sincroniza mora/estado antes de calcular cualquier total, para que
+        // los números reflejen facturas vencidas aunque nadie haya abierto su PDF.
+        \App\Controllers\InvoiceController::refreshOverdueStatuses();
+
+        // Métricas rápidas
+        $stats = [];
+
+        // Total comercios activos
+        $stmt = $db->query("SELECT COUNT(*) as total FROM users WHERE role_id = 3 AND is_active = 1");
+        $stats['total_comercios'] = $stmt->fetch()['total'];
+
+        // Facturas pendientes
+        $stmt = $db->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'pending'");
+        $stats['facturas_pendientes'] = $stmt->fetch()['total'];
+
+        // Facturas vencidas
+        $stmt = $db->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'overdue'");
+        $stats['facturas_vencidas'] = $stmt->fetch()['total'];
+
+        // Deuda total (pendientes + vencidas)
+        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status IN ('pending', 'overdue')");
+        $stats['deuda_total'] = $stmt->fetch()['total'];
+
+        // Facturas pagadas (para el gráfico)
+        $stmt = $db->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'paid'");
+        $stats['facturas_pagadas'] = $stmt->fetch()['total'];
+
+        // Recaudación del mes actual
+        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status = 'paid' AND MONTH(issue_date) = MONTH(CURDATE()) AND YEAR(issue_date) = YEAR(CURDATE())");
+        $stats['recaudacion_mes'] = $stmt->fetch()['total'];
+
+        // Últimas facturas
+        $stmt = $db->query("
+            SELECT i.*, u.business_name, u.client_code 
+            FROM invoices i 
+            JOIN users u ON i.user_id = u.id 
+            ORDER BY i.created_at DESC 
+            LIMIT 10
+        ");
+        $facturas = $stmt->fetchAll();
+
+        // Comercios morosos (con facturas vencidas)
+        $stmt = $db->query("
+            SELECT u.id, u.client_code, u.business_name, u.cuit,
+                   COUNT(i.id) as facturas_vencidas,
+                   SUM(i.total_amount) as deuda
+            FROM users u
+            JOIN invoices i ON u.id = i.user_id AND i.status = 'overdue'
+            WHERE u.role_id = 3
+            GROUP BY u.id
+            ORDER BY deuda DESC
+            LIMIT 5
+        ");
+        $morosos = $stmt->fetchAll();
+
+        // Cobros recientes en ventanilla (últimos 5 pagos registrados)
+        $stmt = $db->query("
+            SELECT p.*, i.invoice_number, i.period, u.business_name, u.client_code
+            FROM payments p
+            JOIN invoices i ON p.invoice_id = i.id
+            JOIN users u ON i.user_id = u.id
+            ORDER BY p.payment_date DESC
+            LIMIT 5
+        ");
+        $cobrosRecientes = $stmt->fetchAll();
+
+        // Datos del usuario logueado
+        $userName = $request->getAttribute('user_name');
+        $userRole = $request->getAttribute('user_role');
+
+        // Notificaciones no leídas (para el badge)
+        $userId = $request->getAttribute('user_id');
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
+        $stmt->execute([':uid' => $userId]);
+        $notifCount = $stmt->fetch()['total'];
+
+        ob_start();
+        require __DIR__ . '/../../public/views/admin/dashboard.php';
+        $html = ob_get_clean();
+        $response->getBody()->write($html);
+        return $response;
+    }
+
+    /**
+     * Gestión de comercios.
+     */
+    public function comercios(Request $request, Response $response): Response
+    {
+        $db = Database::getConnection();
+
+        $stmt = $db->query("
+            SELECT u.*, r.name as role_name,
+                   (SELECT COUNT(*) FROM invoices WHERE user_id = u.id) as total_facturas,
+                   (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE user_id = u.id AND status IN ('pending','overdue')) as deuda_pendiente
+            FROM users u
+            JOIN roles r ON u.role_id = r.id
+            WHERE u.role_id = 3
+            ORDER BY deuda_pendiente DESC, u.business_name ASC
+        ");
+        $comercios = $stmt->fetchAll();
+
+        $stmt = $db->query("SELECT codigo, rubro, cuota_fija, alicuota FROM tarifas ORDER BY rubro ASC");
+        $tarifasDisponibles = $stmt->fetchAll();
+
+        $comerciosStats = [
+            'activos'     => 0,
+            'con_deuda'   => 0,
+            'por_validar' => 0,
+            'deuda_total' => 0.0,
+        ];
+        foreach ($comercios as $c) {
+            if (!empty($c['is_active'])) {
+                $comerciosStats['activos']++;
+            }
+            if ((float) $c['deuda_pendiente'] > 0) {
+                $comerciosStats['con_deuda']++;
+            }
+            if (!empty($c['needs_data_review'])) {
+                $comerciosStats['por_validar']++;
+            }
+            $comerciosStats['deuda_total'] += (float) $c['deuda_pendiente'];
+        }
+
+        $userName = $request->getAttribute('user_name');
+        $userRole = $request->getAttribute('user_role');
+        $userId   = $request->getAttribute('user_id');
+
+        $stmtN = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
+        $stmtN->execute([':uid' => $userId]);
+        $notifCount = $stmtN->fetch()['total'];
+
+        ob_start();
+        require __DIR__ . '/../../public/views/admin/comercios.php';
+        $html = ob_get_clean();
+        $response->getBody()->write($html);
+        return $response;
+    }
+
+    /**
+     * Gestión de facturas.
+     */
+    public function facturas(Request $request, Response $response): Response
+    {
+        $db = Database::getConnection();
+
+        // Sincroniza mora/estado antes de listar, para que el importe
+        // mostrado coincida con el que se cobraría en ventanilla ahora mismo.
+        \App\Controllers\InvoiceController::refreshOverdueStatuses();
+
+        $queryParams = $request->getQueryParams();
+        $filterUserId = $queryParams['user_id'] ?? '';
+        $filterPeriod = $queryParams['period'] ?? '';
+        $tab = $queryParams['tab'] ?? 'pendientes';
+
+        // Condiciones WHERE compartidas entre el conteo (para la paginación)
+        // y el listado en sí, para que ambos siempre queden en sincro.
+        $where = "WHERE 1=1";
+        $params = [];
+        if ($filterUserId !== '') {
+            $where .= " AND i.user_id = :uid";
+            $params[':uid'] = $filterUserId;
+        }
+        if ($filterPeriod !== '') {
+            $where .= " AND i.period = :period";
+            $params[':period'] = $filterPeriod;
+        }
+        if ($tab === 'pagadas') {
+            $where .= " AND i.status = 'paid'";
+        } elseif ($tab === 'anuladas') {
+            $where .= " AND i.status = 'cancelled'";
+        } else {
+            $where .= " AND i.status IN ('pending', 'overdue')";
+        }
+
+        $countStmt = $db->prepare("SELECT COUNT(*) AS total, COALESCE(SUM(i.total_amount), 0) AS monto_total FROM invoices i {$where}");
+        $countStmt->execute($params);
+        $countRow = $countStmt->fetch();
+        $totalFacturas = (int) $countRow['total'];
+        $montoTotalTab = (float) $countRow['monto_total'];
+
+        $perPage = 25;
+        $totalPages = max(1, (int) ceil($totalFacturas / $perPage));
+        $page = max(1, min($totalPages, (int) ($queryParams['page'] ?? 1)));
+        $offset = ($page - 1) * $perPage;
+
+        $sql = "
+            SELECT i.*, u.business_name, u.client_code, u.cuit, p.id AS payment_id,
+                   EXISTS (
+                       SELECT 1 FROM invoices i2
+                       WHERE i2.user_id = i.user_id
+                         AND i2.status IN ('pending', 'overdue')
+                         AND i2.issue_date < i.issue_date
+                   ) as has_older_debt
+            FROM invoices i
+            JOIN users u ON i.user_id = u.id
+            LEFT JOIN payments p ON i.id = p.invoice_id
+            {$where}
+            ORDER BY u.business_name ASC, i.due_date ASC
+            LIMIT {$perPage} OFFSET {$offset}
+        ";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $facturas = $stmt->fetchAll();
+
+        // Comercios para el selector
+        $stmt = $db->query("SELECT id, client_code, business_name FROM users WHERE role_id = 3 AND is_active = 1 ORDER BY business_name");
+        $comerciosSelect = $stmt->fetchAll();
+
+        $userName = $request->getAttribute('user_name');
+        $userRole = $request->getAttribute('user_role');
+        $userId   = $request->getAttribute('user_id');
+
+        $stmtN = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
+        $stmtN->execute([':uid' => $userId]);
+        $notifCount = $stmtN->fetch()['total'];
+
+        ob_start();
+        require __DIR__ . '/../../public/views/admin/facturas.php';
+        $html = ob_get_clean();
+        $response->getBody()->write($html);
+        return $response;
+    }
+
+    /**
+     * Deuda & Indicadores (GET /admin/deuda).
+     */
+    public function deuda(Request $request, Response $response): Response
+    {
+        $db = Database::getConnection();
+
+        // Sincroniza mora/estado antes de calcular cualquier total.
+        \App\Controllers\InvoiceController::refreshOverdueStatuses();
+
+        // 1. Estadísticas globales de deuda
+        $stats = [];
+        
+        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status = 'overdue'");
+        $stats['vencido'] = $stmt->fetch()['total'];
+
+        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status = 'pending'");
+        $stats['pendiente'] = $stmt->fetch()['total'];
+
+        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status = 'paid'");
+        $stats['pagado'] = $stmt->fetch()['total'];
+
+        $stats['deuda_total'] = $stats['vencido'] + $stats['pendiente'];
+
+        // Índices de cobrabilidad
+        $totalEmitido = $stats['deuda_total'] + $stats['pagado'];
+        $stats['cobrabilidad'] = $totalEmitido > 0 ? round(($stats['pagado'] / $totalEmitido) * 100, 1) : 0;
+
+        // 2. Ranking de Deudores
+        $stmt = $db->query("
+            SELECT u.id, u.client_code, u.business_name, u.cuit, u.phone, u.email,
+                   COUNT(i.id) as total_facturas,
+                   SUM(CASE WHEN i.status = 'overdue' THEN i.total_amount ELSE 0 END) as monto_vencido,
+                   SUM(CASE WHEN i.status = 'pending' THEN i.total_amount ELSE 0 END) as monto_pendiente,
+                   SUM(CASE WHEN i.status IN ('pending', 'overdue') THEN i.total_amount ELSE 0 END) as deuda_total
+            FROM users u
+            JOIN invoices i ON u.id = i.user_id
+            WHERE u.role_id = 3
+            GROUP BY u.id
+            HAVING deuda_total > 0
+            ORDER BY deuda_total DESC
+            LIMIT 100
+        ");
+        $deudores = $stmt->fetchAll();
+
+        // 3. Recaudación histórica por meses (últimos 6 meses reales, no los
+        // primeros 6 que existan: con el padrón migrado hay facturas desde
+        // 2021, así que "ORDER BY mes ASC LIMIT 6" mostraría siempre 2021).
+        $stmt = $db->query("
+            SELECT DATE_FORMAT(issue_date, '%Y-%m') as mes,
+                   SUM(CASE WHEN status = 'paid' THEN total_amount ELSE 0 END) as pagado,
+                   SUM(CASE WHEN status IN ('pending', 'overdue') THEN total_amount ELSE 0 END) as pendiente
+            FROM invoices
+            GROUP BY mes
+            ORDER BY mes DESC
+            LIMIT 6
+        ");
+        $historico = array_reverse($stmt->fetchAll());
+
+        $userName = $request->getAttribute('user_name');
+        $userRole = $request->getAttribute('user_role');
+        $userId   = $request->getAttribute('user_id');
+
+        $stmtN = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
+        $stmtN->execute([':uid' => $userId]);
+        $notifCount = $stmtN->fetch()['total'];
+
+        ob_start();
+        require __DIR__ . '/../../public/views/admin/deuda.php';
+        $html = ob_get_clean();
+        $response->getBody()->write($html);
+        return $response;
+    }
+
+    /**
+     * Tarifario por rubro (GET /admin/tarifario).
+     */
+    public function tarifario(Request $request, Response $response): Response
+    {
+        $db = Database::getConnection();
+
+        $stmt = $db->query("
+            SELECT t.*,
+                   (SELECT COUNT(*) FROM users WHERE rubro_code = t.codigo AND role_id = 3) as comercios_asignados
+            FROM tarifas t
+            ORDER BY t.codigo ASC
+        ");
+        $tarifas = $stmt->fetchAll();
+
+        $stmt = $db->query("SELECT COUNT(*) as total FROM users WHERE role_id = 3 AND rubro_code IS NOT NULL");
+        $comerciosConRubro = (int) $stmt->fetch()['total'];
+
+        $stmt = $db->query("SELECT COUNT(*) as total FROM users WHERE role_id = 3 AND rubro_code IS NULL");
+        $comerciosSinRubro = (int) $stmt->fetch()['total'];
+
+        $tarifarioStats = [
+            'total_codigos'      => count($tarifas),
+            'comercios_con_rubro' => $comerciosConRubro,
+            'comercios_sin_rubro' => $comerciosSinRubro,
+        ];
+
+        $userName = $request->getAttribute('user_name');
+        $userRole = $request->getAttribute('user_role');
+        $userId   = $request->getAttribute('user_id');
+
+        $stmtN = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
+        $stmtN->execute([':uid' => $userId]);
+        $notifCount = $stmtN->fetch()['total'];
+
+        ob_start();
+        require __DIR__ . '/../../public/views/admin/tarifario.php';
+        $html = ob_get_clean();
+        $response->getBody()->write($html);
+        return $response;
+    }
+
+    /**
+     * Editar una tarifa por rubro (POST /admin/tarifario/editar/{id}).
+     */
+    public function tarifarioUpdate(Request $request, Response $response, array $args): Response
+    {
+        $db = Database::getConnection();
+        $data = $request->getParsedBody();
+        $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
+        $id = (int) $args['id'];
+
+        $rubro = trim($data['rubro'] ?? '');
+        $categoria = trim($data['categoria'] ?? '');
+        $alicuota = trim($data['alicuota'] ?? '');
+        $cuotaFijaRaw = trim($data['cuota_fija'] ?? '');
+
+        if ($rubro === '') {
+            $_SESSION['flash_error'] = 'El nombre del rubro es obligatorio.';
+            return $response->withHeader('Location', $basePath . '/admin/tarifario')->withStatus(302);
+        }
+
+        $cuotaFija = $cuotaFijaRaw !== '' ? floatval(str_replace(',', '.', $cuotaFijaRaw)) : null;
+
+        $stmt = $db->prepare("
+            UPDATE tarifas SET rubro = :rubro, categoria = :categoria, alicuota = :alicuota, cuota_fija = :cuota_fija
+            WHERE id = :id
+        ");
+        $stmt->execute([
+            ':rubro'      => $rubro,
+            ':categoria'  => $categoria !== '' ? $categoria : null,
+            ':alicuota'   => $alicuota !== '' ? $alicuota : null,
+            ':cuota_fija' => $cuotaFija,
+            ':id'         => $id,
+        ]);
+
+        $_SESSION['flash_success'] = 'Tarifa actualizada correctamente.';
+        return $response->withHeader('Location', $basePath . '/admin/tarifario')->withStatus(302);
+    }
+
+    /**
+     * Cierre de Caja Diario (GET /admin/cierre-caja).
+     */
+    public function cierreCaja(Request $request, Response $response): Response
+    {
+        $db = Database::getConnection();
+
+        // Obtener los cobros realizados en el día de la fecha
+        $stmt = $db->query("
+            SELECT p.*, i.invoice_number, i.period, u.business_name, u.cuit, u.client_code
+            FROM payments p
+            JOIN invoices i ON p.invoice_id = i.id
+            JOIN users u ON i.user_id = u.id
+            WHERE DATE(p.payment_date) = CURDATE()
+            ORDER BY p.payment_date DESC
+        ");
+        $cobros = $stmt->fetchAll();
+
+        // Calcular los totales del día
+        $totalBase = 0.0;
+        $totalMora = 0.0;
+        $totalPaid = 0.0;
+
+        foreach ($cobros as $c) {
+            $totalPaid += floatval($c['amount_paid']);
+            $totalMora += floatval($c['surcharge_paid']);
+            $totalBase += (floatval($c['amount_paid']) - floatval($c['surcharge_paid']));
+        }
+
+        // Datos de sesión del usuario logueado
+        $userName = $request->getAttribute('user_name');
+        $userRole = $request->getAttribute('user_role');
+        $userId   = $request->getAttribute('user_id');
+
+        // Notificaciones no leídas
+        $stmtN = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
+        $stmtN->execute([':uid' => $userId]);
+        $notifCount = $stmtN->fetch()['total'];
+
+        ob_start();
+        require __DIR__ . '/../../public/views/admin/cierre_caja.php';
+        $html = ob_get_clean();
+        $response->getBody()->write($html);
+        return $response;
+    }
+}

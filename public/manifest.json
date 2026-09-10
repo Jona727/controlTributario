@@ -1,0 +1,22 @@
+{
+  "name": "Control Tributario Municipal",
+  "short_name": "Tributario",
+  "description": "Sistema de Control Tributario Municipal – Municipio de El Pingo",
+  "start_url": "./login",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#1b2129",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/images/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "assets/images/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

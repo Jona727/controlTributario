@@ -1,0 +1,4 @@
+codigo;razon_social;cuit;domicilio;telefono;email;tasa_base
+C9001;Almacen El Sol;20-30444555-9;Calle Falsa 123;011-4567-8901;elsol@example.com;1500.50
+C9002;Panaderia La Union;27-40555666-8;Av. San Martin 999;0221-482-1111;launion@example.com;2450.00
+C9003;Ferreteria Martinez;30-50666777-7;Mitre 456;0341-499-2222;martinez@example.com;3200.75

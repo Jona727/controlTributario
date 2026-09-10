@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){try{var t=localStorage.getItem('ct-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= $pageTitle ?? 'Panel Admin' ?> – Control Tributario Municipal</title>
+    <meta name="description" content="Panel de Administración del Sistema de Control Tributario Municipal">
+    <meta name="theme-color" content="#6d1f2b">
+    <meta name="app-base-path" content="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>">
+    <meta name="csrf-token" content="<?= $_SESSION['csrf_token'] ?? '' ?>">
+    <link rel="manifest" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/manifest.json">
+    <link rel="apple-touch-icon" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/images/icon-192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Roboto+Slab:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <link rel="stylesheet" href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/css/app.css">
+    <script src="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/js/toast.js" defer></script>
+</head>
+<body class="app-shell">
+
+<!-- ═══ Sidebar ═══ -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        <img src="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/images/logo-pingo-light.png" alt="Logo" style="width: 46px; height: auto; flex-shrink: 0;">
+        <h1>
+            Control Tributario
+            <span>Municipio de El Pingo</span>
+        </h1>
+    </div>
+
+    <div class="sidebar-nav">
+        <div class="nav-section">
+            <div class="nav-section-title">Principal</div>
+            <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/dashboard" class="nav-link <?= ($activePage ?? '') === 'dashboard' ? 'active' : '' ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                Dashboard
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Gestión</div>
+            <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios" class="nav-link <?= ($activePage ?? '') === 'comercios' ? 'active' : '' ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                Comercios
+            </a>
+
+            <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas" class="nav-link <?= ($activePage ?? '') === 'facturas' ? 'active' : '' ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                </svg>
+                Facturación
+            </a>
+
+            <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/tarifario" class="nav-link <?= ($activePage ?? '') === 'tarifario' ? 'active' : '' ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+                </svg>
+                Tarifario
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Reportes</div>
+            <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/deuda" class="nav-link <?= ($activePage ?? '') === 'deuda' ? 'active' : '' ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="16"/>
+                </svg>
+                Indicadores
+            </a>
+
+            <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/cierre-caja" class="nav-link <?= ($activePage ?? '') === 'cierre-caja' ? 'active' : '' ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 14c2.209 0 4-1.791 4-4s-1.791-4-4-4-4 1.791-4 4 1.791 4 4 4z"/>
+                </svg>
+                Cierre de Caja
+            </a>
+        </div>
+
+        <?php if (($userRole ?? '') === 'super'): ?>
+        <div class="nav-section">
+            <div class="nav-section-title">Configuración</div>
+            <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/usuarios" class="nav-link <?= ($activePage ?? '') === 'usuarios' ? 'active' : '' ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+                Usuarios Admin
+            </a>
+        </div>
+        <?php endif; ?>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <div class="avatar"><?= strtoupper(substr($userName ?? 'A', 0, 2)) ?></div>
+            <div class="user-info">
+                <div class="user-name"><?= htmlspecialchars($userName ?? 'Admin') ?></div>
+                <div class="user-role"><?= htmlspecialchars($userRole ?? 'admin') ?></div>
+            </div>
+            <button type="button" class="icon-btn" title="Cambiar mi contraseña" style="width:32px;height:32px;border:none;" data-modal-open="modal-cambiar-password">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                </svg>
+            </button>
+            <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/logout" class="icon-btn" title="Cerrar sesión" style="width:32px;height:32px;border:none;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<?php require __DIR__ . '/../partials/change_password_modal.php'; ?>
+<?php require __DIR__ . '/../partials/confirm_modal.php'; ?>
+
+<!-- ═══ Main Content ═══ -->
+<div class="main-content">
+    <!-- Top Header -->
+    <header class="top-header">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+            <button class="icon-btn" id="mobile-menu-toggle" style="display:none;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+            </button>
+            <h2><?= $pageTitle ?? 'Dashboard' ?></h2>
+        </div>
+
+        <div class="header-actions">
+            <?php if (($activePage ?? '') !== 'dashboard'): ?>
+                <!-- Botón de acción contextual se inyecta en cada vista -->
+            <?php endif; ?>
+
+            <button class="icon-btn theme-toggle" id="theme-toggle" title="Cambiar tema claro/oscuro">
+                <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+            </button>
+
+            <div style="position:relative;">
+                <button class="icon-btn" id="notif-bell">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+                    </svg>
+                    <?php if (($notifCount ?? 0) > 0): ?>
+                        <span class="badge"><?= $notifCount ?></span>
+                    <?php endif; ?>
+                </button>
+
+                <div class="notif-panel" id="notif-panel">
+                    <div class="notif-header">Notificaciones</div>
+                    <div style="max-height:300px;overflow-y:auto;">
+                        <?php if (empty($notificaciones ?? [])): ?>
+                            <div class="empty-state">
+                                <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+                                <p>Sin notificaciones</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+        <?php if (!empty($_SESSION['flash_success'])): ?>
+            <script>document.addEventListener('DOMContentLoaded', () => showToast(<?= json_encode($_SESSION['flash_success']) ?>, 'success'));</script>
+            <?php unset($_SESSION['flash_success']); ?>
+        <?php endif; ?>
+
+        <?php if (!empty($_SESSION['flash_error'])): ?>
+            <script>document.addEventListener('DOMContentLoaded', () => showToast(<?= json_encode($_SESSION['flash_error']) ?>, 'error'));</script>
+            <?php unset($_SESSION['flash_error']); ?>
+        <?php endif; ?>
+
+        <!-- El contenido de cada página se inyecta aquí -->
