@@ -174,7 +174,7 @@ class UserController
         $auditStmt->execute([
             ':uid'     => $adminId,
             ':eid'     => $id,
-            ':details' => json_encode(['client_code' => trim($data['client_code']), 'is_active' => isset($data['is_active']) ? 1 : 0, 'password_changed' => $passwordChanged]),
+            ':details' => json_encode(['rubro_code' => $rubroCode, 'is_active' => isset($data['is_active']) ? 1 : 0, 'password_changed' => $passwordChanged]),
             ':ip'      => $_SERVER['REMOTE_ADDR'] ?? '',
         ]);
 
