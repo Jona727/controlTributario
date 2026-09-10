@@ -896,9 +896,20 @@ class InvoiceController
                 }
             }
 
+            $stmtCheckPeriod = $db->prepare("
+                SELECT id FROM invoices WHERE user_id = :uid AND period = :period AND status != 'cancelled'
+            ");
+
             $count = 0;
+            $yaFacturados = 0;
             foreach ($comercios as $comercio) {
                 if (floatval($comercio['base_rate']) <= 0) {
+                    continue;
+                }
+
+                $stmtCheckPeriod->execute([':uid' => (int) $comercio['id'], ':period' => $period]);
+                if ($stmtCheckPeriod->fetch()) {
+                    $yaFacturados++;
                     continue;
                 }
 
@@ -954,7 +965,7 @@ class InvoiceController
                 $count++;
             }
 
-            if ($count === 0) {
+            if ($count === 0 && $yaFacturados === 0) {
                 throw new \Exception('Ningún comercio activo tiene configurada una Tasa Base superior a $0.00.');
             }
 
@@ -964,12 +975,16 @@ class InvoiceController
             ");
             $auditStmt->execute([
                 ':uid'     => $adminId,
-                ':details' => json_encode(['period' => $period, 'issue_date' => $issueDate, 'due_date' => $dueDate, 'count' => $count]),
+                ':details' => json_encode(['period' => $period, 'issue_date' => $issueDate, 'due_date' => $dueDate, 'count' => $count, 'ya_facturados' => $yaFacturados]),
                 ':ip'      => $_SERVER['REMOTE_ADDR'] ?? '',
             ]);
 
             $db->commit();
-            $_SESSION['flash_success'] = "Se generó exitosamente el lote con {$count} facturas.";
+            $mensaje = "Se generó exitosamente el lote con {$count} facturas.";
+            if ($yaFacturados > 0) {
+                $mensaje .= " {$yaFacturados} comercio(s) ya tenían factura para el período {$period} y se omitieron.";
+            }
+            $_SESSION['flash_success'] = $mensaje;
 
         } catch (\Exception $e) {
             $db->rollBack();
