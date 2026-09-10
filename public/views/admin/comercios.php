@@ -97,11 +97,11 @@ require __DIR__ . '/layout_header.php';
 <div style="overflow-x:auto;">
 <table class="data-table">
 <thead><tr>
-    <th>Comercio</th><th class="col-secondary">CUIT</th><th class="col-secondary">Domicilio</th><th class="col-secondary">Email</th><th class="col-secondary">Tasa Base</th><th>Deuda</th><th>Estado</th><th>Acciones</th>
+    <th>Comercio</th><th class="col-secondary">CUIT</th><th class="col-secondary">Domicilio</th><th class="col-secondary">Tasa Base</th><th>Deuda</th><th>Estado</th><th>Acciones</th>
 </tr></thead>
 <tbody>
 <?php if (empty($comercios)): ?>
-    <tr><td colspan="8" class="empty-state">
+    <tr><td colspan="7" class="empty-state">
         <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
         <p>Sin comercios</p>
     </td></tr>
@@ -111,9 +111,14 @@ require __DIR__ . '/layout_header.php';
             <div style="font-weight:600;"><?= htmlspecialchars($c['business_name']) ?></div>
             <div style="font-size:0.72rem;color:var(--primary-600);font-family:monospace;"><?= htmlspecialchars($c['client_code']) ?></div>
         </td>
-        <td class="col-secondary"><?= htmlspecialchars($c['cuit']) ?></td>
+        <td class="col-secondary">
+            <?php if (str_starts_with($c['cuit'], 'SC-')): ?>
+                <span style="color:var(--slate-medium);" title="Comercio importado sin CUIT real — este código es solo para iniciar sesión, no es válido ante AFIP.">Sin CUIT real</span>
+            <?php else: ?>
+                <?= htmlspecialchars($c['cuit']) ?>
+            <?php endif; ?>
+        </td>
         <td class="col-secondary"><?= htmlspecialchars($c['address']) ?></td>
-        <td class="col-secondary"><?= htmlspecialchars($c['email']) ?></td>
         <td class="col-secondary" style="font-weight:600;">
             <?= (float) $c['base_rate'] > 0 ? '$ ' . number_format((float) $c['base_rate'], 2, ',', '.') : '<span style="color:var(--slate-medium);font-weight:400;">— (monto variable)</span>' ?>
         </td>
