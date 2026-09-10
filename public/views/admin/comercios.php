@@ -108,7 +108,15 @@ require __DIR__ . '/layout_header.php';
 <?php else: foreach ($comercios as $c): ?>
     <tr class="comercio-row" data-needs-review="<?= !empty($c['needs_data_review']) ? '1' : '0' ?>">
         <td>
-            <div style="font-weight:600;"><?= htmlspecialchars($c['business_name']) ?></div>
+            <?php
+                $nombreTitular = trim($c['owner_name'] ?? '');
+                $razonSocial = trim($c['business_name'] ?? '');
+                $mostrarRazonSocial = $razonSocial !== '' && strcasecmp($razonSocial, $nombreTitular) !== 0;
+            ?>
+            <div style="font-weight:600;"><?= htmlspecialchars($nombreTitular !== '' ? $nombreTitular : $razonSocial) ?></div>
+            <?php if ($mostrarRazonSocial && $nombreTitular !== ''): ?>
+                <div style="font-size:0.75rem;color:var(--gray-500);"><?= htmlspecialchars($razonSocial) ?></div>
+            <?php endif; ?>
             <div style="font-size:0.72rem;color:var(--primary-600);font-family:monospace;"><?= htmlspecialchars($c['client_code']) ?></div>
         </td>
         <td class="col-secondary">
