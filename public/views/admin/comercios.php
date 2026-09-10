@@ -82,6 +82,17 @@ require __DIR__ . '/layout_header.php';
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="searchInput" class="form-input" placeholder="Buscar comercio..." style="padding-left: 2.25rem; width: 100%; min-width: 160px; font-size: 0.85rem;">
         </div>
+        <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios/resetear-passwords" style="display:inline;"
+              data-confirm-submit
+              data-confirm-title="Resetear todas las contraseñas"
+              data-confirm-message="Se le va a generar una contraseña nueva, al azar, a los <?= count($comercios) ?> comercios activos — las contraseñas actuales dejan de funcionar en el momento. Se va a descargar un archivo con la lista completa para repartir. ¿Confirmás?"
+              data-confirm-label="Resetear todas">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+            <button type="submit" class="btn btn-secondary" title="Genera una contraseña nueva para cada comercio activo y descarga la lista">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                Resetear Contraseñas
+            </button>
+        </form>
         <button class="btn btn-secondary" data-modal-open="modal-importar-csv">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             Importar CSV
