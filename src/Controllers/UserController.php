@@ -431,8 +431,9 @@ class UserController
     }
 
     /**
-     * Resetea la contraseña de TODOS los comercios activos a una nueva
-     * aleatoria, y entrega el listado completo como CSV para descargar
+     * Asigna la misma contraseña (elegida por el admin) a TODOS los
+     * comercios activos, y entrega el listado de usuarios (CUIT) como
+     * CSV para saber con qué usuario entra cada uno
      * (POST /admin/comercios/resetear-passwords). Requiere sesión de
      * admin — a diferencia de los scripts de una sola vez, esto queda
      * protegido por el login normal del panel.
@@ -441,6 +442,13 @@ class UserController
     {
         $db = Database::getConnection();
         $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
+        $data = $request->getParsedBody();
+
+        $password = trim($data['password'] ?? '');
+        if (strlen($password) < 6) {
+            $_SESSION['flash_error'] = 'La contraseña tiene que tener al menos 6 caracteres.';
+            return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
+        }
 
         $stmt = $db->query("SELECT id, client_code, business_name, cuit FROM users WHERE role_id = 3 AND is_active = 1 ORDER BY client_code ASC");
         $comercios = $stmt->fetchAll();
@@ -453,15 +461,12 @@ class UserController
         try {
             $db->beginTransaction();
 
+            $hash = password_hash($password, PASSWORD_DEFAULT);
             $stmtUpdate = $db->prepare("UPDATE users SET password_hash = :hash WHERE id = :id");
             $filas = [];
             foreach ($comercios as $c) {
-                $passwordNueva = self::generateTempPassword();
-                $stmtUpdate->execute([
-                    ':hash' => password_hash($passwordNueva, PASSWORD_DEFAULT),
-                    ':id'   => $c['id'],
-                ]);
-                $filas[] = [$c['client_code'], $c['business_name'], $c['cuit'], $passwordNueva];
+                $stmtUpdate->execute([':hash' => $hash, ':id' => $c['id']]);
+                $filas[] = [$c['client_code'], $c['business_name'], $c['cuit']];
             }
 
             $adminId = $request->getAttribute('user_id');
@@ -471,7 +476,7 @@ class UserController
             ");
             $auditStmt->execute([
                 ':uid'     => $adminId,
-                ':details' => json_encode(['cantidad' => count($filas)]),
+                ':details' => json_encode(['cantidad' => count($filas), 'tipo' => 'contraseña genérica compartida']),
                 ':ip'      => $_SERVER['REMOTE_ADDR'] ?? '',
             ]);
 
@@ -482,7 +487,7 @@ class UserController
             return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
         }
 
-        $csv = "\xEF\xBB\xBF" . "Codigo;Comercio;Usuario (CUIT);Contrasena Nueva\r\n";
+        $csv = "\xEF\xBB\xBF" . "Codigo;Comercio;Usuario (CUIT)\r\n";
         foreach ($filas as $f) {
             $escaped = array_map(function ($v) {
                 return '"' . str_replace('"', '""', (string) $v) . '"';
@@ -493,7 +498,7 @@ class UserController
         $response->getBody()->write($csv);
         return $response
             ->withHeader('Content-Type', 'text/csv; charset=utf-8')
-            ->withHeader('Content-Disposition', 'attachment; filename="credenciales_comercios.csv"');
+            ->withHeader('Content-Disposition', 'attachment; filename="usuarios_comercios.csv"');
     }
 
     /**
