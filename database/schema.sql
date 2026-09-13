@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
     client_code VARCHAR(20) NOT NULL UNIQUE COMMENT 'Código único de cliente',
     business_name VARCHAR(255) NOT NULL COMMENT 'Razón Social',
     cuit VARCHAR(13) NOT NULL UNIQUE COMMENT 'CUIT formato XX-XXXXXXXX-X',
+    dni VARCHAR(15) DEFAULT NULL COMMENT 'DNI del titular (persona física). Se usa como contraseña inicial de acceso al panel; en sociedades hay que pedírselo al municipio, no se puede derivar del CUIT',
     address VARCHAR(500) NOT NULL COMMENT 'Domicilio',
     phone VARCHAR(50) DEFAULT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -164,6 +165,29 @@ CREATE TABLE IF NOT EXISTS audit_log (
     INDEX idx_audit_user (user_id),
     INDEX idx_audit_action (action),
     INDEX idx_audit_date (created_at)
+) ENGINE=InnoDB;
+
+-- =====================================================
+-- Tabla: account_status_requests (Solicitudes de estado de cuenta)
+-- El comercio pide que le informen su situación real, conciliada a mano
+-- con el sistema anterior por el área de Catastro y Rentas, en vez de
+-- confiar en el total que calcula el sistema (que puede tener huecos
+-- heredados de la facturación reactiva del sistema viejo).
+-- =====================================================
+CREATE TABLE IF NOT EXISTS account_status_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    status ENUM('pending','resolved') NOT NULL DEFAULT 'pending',
+    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resolved_at DATETIME DEFAULT NULL,
+    resolved_by INT DEFAULT NULL COMMENT 'Admin que respondió',
+    response_message TEXT DEFAULT NULL,
+    CONSTRAINT fk_asr_user FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_asr_admin FOREIGN KEY (resolved_by) REFERENCES users(id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    INDEX idx_asr_user (user_id),
+    INDEX idx_asr_status (status)
 ) ENGINE=InnoDB;
 
 -- =====================================================

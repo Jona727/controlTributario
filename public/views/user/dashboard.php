@@ -115,7 +115,11 @@ $activePage = 'dashboard';
             <div class="stat-card stat-danger">
                 <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
                 <div class="stat-label">Deuda Pendiente</div>
-                <div class="stat-value">$ <?= number_format((float)$deudaTotal,2,',','.') ?></div>
+                <?php if ($tieneDeuda): ?>
+                    <div class="stat-value" style="font-size:1.1rem;">Pendiente de conciliar</div>
+                <?php else: ?>
+                    <div class="stat-value">$ <?= number_format((float)$deudaTotal,2,',','.') ?></div>
+                <?php endif; ?>
             </div>
             <div class="stat-card stat-warning">
                 <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
@@ -132,6 +136,25 @@ $activePage = 'dashboard';
         <!-- Facturas -->
         <div class="card">
             <div class="card-header"><h3>Mis Facturas</h3></div>
+            <?php if ($tieneDeuda): ?>
+                <div style="padding: 1.5rem;">
+                    <div class="empty-state" style="padding: 1.5rem 1rem;">
+                        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <p>Registrás facturación pendiente de regularizar con el municipio. Para conocer el detalle exacto de tu situación, pedí tu estado de cuenta — Catastro y Rentas lo revisa y te confirma el monto real.</p>
+                        <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'pending'): ?>
+                            <span class="status-badge status-pending" style="margin-top:0.75rem;"><span class="status-dot"></span>Solicitud enviada — en revisión</span>
+                        <?php else: ?>
+                            <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'resolved'): ?>
+                                <p style="font-size:0.8rem; color:var(--slate-medium); margin-top:0.5rem;">Ya te respondimos una solicitud anterior — revisá tus notificaciones. Si tu situación cambió, podés volver a pedirlo.</p>
+                            <?php endif; ?>
+                            <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/user/estado-cuenta/solicitar" style="margin-top:0.75rem;">
+                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                <button type="submit" class="btn btn-primary">Solicitar estado de cuenta</button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php else: ?>
             <div style="overflow-x:auto;">
                 <table class="data-table">
                     <thead><tr><th># Factura</th><th>Período</th><th>Emisión</th><th>Vencimiento</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead>
@@ -174,6 +197,7 @@ $activePage = 'dashboard';
                     </tbody>
                 </table>
             </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
