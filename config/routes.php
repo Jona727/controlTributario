@@ -11,6 +11,7 @@ use App\Controllers\UserController;
 use App\Controllers\InvoiceController;
 use App\Controllers\ProfileController;
 use App\Controllers\NotificationController;
+use App\Controllers\AccountStatusController;
 use App\Middleware\JwtMiddleware;
 use App\Middleware\RoleMiddleware;
 
@@ -59,6 +60,10 @@ $app->group('/admin', function ($group) {
     $group->get('/deuda',                     [AdminController::class, 'deuda']);
     $group->get('/cierre-caja',               [AdminController::class, 'cierreCaja']);
     $group->get('/cierre-caja/pdf',           [InvoiceController::class, 'downloadCierreCajaPdf']);
+
+    // Solicitudes de estado de cuenta real
+    $group->get('/estado-cuenta',                    [AdminController::class, 'estadoCuenta']);
+    $group->post('/estado-cuenta/responder/{id}',    [AccountStatusController::class, 'resolve']);
 })
 ->add(new RoleMiddleware(['admin', 'super']))
 ->add(new JwtMiddleware());
@@ -89,6 +94,7 @@ $app->group('/user', function ($group) {
     $group->get('/dashboard', [DashboardController::class, 'index']);
     $group->get('/facturas/pdf/{id}',         [InvoiceController::class, 'downloadPdf']);
     $group->get('/facturas/recibo/{id}',      [InvoiceController::class, 'downloadReceiptPdf']);
+    $group->post('/estado-cuenta/solicitar',  [AccountStatusController::class, 'request']);
 })
 ->add(new JwtMiddleware());
 

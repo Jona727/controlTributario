@@ -85,6 +85,28 @@
                 </svg>
                 Cierre de Caja
             </a>
+
+            <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/estado-cuenta" class="nav-link <?= ($activePage ?? '') === 'estado-cuenta' ? 'active' : '' ?>" style="justify-content:space-between;">
+                <span style="display:flex; align-items:center; gap:0.6rem;">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                    </svg>
+                    Solicitudes
+                </span>
+                <?php
+                    $solicitudesPendientesNav = 0;
+                    try {
+                        $solicitudesPendientesNav = (int) \App\Config\Database::getConnection()
+                            ->query("SELECT COUNT(*) FROM account_status_requests WHERE status = 'pending'")
+                            ->fetchColumn();
+                    } catch (\Throwable $e) {
+                        // La tabla puede no existir todavía si no se corrió la migración.
+                    }
+                ?>
+                <?php if ($solicitudesPendientesNav > 0): ?>
+                    <span class="badge" style="position:static;"><?= $solicitudesPendientesNav ?></span>
+                <?php endif; ?>
+            </a>
         </div>
 
         <?php if (($userRole ?? '') === 'super'): ?>

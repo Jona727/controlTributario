@@ -82,7 +82,7 @@ require __DIR__ . '/layout_header.php';
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="searchInput" class="form-input" placeholder="Buscar comercio..." style="padding-left: 2.25rem; width: 100%; min-width: 160px; font-size: 0.85rem;">
         </div>
-        <button type="button" class="btn btn-secondary" data-modal-open="modal-reset-passwords" title="Asignar una contraseña genérica a todos los comercios">
+        <button type="button" class="btn btn-secondary" data-modal-open="modal-reset-passwords" title="Asignar una contraseña provisoria a los comercios que todavía no tienen DNI cargado">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
             Resetear Contraseñas
         </button>
@@ -143,6 +143,12 @@ require __DIR__ . '/layout_header.php';
                     Por validar
                 </span>
             <?php endif; ?>
+            <?php if (empty($c['dni'])): ?>
+                <span title="Todavía no tiene DNI cargado — entra con la contraseña provisoria hasta que se cargue su DNI real." style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.68rem;color:var(--slate-medium);margin-top:0.2rem;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                    Sin DNI
+                </span>
+            <?php endif; ?>
         </td>
         <td style="white-space: nowrap;">
             <button class="icon-btn" onclick='openEditModal(<?= json_encode($c) ?>)' title="Editar" style="color:var(--primary-600); margin-right: 0.25rem;">
@@ -173,16 +179,16 @@ require __DIR__ . '/layout_header.php';
 <div class="modal-body">
     <div class="alert-warning" style="margin-bottom:1rem;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Esta contraseña se le asigna a los <?= count($comercios) ?> comercios activos por igual — la contraseña actual de cada uno deja de funcionar en el momento. Cada comercio puede cambiarla después por la suya desde su cuenta.
+        El comercio entra con su código y su DNI. Esto solo aplica a los que todavía no tienen un DNI cargado (típicamente sociedades, donde el DNI no sale del CUIT) — les asigna esta contraseña provisoria hasta que el municipio informe el DNI del titular y se cargue en su ficha.
     </div>
     <div class="form-group">
-        <label class="form-label">Contraseña para todos *</label>
+        <label class="form-label">Contraseña provisoria *</label>
         <div style="position:relative; display:flex; gap:0.5rem;">
             <input type="text" name="password" id="reset-generic-password" class="form-input" required minlength="6" placeholder="Ej: ElPingo2026" style="flex:1;">
             <button type="button" class="btn btn-ghost" id="btn-sugerir-password">Sugerir</button>
         </div>
     </div>
-    <p style="font-size:0.78rem; color:var(--gray-500); margin:0.5rem 0 0;">Al confirmar se descarga un archivo con el código y el usuario (CUIT) de cada comercio, para que sepas con qué usuario entra cada uno — la contraseña es la que escribiste arriba, para todos por igual.</p>
+    <p style="font-size:0.78rem; color:var(--gray-500); margin:0.5rem 0 0;">Al confirmar se descarga un archivo con el código de cada comercio afectado, para saber con qué usuario entra — la contraseña es la que escribiste arriba, para todos por igual, hasta que se cargue su DNI real.</p>
 </div>
 <div class="modal-footer"><button type="button" class="btn btn-ghost" data-modal-close>Cancelar</button><button type="submit" class="btn btn-primary">Aplicar a todos</button></div>
 </form></div></div>
@@ -253,6 +259,11 @@ require __DIR__ . '/layout_header.php';
 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 <div class="modal-body">
     <div class="form-row"><div class="form-group"><label class="form-label">Código</label><input type="text" id="edit-client-code" class="form-input" disabled title="El código de comercio se asigna una sola vez y no se puede editar."></div><div class="form-group"><label class="form-label">CUIT *</label><input type="text" name="cuit" id="edit-cuit" class="form-input cuit-mask" required></div></div>
+    <div class="form-group">
+        <label class="form-label">DNI del titular</label>
+        <input type="text" name="dni" id="edit-dni" class="form-input" placeholder="Ej: 25123456" inputmode="numeric">
+        <p style="font-size:0.72rem; color:var(--gray-400); margin:0.3rem 0 0;">Es la contraseña con la que el comercio entra al panel (junto con su código). Si lo cargás o cambiás acá, la contraseña de acceso se actualiza sola — salvo que también escribas una "Nueva Contraseña" abajo, que manda por encima del DNI.</p>
+    </div>
     <div class="form-group"><label class="form-label">Razón Social *</label><input type="text" name="business_name" id="edit-business-name" class="form-input" required></div>
     <div class="form-group"><label class="form-label">Domicilio *</label><input type="text" name="address" id="edit-address" class="form-input" required></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Teléfono</label><input type="text" name="phone" id="edit-phone" class="form-input"></div><div class="form-group"><label class="form-label">Email *</label><input type="email" name="email" id="edit-email" class="form-input" required></div></div>
@@ -299,6 +310,7 @@ function openEditModal(d) {
     document.getElementById('edit-client-code').value = d.client_code;
     document.getElementById('edit-business-name').value = d.business_name;
     document.getElementById('edit-cuit').value = d.cuit;
+    document.getElementById('edit-dni').value = d.dni || '';
     document.getElementById('edit-address').value = d.address;
     document.getElementById('edit-phone').value = d.phone || '';
     document.getElementById('edit-email').value = d.email;

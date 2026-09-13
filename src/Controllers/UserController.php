@@ -106,6 +106,7 @@ class UserController
 
         $ownerName = trim($data['owner_name'] ?? '');
         $rubroCode = trim($data['rubro_code'] ?? '');
+        $dni       = trim($data['dni'] ?? '');
 
         // El rubro se elige de la tabla tarifas (fuente de verdad de la
         // ordenanza) — de ahí sale también el nombre que se guarda en
@@ -125,10 +126,17 @@ class UserController
             $rubroCode = null;
         }
 
+        // DNI anterior, para saber si el que llega es un dato nuevo (y
+        // entonces conviene actualizar también la contraseña de acceso).
+        $stmtDniActual = $db->prepare("SELECT dni FROM users WHERE id = :id");
+        $stmtDniActual->execute([':id' => $id]);
+        $dniAnterior = $stmtDniActual->fetch()['dni'] ?? null;
+
         $stmt = $db->prepare("
             UPDATE users SET
                 business_name     = :name,
                 cuit              = :cuit,
+                dni               = :dni,
                 address           = :addr,
                 phone             = :phone,
                 email             = :email,
@@ -145,6 +153,7 @@ class UserController
         $stmt->execute([
             ':name'          => trim($data['business_name']),
             ':cuit'          => trim($data['cuit']),
+            ':dni'           => $dni !== '' ? $dni : null,
             ':addr'          => trim($data['address']),
             ':phone'         => trim($data['phone'] ?? ''),
             ':email'         => trim($data['email']),
@@ -158,11 +167,18 @@ class UserController
             ':id'            => $id,
         ]);
 
-        // Actualizar password si se proporcionó
+        // Actualizar password: si se escribió una a mano, esa manda. Si no,
+        // pero se acaba de cargar (o cambiar) el DNI, se usa el DNI como
+        // contraseña — así el comercio ya puede entrar con código + DNI
+        // sin que el admin tenga que pensar en una contraseña aparte.
         $passwordChanged = false;
         if (!empty($data['password'])) {
             $stmt = $db->prepare("UPDATE users SET password_hash = :pass WHERE id = :id");
             $stmt->execute([':pass' => password_hash($data['password'], PASSWORD_DEFAULT), ':id' => $id]);
+            $passwordChanged = true;
+        } elseif ($dni !== '' && $dni !== $dniAnterior) {
+            $stmt = $db->prepare("UPDATE users SET password_hash = :pass WHERE id = :id");
+            $stmt->execute([':pass' => password_hash($dni, PASSWORD_DEFAULT), ':id' => $id]);
             $passwordChanged = true;
         }
 
@@ -450,11 +466,14 @@ class UserController
             return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
         }
 
-        $stmt = $db->query("SELECT id, client_code, business_name, cuit FROM users WHERE role_id = 3 AND is_active = 1 ORDER BY client_code ASC");
+        // Solo alcanza a los comercios sin DNI cargado (sociedades pendientes
+        // de que el municipio informe el DNI del titular): los que ya tienen
+        // DNI inician sesión con ese dato, y este reseteo no debe pisarlo.
+        $stmt = $db->query("SELECT id, client_code, business_name, cuit FROM users WHERE role_id = 3 AND is_active = 1 AND dni IS NULL ORDER BY client_code ASC");
         $comercios = $stmt->fetchAll();
 
         if (empty($comercios)) {
-            $_SESSION['flash_error'] = 'No hay comercios activos para resetear.';
+            $_SESSION['flash_error'] = 'No hay comercios pendientes de DNI para resetear (todos los activos ya inician sesión con su DNI).';
             return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
         }
 
@@ -487,7 +506,7 @@ class UserController
             return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
         }
 
-        $csv = "\xEF\xBB\xBF" . "Codigo;Comercio;Usuario (CUIT)\r\n";
+        $csv = "\xEF\xBB\xBF" . "Codigo;Comercio;Usuario (Codigo de acceso)\r\n";
         foreach ($filas as $f) {
             $escaped = array_map(function ($v) {
                 return '"' . str_replace('"', '""', (string) $v) . '"';

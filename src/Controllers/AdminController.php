@@ -396,6 +396,40 @@ class AdminController
     }
 
     /**
+     * Solicitudes de estado de cuenta real (GET /admin/estado-cuenta).
+     */
+    public function estadoCuenta(Request $request, Response $response): Response
+    {
+        $db = Database::getConnection();
+
+        $stmt = $db->query("
+            SELECT s.*, u.client_code, u.business_name, u.owner_name,
+                   admin.business_name AS resolved_by_name
+            FROM account_status_requests s
+            JOIN users u ON s.user_id = u.id
+            LEFT JOIN users admin ON s.resolved_by = admin.id
+            ORDER BY (s.status = 'pending') DESC, s.requested_at DESC
+        ");
+        $solicitudes = $stmt->fetchAll();
+
+        $pendientes = array_filter($solicitudes, fn($s) => $s['status'] === 'pending');
+
+        $userName = $request->getAttribute('user_name');
+        $userRole = $request->getAttribute('user_role');
+        $userId   = $request->getAttribute('user_id');
+
+        $stmtN = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
+        $stmtN->execute([':uid' => $userId]);
+        $notifCount = $stmtN->fetch()['total'];
+
+        ob_start();
+        require __DIR__ . '/../../public/views/admin/estado_cuenta_solicitudes.php';
+        $html = ob_get_clean();
+        $response->getBody()->write($html);
+        return $response;
+    }
+
+    /**
      * Cierre de Caja Diario (GET /admin/cierre-caja).
      */
     public function cierreCaja(Request $request, Response $response): Response

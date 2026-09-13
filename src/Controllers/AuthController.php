@@ -34,35 +34,24 @@ class AuthController
             return $this->returnError($request, $response, "Demasiados intentos fallidos. Intente de nuevo en {$mins} minuto(s).");
         }
 
-        $data = $request->getParsedBody();
-        $cuit = trim($data['cuit'] ?? '');
-        $pass = $data['password'] ?? '';
+        $data     = $request->getParsedBody();
+        $username = trim($data['username'] ?? '');
+        $pass     = $data['password'] ?? '';
         $remember = !empty($data['remember_me']);
 
-        if (empty($cuit) || empty($pass)) {
-            return $this->returnError($request, $response, 'Ingrese CUIT y contraseña.');
+        if (empty($username) || empty($pass)) {
+            return $this->returnError($request, $response, 'Ingrese su usuario y contraseña.');
         }
-
-        // Limpiar guiones del CUIT de entrada para comparación robusta
-        $cuitClean = str_replace('-', '', $cuit);
 
         $db   = Database::getConnection();
         $stmt = $db->prepare('
-            SELECT u.*, r.name AS role_name 
-            FROM users u 
-            JOIN roles r ON u.role_id = r.id 
-            WHERE REPLACE(u.cuit, \'-\', \'\') = :cuit_clean AND u.is_active = 1
+            SELECT u.*, r.name AS role_name
+            FROM users u
+            JOIN roles r ON u.role_id = r.id
+            WHERE u.client_code = :client_code AND u.is_active = 1
         ');
-        $stmt->execute([':cuit_clean' => $cuitClean]);
+        $stmt->execute([':client_code' => $username]);
         $user = $stmt->fetch();
-
-        error_log("DEBUG LOGIN: Recibido CUIT='$cuit' (Limpio='$cuitClean')");
-        if ($user) {
-            $verify = password_verify($pass, $user['password_hash']);
-            error_log("DEBUG LOGIN: Usuario encontrado ID={$user['id']}, CUIT={$user['cuit']}. Verificacion: " . ($verify ? "OK" : "FALLO"));
-        } else {
-            error_log("DEBUG LOGIN: Usuario no encontrado en DB para CUIT limpio '$cuitClean'");
-        }
 
         if (!$user || !password_verify($pass, $user['password_hash'])) {
             $_SESSION['login_attempts'] = ($_SESSION['login_attempts'] ?? 0) + 1;

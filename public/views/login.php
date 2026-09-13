@@ -241,22 +241,22 @@
         <div class="login-form-panel">
             <div class="login-form-wrap anim-in" style="animation-delay: 0.1s;">
                 <h1>Acceso al Comercio</h1>
-                <p class="login-subtitle">Ingresá con tu CUIT y contraseña para continuar.</p>
+                <p class="login-subtitle">Ingresá con tu usuario y contraseña para continuar.</p>
 
                 <form id="login-form" autocomplete="off">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 
                     <div class="form-group">
-                        <label class="form-label" for="cuit">CUIT del Comercio</label>
-                        <input type="text" id="cuit" name="cuit" class="form-input"
-                               placeholder="20-12345678-9" required autofocus>
+                        <label class="form-label" for="username">Usuario</label>
+                        <input type="text" id="username" name="username" class="form-input"
+                               placeholder="COM-000001" required autofocus>
                         <span style="font-size: 0.7rem; color: var(--slate-medium); display: block; margin-top: 0.25rem;">
-                            Ingrese el CUIT. Los guiones se agregarán automáticamente.
+                            Tu código de comercio — aparece en tus facturas.
                         </span>
                     </div>
 
                     <div class="form-group" style="margin-bottom: 1rem;">
-                        <label class="form-label" for="password">Contraseña (Clave Fiscal)</label>
+                        <label class="form-label" for="password">Contraseña (tu DNI)</label>
                         <div style="position: relative;">
                             <input type="password" id="password" name="password" class="form-input"
                                    placeholder="••••••••" required style="padding-right: 2.5rem;">
@@ -297,19 +297,6 @@
             const passInput = document.getElementById('password');
             const toggleBtn = document.getElementById('toggle-password');
             const btnLogin = document.getElementById('btn-login');
-
-            // CUIT Mask
-            document.getElementById('cuit').addEventListener('input', function (e) {
-                let val = this.value.replace(/\D/g, '');
-                if (val.length > 11) val = val.substring(0, 11);
-
-                if (val.length > 2 && val.length <= 10) {
-                    val = val.substring(0, 2) + '-' + val.substring(2);
-                } else if (val.length > 10) {
-                    val = val.substring(0, 2) + '-' + val.substring(2, 10) + '-' + val.substring(10);
-                }
-                this.value = val;
-            });
 
             // Toggle Password Visibility
             toggleBtn.addEventListener('click', () => {

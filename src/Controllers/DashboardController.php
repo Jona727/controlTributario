@@ -51,6 +51,23 @@ class DashboardController
         $stmt->execute([':uid' => $userId]);
         $facturasPendientes = $stmt->fetch()['total'];
 
+        $tieneDeuda = (int) $facturasPendientes > 0;
+
+        // Si ya tiene deuda, hace falta saber si tiene una solicitud de
+        // estado de cuenta en trámite (para no dejarlo pedir dos veces) o
+        // ya respondida (para no repetirle el botón sin necesidad).
+        $solicitudEstadoCuenta = null;
+        if ($tieneDeuda) {
+            $stmt = $db->prepare("
+                SELECT * FROM account_status_requests
+                WHERE user_id = :uid
+                ORDER BY requested_at DESC
+                LIMIT 1
+            ");
+            $stmt->execute([':uid' => $userId]);
+            $solicitudEstadoCuenta = $stmt->fetch() ?: null;
+        }
+
         // Notificaciones
         $stmt = $db->prepare("SELECT * FROM notifications WHERE user_id = :uid ORDER BY created_at DESC LIMIT 10");
         $stmt->execute([':uid' => $userId]);
