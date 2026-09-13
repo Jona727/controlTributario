@@ -94,13 +94,28 @@ require __DIR__ . '/layout_header.php';
     <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
         <div>
             <h3>Ranking y Seguimiento de Deudores</h3>
-            <p style="font-size:0.75rem; color:var(--gray-400);">Top 100 Comercios con obligaciones pendientes, ordenados de mayor a menor deuda</p>
+            <p style="font-size:0.75rem; color:var(--gray-400);">Incluye email y teléfono de cada comercio — no se lista a nadie hasta buscar o pedir el ranking completo.</p>
         </div>
-        <div style="position:relative; flex:1 1 200px; min-width:0;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="searchDeudores" class="form-input" placeholder="Buscar deudor..." style="padding-left: 2.25rem; width: 100%; min-width: 160px; font-size: 0.85rem;">
-        </div>
+        <form method="GET" action="" style="display:flex; gap:0.5rem; flex:1 1 260px; min-width:0;">
+            <div style="position:relative; flex:1 1 200px; min-width:0;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" name="q" value="<?= htmlspecialchars($qDeudores) ?>" class="form-input" placeholder="Buscar deudor por nombre, código o CUIT..." style="padding-left: 2.25rem; width: 100%; min-width: 160px; font-size: 0.85rem;">
+            </div>
+            <button type="submit" class="btn btn-primary">Buscar</button>
+            <?php if (!$verRanking): ?>
+                <a href="?ver=todos" class="btn btn-ghost">Ver ranking completo</a>
+            <?php endif; ?>
+            <?php if ($huboConsultaDeudores): ?>
+                <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/deuda" class="btn btn-ghost">Limpiar</a>
+            <?php endif; ?>
+        </form>
     </div>
+    <?php if (!$huboConsultaDeudores): ?>
+        <div class="empty-state" style="padding: 2.5rem 1rem;">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <p>Buscá un deudor puntual, o pedí el ranking completo con el botón de arriba.</p>
+        </div>
+    <?php else: ?>
     <div style="overflow-x:auto;">
         <table class="data-table">
             <thead>
@@ -120,9 +135,9 @@ require __DIR__ . '/layout_header.php';
                 <?php if (empty($deudores)): ?>
                     <tr><td colspan="9" class="empty-state empty-success">
                         <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                        <p>No se registran comercios deudores en el sistema.</p>
+                        <p>No se registran comercios deudores que coincidan.</p>
                     </td></tr>
-                <?php else: $i = 1; foreach ($deudores as $d): ?>
+                <?php else: $i = 1 + (($pageDeudores - 1) * $perPageDeudores); foreach ($deudores as $d): ?>
                     <tr class="deudor-row">
                         <td class="col-secondary" style="font-weight: bold; text-align: center; color: var(--gray-400); width: 60px;"># <?= $i++ ?></td>
                         <td>
@@ -154,24 +169,14 @@ require __DIR__ . '/layout_header.php';
             </tbody>
         </table>
     </div>
+    <?php $page = $pageDeudores; $totalPages = $totalPagesDeudores; ?>
+    <?php require __DIR__ . '/../partials/pagination.php'; ?>
+    <?php endif; ?>
 </div>
 
 <script>
 // Preparar los gráficos interactivos
 document.addEventListener('DOMContentLoaded', () => {
-    // Live Search para Deudores
-    const searchDeudores = document.getElementById('searchDeudores');
-    const rowsDeudores = document.querySelectorAll('.deudor-row');
-    if (searchDeudores) {
-        searchDeudores.addEventListener('input', function() {
-            const term = this.value.toLowerCase().trim();
-            rowsDeudores.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(term) ? '' : 'none';
-            });
-        });
-    }
-
     // 1. Gráfico Histórico
     const histCtx = document.getElementById('historicalChart').getContext('2d');
     

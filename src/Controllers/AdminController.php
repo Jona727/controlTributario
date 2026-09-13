@@ -314,22 +314,63 @@ class AdminController
         $totalEmitido = $stats['deuda_total'] + $stats['pagado'];
         $stats['cobrabilidad'] = $totalEmitido > 0 ? round(($stats['pagado'] / $totalEmitido) * 100, 1) : 0;
 
-        // 2. Ranking de Deudores
-        $stmt = $db->query("
-            SELECT u.id, u.client_code, u.business_name, u.cuit, u.phone, u.email,
-                   COUNT(i.id) as total_facturas,
-                   SUM(CASE WHEN i.status = 'overdue' THEN i.total_amount ELSE 0 END) as monto_vencido,
-                   SUM(CASE WHEN i.status = 'pending' THEN i.total_amount ELSE 0 END) as monto_pendiente,
-                   SUM(CASE WHEN i.status IN ('pending', 'overdue') THEN i.total_amount ELSE 0 END) as deuda_total
-            FROM users u
-            JOIN invoices i ON u.id = i.user_id
-            WHERE u.role_id = 3
-            GROUP BY u.id
-            HAVING deuda_total > 0
-            ORDER BY deuda_total DESC
-            LIMIT 100
-        ");
-        $deudores = $stmt->fetchAll();
+        // 2. Ranking de Deudores — no se lista a nadie (con email/teléfono)
+        // hasta que se busque un deudor puntual o se pida el ranking
+        // completo a propósito.
+        $queryParams = $request->getQueryParams();
+        $qDeudores = trim($queryParams['q'] ?? '');
+        $verRanking = ($queryParams['ver'] ?? '') === 'todos';
+        $huboConsultaDeudores = $qDeudores !== '' || $verRanking;
+
+        $deudores = [];
+        $totalDeudores = 0;
+        $pageDeudores = 1;
+        $totalPagesDeudores = 1;
+        $perPageDeudores = 25;
+
+        if ($huboConsultaDeudores) {
+            $whereBusqueda = '';
+            $paramsBusqueda = [];
+            if ($qDeudores !== '') {
+                $whereBusqueda = "AND (u.business_name LIKE :q OR u.client_code LIKE :q OR u.cuit LIKE :q)";
+                $paramsBusqueda[':q'] = "%{$qDeudores}%";
+            }
+
+            $countStmt = $db->prepare("
+                SELECT COUNT(*) FROM (
+                    SELECT u.id,
+                           SUM(CASE WHEN i.status IN ('pending', 'overdue') THEN i.total_amount ELSE 0 END) as deuda_total
+                    FROM users u
+                    JOIN invoices i ON u.id = i.user_id
+                    WHERE u.role_id = 3 {$whereBusqueda}
+                    GROUP BY u.id
+                    HAVING deuda_total > 0
+                ) t
+            ");
+            $countStmt->execute($paramsBusqueda);
+            $totalDeudores = (int) $countStmt->fetchColumn();
+
+            $totalPagesDeudores = max(1, (int) ceil($totalDeudores / $perPageDeudores));
+            $pageDeudores = max(1, min($totalPagesDeudores, (int) ($queryParams['page'] ?? 1)));
+            $offsetDeudores = ($pageDeudores - 1) * $perPageDeudores;
+
+            $stmt = $db->prepare("
+                SELECT u.id, u.client_code, u.business_name, u.cuit, u.phone, u.email,
+                       COUNT(i.id) as total_facturas,
+                       SUM(CASE WHEN i.status = 'overdue' THEN i.total_amount ELSE 0 END) as monto_vencido,
+                       SUM(CASE WHEN i.status = 'pending' THEN i.total_amount ELSE 0 END) as monto_pendiente,
+                       SUM(CASE WHEN i.status IN ('pending', 'overdue') THEN i.total_amount ELSE 0 END) as deuda_total
+                FROM users u
+                JOIN invoices i ON u.id = i.user_id
+                WHERE u.role_id = 3 {$whereBusqueda}
+                GROUP BY u.id
+                HAVING deuda_total > 0
+                ORDER BY deuda_total DESC
+                LIMIT {$perPageDeudores} OFFSET {$offsetDeudores}
+            ");
+            $stmt->execute($paramsBusqueda);
+            $deudores = $stmt->fetchAll();
+        }
 
         // 3. Recaudación histórica por meses (últimos 6 meses reales, no los
         // primeros 6 que existan: con el padrón migrado hay facturas desde
