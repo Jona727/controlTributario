@@ -521,6 +521,47 @@ class UserController
     }
 
     /**
+     * Listado de credenciales para pruebas de login (GET /admin/comercios/credenciales-test).
+     * Queda dentro del grupo /admin, protegido por el login normal — a
+     * diferencia de los scripts de una sola vez, nunca queda accesible sin
+     * sesión, porque el DNI es la contraseña real de cada comercio.
+     */
+    public function exportarCredencialesTest(Request $request, Response $response): Response
+    {
+        $db = Database::getConnection();
+
+        $stmt = $db->query("SELECT client_code, business_name, dni FROM users WHERE role_id = 3 AND is_active = 1 ORDER BY client_code ASC");
+        $comercios = $stmt->fetchAll();
+
+        $stmt = $db->query("
+            SELECT u.client_code, u.business_name, r.name AS role_name
+            FROM users u JOIN roles r ON u.role_id = r.id
+            WHERE u.role_id IN (1, 2) AND u.is_active = 1
+            ORDER BY u.client_code ASC
+        ");
+        $admins = $stmt->fetchAll();
+
+        $lines = [];
+        $lines[] = "=== COMERCIOS — usuario = número sin 'COM-' / contraseña = DNI ===";
+        foreach ($comercios as $c) {
+            $numero = ltrim(preg_replace('/^COM-/', '', $c['client_code']), '0') ?: '0';
+            $clave = $c['dni'] !== null && $c['dni'] !== ''
+                ? $c['dni']
+                : 'SIN DNI — pendiente del municipio (usa la contraseña provisoria si ya se asignó una)';
+            $lines[] = "{$c['client_code']}  (usuario: {$numero})  —  {$c['business_name']}  —  DNI: {$clave}";
+        }
+
+        $lines[] = "";
+        $lines[] = "=== CUENTAS ADMIN/SUPER — la contraseña es la que ya tenían, no se puede recuperar desde acá ===";
+        foreach ($admins as $a) {
+            $lines[] = "{$a['client_code']}  —  {$a['business_name']}  ({$a['role_name']})";
+        }
+
+        $response->getBody()->write(implode("\n", $lines));
+        return $response->withHeader('Content-Type', 'text/plain; charset=utf-8');
+    }
+
+    /**
      * Genera una contraseña temporal aleatoria, legible (sin caracteres
      * ambiguos como 0/O o 1/l/I), para asignar a comercios importados por CSV.
      */
