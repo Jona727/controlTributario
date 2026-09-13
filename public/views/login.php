@@ -249,9 +249,9 @@
                     <div class="form-group">
                         <label class="form-label" for="username">Usuario</label>
                         <input type="text" id="username" name="username" class="form-input"
-                               placeholder="COM-000001" required autofocus>
+                               placeholder="001" inputmode="numeric" required autofocus>
                         <span style="font-size: 0.7rem; color: var(--slate-medium); display: block; margin-top: 0.25rem;">
-                            Tu código de comercio — aparece en tus facturas.
+                            El número de tu código de comercio — aparece en tus facturas (ej: COM-000001 → usuario 001).
                         </span>
                     </div>
 

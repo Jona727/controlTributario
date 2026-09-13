@@ -43,6 +43,14 @@ class AuthController
             return $this->returnError($request, $response, 'Ingrese su usuario y contraseña.');
         }
 
+        // El comercio entra solo con el número (ej: "001"), no con el código
+        // completo "COM-000001" — si lo que llega es puramente numérico, se
+        // reconstruye el código completo para buscarlo. Si llega un código
+        // ya completo (ej. el de un admin, "ADMIN-001"), se usa tal cual.
+        $clientCode = preg_match('/^\d{1,6}$/', $username)
+            ? 'COM-' . str_pad($username, 6, '0', STR_PAD_LEFT)
+            : $username;
+
         $db   = Database::getConnection();
         $stmt = $db->prepare('
             SELECT u.*, r.name AS role_name
@@ -50,7 +58,7 @@ class AuthController
             JOIN roles r ON u.role_id = r.id
             WHERE u.client_code = :client_code AND u.is_active = 1
         ');
-        $stmt->execute([':client_code' => $username]);
+        $stmt->execute([':client_code' => $clientCode]);
         $user = $stmt->fetch();
 
         if (!$user || !password_verify($pass, $user['password_hash'])) {
