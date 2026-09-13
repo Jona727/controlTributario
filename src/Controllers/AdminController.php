@@ -101,44 +101,89 @@ class AdminController
     }
 
     /**
-     * Gestión de comercios.
+     * Gestión de comercios. No lista ningún comercio hasta que se busque
+     * por nombre/código/CUIT o se elija un filtro — los indicadores
+     * agregados de arriba sí se calculan siempre, pero son solo números.
      */
     public function comercios(Request $request, Response $response): Response
     {
         $db = Database::getConnection();
+        $queryParams = $request->getQueryParams();
 
-        $stmt = $db->query("
-            SELECT u.*, r.name as role_name,
-                   (SELECT COUNT(*) FROM invoices WHERE user_id = u.id) as total_facturas,
-                   (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE user_id = u.id AND status IN ('pending','overdue')) as deuda_pendiente
-            FROM users u
-            JOIN roles r ON u.role_id = r.id
-            WHERE u.role_id = 3
-            ORDER BY deuda_pendiente DESC, u.business_name ASC
-        ");
-        $comercios = $stmt->fetchAll();
+        $q = trim($queryParams['q'] ?? '');
+        $filtro = $queryParams['filtro'] ?? '';
+        $filtrosValidos = ['con_deuda', 'por_validar', 'sin_dni', 'inactivos', 'todos'];
+        if (!in_array($filtro, $filtrosValidos, true)) {
+            $filtro = '';
+        }
+        $huboConsulta = $q !== '' || $filtro !== '';
+
+        // Indicadores agregados: siempre visibles, se calculan aparte para
+        // no depender de traer la lista completa de comercios.
+        $comerciosStats = [
+            'activos'     => (int) $db->query("SELECT COUNT(*) FROM users WHERE role_id = 3 AND is_active = 1")->fetchColumn(),
+            'con_deuda'   => (int) $db->query("
+                SELECT COUNT(*) FROM users u
+                WHERE u.role_id = 3 AND (
+                    SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE user_id = u.id AND status IN ('pending','overdue')
+                ) > 0
+            ")->fetchColumn(),
+            'por_validar' => (int) $db->query("SELECT COUNT(*) FROM users WHERE role_id = 3 AND needs_data_review = 1")->fetchColumn(),
+            'deuda_total' => (float) $db->query("
+                SELECT COALESCE(SUM(i.total_amount), 0) FROM invoices i
+                JOIN users u ON i.user_id = u.id
+                WHERE u.role_id = 3 AND i.status IN ('pending','overdue')
+            ")->fetchColumn(),
+        ];
+        $totalComerciosGlobal = (int) $db->query("SELECT COUNT(*) FROM users WHERE role_id = 3")->fetchColumn();
+
+        $comercios = [];
+        $totalComercios = 0;
+        $page = 1;
+        $totalPages = 1;
+        $perPage = 25;
+
+        if ($huboConsulta) {
+            $where = "WHERE u.role_id = 3";
+            $params = [];
+            if ($q !== '') {
+                $where .= " AND (u.business_name LIKE :q OR u.owner_name LIKE :q OR u.client_code LIKE :q OR u.cuit LIKE :q)";
+                $params[':q'] = "%{$q}%";
+            }
+            if ($filtro === 'con_deuda') {
+                $where .= " AND (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE user_id = u.id AND status IN ('pending','overdue')) > 0";
+            } elseif ($filtro === 'por_validar') {
+                $where .= " AND u.needs_data_review = 1";
+            } elseif ($filtro === 'sin_dni') {
+                $where .= " AND u.dni IS NULL";
+            } elseif ($filtro === 'inactivos') {
+                $where .= " AND u.is_active = 0";
+            }
+
+            $countStmt = $db->prepare("SELECT COUNT(*) FROM users u {$where}");
+            $countStmt->execute($params);
+            $totalComercios = (int) $countStmt->fetchColumn();
+
+            $totalPages = max(1, (int) ceil($totalComercios / $perPage));
+            $page = max(1, min($totalPages, (int) ($queryParams['page'] ?? 1)));
+            $offset = ($page - 1) * $perPage;
+
+            $stmt = $db->prepare("
+                SELECT u.*, r.name as role_name,
+                       (SELECT COUNT(*) FROM invoices WHERE user_id = u.id) as total_facturas,
+                       (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE user_id = u.id AND status IN ('pending','overdue')) as deuda_pendiente
+                FROM users u
+                JOIN roles r ON u.role_id = r.id
+                {$where}
+                ORDER BY u.business_name ASC
+                LIMIT {$perPage} OFFSET {$offset}
+            ");
+            $stmt->execute($params);
+            $comercios = $stmt->fetchAll();
+        }
 
         $stmt = $db->query("SELECT codigo, rubro, cuota_fija, alicuota FROM tarifas ORDER BY rubro ASC");
         $tarifasDisponibles = $stmt->fetchAll();
-
-        $comerciosStats = [
-            'activos'     => 0,
-            'con_deuda'   => 0,
-            'por_validar' => 0,
-            'deuda_total' => 0.0,
-        ];
-        foreach ($comercios as $c) {
-            if (!empty($c['is_active'])) {
-                $comerciosStats['activos']++;
-            }
-            if ((float) $c['deuda_pendiente'] > 0) {
-                $comerciosStats['con_deuda']++;
-            }
-            if (!empty($c['needs_data_review'])) {
-                $comerciosStats['por_validar']++;
-            }
-            $comerciosStats['deuda_total'] += (float) $c['deuda_pendiente'];
-        }
 
         $userName = $request->getAttribute('user_name');
         $userRole = $request->getAttribute('user_role');

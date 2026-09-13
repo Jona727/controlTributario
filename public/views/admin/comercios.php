@@ -64,24 +64,19 @@ require __DIR__ . '/layout_header.php';
     </div>
 </div>
 
-<?php $comerciosRevision = array_filter($comercios, fn($c) => !empty($c['needs_data_review'])); ?>
-<?php if (!empty($comerciosRevision)): ?>
-    <div class="alert-warning" style="align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
-        <div style="display:flex; align-items:center; gap:0.5rem;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span><strong><?= count($comerciosRevision) ?> comercio(s)</strong> tienen datos provisorios (importados sin email real y/o con CUIT incompleto) — hay que pedirles que los validen.</span>
-        </div>
-        <button type="button" class="btn btn-ghost btn-sm" id="btn-filtrar-revision">Ver solo estos</button>
-    </div>
-<?php endif; ?>
-
-<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.5rem;">
-    <p style="font-size:0.85rem; color:var(--gray-500);"><?= count($comercios) ?> comercio(s)</p>
-    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-        <div style="position:relative; flex:1 1 200px;">
+<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem;">
+    <form method="GET" action="" style="display:flex; gap:0.5rem; flex:1 1 260px; min-width:0;">
+        <input type="hidden" name="filtro" value="<?= htmlspecialchars($filtro) ?>">
+        <div style="position:relative; flex:1 1 200px; min-width:0;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="searchInput" class="form-input" placeholder="Buscar comercio..." style="padding-left: 2.25rem; width: 100%; min-width: 160px; font-size: 0.85rem;">
+            <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" class="form-input" placeholder="Buscar por nombre, código o CUIT..." style="padding-left: 2.25rem; width: 100%; min-width: 160px; font-size: 0.85rem;">
         </div>
+        <button type="submit" class="btn btn-primary">Buscar</button>
+        <?php if ($huboConsulta): ?>
+            <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios" class="btn btn-ghost">Limpiar</a>
+        <?php endif; ?>
+    </form>
+    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
         <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios/credenciales-test" class="btn btn-ghost" target="_blank" title="Ver el usuario y DNI de cada comercio, para probar el login">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             Ver Credenciales
@@ -101,7 +96,31 @@ require __DIR__ . '/layout_header.php';
     </div>
 </div>
 
+<?php
+    $chips = [
+        'con_deuda'   => "Con deuda ({$comerciosStats['con_deuda']})",
+        'por_validar' => "Por validar ({$comerciosStats['por_validar']})",
+        'sin_dni'     => 'Sin DNI',
+        'inactivos'   => 'Inactivos',
+        'todos'       => 'Ver todos (' . $totalComerciosGlobal . ')',
+    ];
+?>
+<div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem;">
+    <?php foreach ($chips as $key => $label): ?>
+        <?php $qs = http_build_query(array_merge($_GET, ['filtro' => $key, 'page' => 1])); ?>
+        <a href="?<?= $qs ?>" class="btn btn-sm <?= $filtro === $key ? 'btn-primary' : 'btn-ghost' ?>" style="border:1px solid var(--slate-border);">
+            <?= htmlspecialchars($label) ?>
+        </a>
+    <?php endforeach; ?>
+</div>
+
 <div class="card">
+<?php if (!$huboConsulta): ?>
+    <div class="empty-state" style="padding: 2.5rem 1rem;">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <p>Buscá un comercio por nombre, código o CUIT, o elegí un filtro de arriba — para no mostrar datos de nadie sin que lo pidas.</p>
+    </div>
+<?php else: ?>
 <div style="overflow-x:auto;">
 <table class="data-table">
 <thead><tr>
@@ -111,7 +130,7 @@ require __DIR__ . '/layout_header.php';
 <?php if (empty($comercios)): ?>
     <tr><td colspan="7" class="empty-state">
         <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
-        <p>Sin comercios</p>
+        <p>Ningún comercio coincide con la búsqueda.</p>
     </td></tr>
 <?php else: foreach ($comercios as $c): ?>
     <tr class="comercio-row" data-needs-review="<?= !empty($c['needs_data_review']) ? '1' : '0' ?>">
@@ -173,7 +192,10 @@ require __DIR__ . '/layout_header.php';
 <?php endforeach; endif; ?>
 </tbody>
 </table>
-</div></div>
+</div>
+<?php require __DIR__ . '/../partials/pagination.php'; ?>
+<?php endif; ?>
+</div>
 
 <!-- Modal Resetear Contraseñas -->
 <div class="modal-overlay" id="modal-reset-passwords"><div class="modal">
@@ -363,33 +385,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (cuota) {
                 document.getElementById('edit-base-rate').value = cuota;
             }
-        });
-    }
-
-    // Live Search
-    const searchInput = document.getElementById('searchInput');
-    const rows = document.querySelectorAll('.comercio-row');
-
-    if(searchInput) {
-        searchInput.addEventListener('input', function() {
-            const term = this.value.toLowerCase().trim();
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(term) ? '' : 'none';
-            });
-        });
-    }
-
-    // Filtro "Ver solo estos" (comercios con datos pendientes de revisión)
-    const btnFiltrarRevision = document.getElementById('btn-filtrar-revision');
-    if (btnFiltrarRevision) {
-        let soloRevision = false;
-        btnFiltrarRevision.addEventListener('click', function() {
-            soloRevision = !soloRevision;
-            this.textContent = soloRevision ? 'Ver todos' : 'Ver solo estos';
-            rows.forEach(row => {
-                row.style.display = (!soloRevision || row.dataset.needsReview === '1') ? '' : 'none';
-            });
         });
     }
 
