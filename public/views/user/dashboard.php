@@ -138,20 +138,25 @@ $activePage = 'dashboard';
             <div class="card-header"><h3>Mis Facturas</h3></div>
             <?php if ($tieneDeuda): ?>
                 <div style="padding: 1.5rem;">
-                    <div class="empty-state" style="padding: 1.5rem 1rem;">
-                        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        <p>Registrás facturación pendiente de regularizar con el municipio. Para conocer el detalle exacto de tu situación, pedí tu estado de cuenta — Catastro y Rentas lo revisa y te confirma el monto real.</p>
-                        <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'pending'): ?>
-                            <span class="status-badge status-pending" style="margin-top:0.75rem;"><span class="status-dot"></span>Solicitud enviada — en revisión</span>
-                        <?php else: ?>
-                            <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'resolved'): ?>
-                                <p style="font-size:0.8rem; color:var(--slate-medium); margin-top:0.5rem;">Ya te respondimos una solicitud anterior — revisá tus notificaciones. Si tu situación cambió, podés volver a pedirlo.</p>
+                    <div style="display:flex; gap:1rem; align-items:flex-start; padding:1.25rem; background:var(--alert-warning-bg); border:1px solid var(--alert-warning-border); border-radius:10px;">
+                        <div style="flex-shrink:0; width:42px; height:42px; border-radius:50%; background:var(--warning); display:flex; align-items:center; justify-content:center;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                            <h4 style="margin:0 0 0.35rem; font-size:0.95rem; color:var(--alert-warning-text);">Tenés facturación pendiente de regularizar</h4>
+                            <p style="margin:0; font-size:0.82rem; color:var(--slate-medium); line-height:1.5;">Para conocer el detalle exacto de tu situación, pedí tu estado de cuenta — Catastro y Rentas lo revisa y te confirma el monto real.</p>
+                            <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'pending'): ?>
+                                <span class="status-badge status-pending" style="margin-top:0.85rem;"><span class="status-dot"></span>Solicitud enviada — en revisión</span>
+                            <?php else: ?>
+                                <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'resolved'): ?>
+                                    <p style="font-size:0.78rem; color:var(--slate-medium); margin:0.5rem 0 0;">Ya te respondimos una solicitud anterior — revisá tus notificaciones. Si tu situación cambió, podés volver a pedirlo.</p>
+                                <?php endif; ?>
+                                <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/user/estado-cuenta/solicitar" style="margin-top:0.85rem;">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                    <button type="submit" class="btn btn-primary">Solicitar estado de cuenta</button>
+                                </form>
                             <?php endif; ?>
-                            <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/user/estado-cuenta/solicitar" style="margin-top:0.75rem;">
-                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                <button type="submit" class="btn btn-primary">Solicitar estado de cuenta</button>
-                            </form>
-                        <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             <?php else: ?>
