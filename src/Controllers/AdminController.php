@@ -147,8 +147,12 @@ class AdminController
             $where = "WHERE u.role_id = 3";
             $params = [];
             if ($q !== '') {
-                $where .= " AND (u.business_name LIKE :q OR u.owner_name LIKE :q OR u.client_code LIKE :q OR u.cuit LIKE :q)";
-                $params[':q'] = "%{$q}%";
+                $where .= " AND (u.business_name LIKE :q1 OR u.owner_name LIKE :q2 OR u.client_code LIKE :q3 OR u.cuit LIKE :q4)";
+                $like = "%{$q}%";
+                $params[':q1'] = $like;
+                $params[':q2'] = $like;
+                $params[':q3'] = $like;
+                $params[':q4'] = $like;
             }
             if ($filtro === 'con_deuda') {
                 $where .= " AND (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE user_id = u.id AND status IN ('pending','overdue')) > 0";
@@ -332,8 +336,11 @@ class AdminController
             $whereBusqueda = '';
             $paramsBusqueda = [];
             if ($qDeudores !== '') {
-                $whereBusqueda = "AND (u.business_name LIKE :q OR u.client_code LIKE :q OR u.cuit LIKE :q)";
-                $paramsBusqueda[':q'] = "%{$qDeudores}%";
+                $whereBusqueda = "AND (u.business_name LIKE :q1 OR u.client_code LIKE :q2 OR u.cuit LIKE :q3)";
+                $like = "%{$qDeudores}%";
+                $paramsBusqueda[':q1'] = $like;
+                $paramsBusqueda[':q2'] = $like;
+                $paramsBusqueda[':q3'] = $like;
             }
 
             $countStmt = $db->prepare("
