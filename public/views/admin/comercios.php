@@ -11,7 +11,7 @@ require __DIR__ . '/layout_header.php';
         </div>
         <div class="card-body" style="padding: 1rem 1.5rem;">
             <div class="alert-info" style="margin-bottom: 1rem;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 Estas contraseñas solo se muestran una vez. Copiálas o entregáselas a cada comercio antes de salir de esta pantalla — al recargar, desaparecen.
             </div>
             <div style="overflow-x:auto;">
@@ -50,7 +50,7 @@ require __DIR__ . '/layout_header.php';
     </div>
     <div class="stat-card stat-warning">
         <div class="stat-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
         <div class="stat-label">Datos por Validar</div>
         <div class="stat-value"><?= (int) $comerciosStats['por_validar'] ?></div>
@@ -162,7 +162,7 @@ require __DIR__ . '/layout_header.php';
             <div style="margin-bottom:0.3rem;"><?php if($c['is_active']): ?><span class="status-badge status-paid"><span class="status-dot"></span>Activo</span><?php else: ?><span class="status-badge status-cancelled">Inactivo</span><?php endif; ?></div>
             <?php if (!empty($c['needs_data_review'])): ?>
                 <span title="<?= htmlspecialchars($c['data_review_reason'] ?? 'Datos provisorios, requiere validación') ?>" style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.68rem;color:var(--warning);cursor:help;">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     Por validar
                 </span>
             <?php endif; ?>
@@ -204,7 +204,7 @@ require __DIR__ . '/layout_header.php';
 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 <div class="modal-body">
     <div class="alert-warning" style="margin-bottom:1rem;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         El comercio entra con su código y su DNI. Esto solo aplica a los que todavía no tienen un DNI cargado (típicamente sociedades, donde el DNI no sale del CUIT) — les asigna esta contraseña provisoria hasta que el municipio informe el DNI del titular y se cargue en su ficha.
     </div>
     <div class="form-group">

@@ -49,8 +49,8 @@ require __DIR__ . '/layout_header.php';
     <div class="stat-card stat-danger">
         <div class="stat-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
         </div>
         <div class="stat-label">Facturas Vencidas</div>
@@ -76,7 +76,7 @@ require __DIR__ . '/layout_header.php';
             Caja y Recaudación Diaria
         </button>
         <button class="btn tab-button" onclick="switchTab(event, 'tab-deuda')" style="border-radius: 4px; padding: 0.5rem 1.25rem; font-weight: 600; text-transform: none; letter-spacing: normal; background-color: transparent; color: var(--slate-medium); border: 1px solid var(--slate-border);">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px; vertical-align: -2px;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px; vertical-align: -2px;"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
             Control de Deudores
         </button>
     </div>
