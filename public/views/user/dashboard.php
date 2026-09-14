@@ -138,16 +138,24 @@ $activePage = 'dashboard';
             <div class="card-header"><h3>Mis Facturas</h3></div>
             <?php if ($tieneDeuda): ?>
                 <div style="padding: 1.5rem;">
-                    <div style="display:flex; gap:1rem; align-items:flex-start; padding:1.25rem; background:var(--alert-warning-bg); border:1px solid var(--alert-warning-border); border-radius:10px;">
-                        <div style="flex-shrink:0; width:42px; height:42px; border-radius:50%; background:var(--warning); display:flex; align-items:center; justify-content:center;">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'pending'): ?>
+                        <div style="display:flex; gap:1rem; align-items:flex-start; padding:1.25rem; background:var(--slate-light); border:1px solid var(--slate-border); border-radius:10px;">
+                            <div style="flex-shrink:0; width:42px; height:42px; border-radius:50%; background:var(--brand-primary); display:flex; align-items:center; justify-content:center;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div style="flex:1; min-width:0;">
+                                <h4 style="margin:0 0 0.35rem; font-size:0.95rem; color:var(--slate-dark);">Tu solicitud de estado de cuenta está siendo procesada</h4>
+                                <p style="margin:0; font-size:0.82rem; color:var(--slate-medium); line-height:1.5;">Catastro y Rentas la está revisando. Apenas tengan una respuesta te va a llegar como notificación acá mismo.</p>
+                            </div>
                         </div>
-                        <div style="flex:1; min-width:0;">
-                            <h4 style="margin:0 0 0.35rem; font-size:0.95rem; color:var(--alert-warning-text);">Tenés facturación pendiente de regularizar</h4>
-                            <p style="margin:0; font-size:0.82rem; color:var(--slate-medium); line-height:1.5;">Para conocer el detalle exacto de tu situación, pedí tu estado de cuenta — Catastro y Rentas lo revisa y te confirma el monto real.</p>
-                            <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'pending'): ?>
-                                <span class="status-badge status-pending" style="margin-top:0.85rem;"><span class="status-dot"></span>Solicitud enviada — en revisión</span>
-                            <?php else: ?>
+                    <?php else: ?>
+                        <div style="display:flex; gap:1rem; align-items:flex-start; padding:1.25rem; background:var(--alert-warning-bg); border:1px solid var(--alert-warning-border); border-radius:10px;">
+                            <div style="flex-shrink:0; width:42px; height:42px; border-radius:50%; background:var(--warning); display:flex; align-items:center; justify-content:center;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                            </div>
+                            <div style="flex:1; min-width:0;">
+                                <h4 style="margin:0 0 0.35rem; font-size:0.95rem; color:var(--alert-warning-text);">Tenés facturación pendiente de regularizar</h4>
+                                <p style="margin:0; font-size:0.82rem; color:var(--slate-medium); line-height:1.5;">Para conocer el detalle exacto de tu situación, pedí tu estado de cuenta — Catastro y Rentas lo revisa y te confirma el monto real.</p>
                                 <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'resolved'): ?>
                                     <p style="font-size:0.78rem; color:var(--slate-medium); margin:0.5rem 0 0;">Ya te respondimos una solicitud anterior — revisá tus notificaciones. Si tu situación cambió, podés volver a pedirlo.</p>
                                 <?php endif; ?>
@@ -155,9 +163,9 @@ $activePage = 'dashboard';
                                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     <button type="submit" class="btn btn-primary">Solicitar estado de cuenta</button>
                                 </form>
-                            <?php endif; ?>
+                            </div>
                         </div>
-                    </div>
+                    <?php endif; ?>
                 </div>
             <?php else: ?>
             <div style="overflow-x:auto;">
