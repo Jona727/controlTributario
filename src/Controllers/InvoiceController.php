@@ -139,7 +139,7 @@ class InvoiceController
         $stmt = $db->prepare("
             UPDATE invoices
             SET period = :period, issue_date = :issue, due_date = :due,
-                subtotal = :sub, surcharge = 0.00, total_amount = :sub,
+                subtotal = :sub, surcharge = 0.00, total_amount = :sub2,
                 status = 'pending', notes = :notes
             WHERE id = :id
         ");
@@ -148,17 +148,18 @@ class InvoiceController
             ':issue'  => $data['issue_date'],
             ':due'    => $data['due_date'],
             ':sub'    => $newSubtotal,
+            ':sub2'   => $newSubtotal,
             ':notes'  => trim($data['notes'] ?? ($invoice['notes'] ?? '')),
             ':id'     => $id,
         ]);
 
         // Mantener el ítem principal (no los recargos por mora) en línea con el nuevo monto.
         $itemStmt = $db->prepare("
-            UPDATE invoice_items SET unit_price = :price, line_total = :price
+            UPDATE invoice_items SET unit_price = :price, line_total = :price2
             WHERE invoice_id = :iid AND description NOT LIKE 'Recargo por mora%'
             LIMIT 1
         ");
-        $itemStmt->execute([':price' => $newSubtotal, ':iid' => $id]);
+        $itemStmt->execute([':price' => $newSubtotal, ':price2' => $newSubtotal, ':iid' => $id]);
 
         $adminId = $request->getAttribute('user_id');
         $auditStmt = $db->prepare("
