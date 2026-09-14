@@ -135,7 +135,19 @@ $activePage = 'dashboard';
 
         <!-- Facturas -->
         <div class="card">
-            <div class="card-header"><h3>Mis Facturas</h3></div>
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                <h3>Mis Facturas</h3>
+                <?php if ($cuentaVerificada): ?>
+                    <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'pending'): ?>
+                        <span class="status-badge status-pending" style="font-size:0.72rem;"><span class="status-dot"></span>Solicitud en trámite</span>
+                    <?php else: ?>
+                        <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/user/estado-cuenta/solicitar">
+                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                            <button type="submit" class="btn btn-ghost btn-sm">¿Algo no coincide? Solicitá tu estado de cuenta</button>
+                        </form>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
             <?php if ($tieneDeuda && !$cuentaVerificada): ?>
                 <div style="padding: 1.5rem;">
                     <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'pending'): ?>

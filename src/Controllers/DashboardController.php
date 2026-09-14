@@ -61,20 +61,18 @@ class DashboardController
         $stmt->execute([':uid' => $userId]);
         $cuentaVerificada = (bool) $stmt->fetchColumn();
 
-        // Si ya tiene deuda y la cuenta todavía no fue conciliada, hace
-        // falta saber si tiene una solicitud de estado de cuenta en trámite
-        // (para no dejarlo pedir dos veces) o ya respondida.
-        $solicitudEstadoCuenta = null;
-        if ($tieneDeuda && !$cuentaVerificada) {
-            $stmt = $db->prepare("
-                SELECT * FROM account_status_requests
-                WHERE user_id = :uid
-                ORDER BY requested_at DESC
-                LIMIT 1
-            ");
-            $stmt->execute([':uid' => $userId]);
-            $solicitudEstadoCuenta = $stmt->fetch() ?: null;
-        }
+        // Se consulta siempre (no solo cuando falta conciliar): incluso con
+        // la cuenta ya verificada, el comercio puede querer marcar que algo
+        // dejó de coincidir, y hace falta saber si ya tiene una solicitud
+        // en trámite para no dejarlo pedir dos veces.
+        $stmt = $db->prepare("
+            SELECT * FROM account_status_requests
+            WHERE user_id = :uid
+            ORDER BY requested_at DESC
+            LIMIT 1
+        ");
+        $stmt->execute([':uid' => $userId]);
+        $solicitudEstadoCuenta = $stmt->fetch() ?: null;
 
         // Notificaciones
         $stmt = $db->prepare("SELECT * FROM notifications WHERE user_id = :uid ORDER BY created_at DESC LIMIT 10");
