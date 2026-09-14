@@ -115,7 +115,7 @@ $activePage = 'dashboard';
             <div class="stat-card stat-danger">
                 <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
                 <div class="stat-label">Deuda Pendiente</div>
-                <?php if ($tieneDeuda): ?>
+                <?php if ($tieneDeuda && !$cuentaVerificada): ?>
                     <div class="stat-value" style="font-size:1.1rem;">Pendiente de conciliar</div>
                 <?php else: ?>
                     <div class="stat-value">$ <?= number_format((float)$deudaTotal,2,',','.') ?></div>
@@ -136,7 +136,7 @@ $activePage = 'dashboard';
         <!-- Facturas -->
         <div class="card">
             <div class="card-header"><h3>Mis Facturas</h3></div>
-            <?php if ($tieneDeuda): ?>
+            <?php if ($tieneDeuda && !$cuentaVerificada): ?>
                 <div style="padding: 1.5rem;">
                     <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'pending'): ?>
                         <div style="display:flex; gap:1rem; align-items:flex-start; padding:1.25rem; background:var(--slate-light); border:1px solid var(--slate-border); border-radius:10px;">

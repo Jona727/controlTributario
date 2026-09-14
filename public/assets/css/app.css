@@ -1277,6 +1277,9 @@ html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
 /* ── Modal de confirmación (chico) ── */
 .modal-sm { max-width: 420px; }
 
+/* ── Modal ancho (formularios con varias columnas) ── */
+.modal-lg { max-width: 760px; }
+
 /* ── Modales Clásicos ── */
 .modal-overlay {
     display: none;

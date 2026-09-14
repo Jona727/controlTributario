@@ -65,8 +65,97 @@ class AccountStatusController
             return $response->withHeader('Location', $basePath . '/admin/estado-cuenta')->withStatus(302);
         }
 
+        $userId = (int) $solicitud['user_id'];
+        $cancelarAnteriores = !empty($data['cancelar_anteriores']);
+
+        // Filas de facturas reales a cargar, como arrays paralelos
+        // (facturas[period][], facturas[issue_date][], etc. del formulario).
+        $periods    = $data['facturas']['period'] ?? [];
+        $issueDates = $data['facturas']['issue_date'] ?? [];
+        $dueDates   = $data['facturas']['due_date'] ?? [];
+        $amounts    = $data['facturas']['amount'] ?? [];
+
+        $facturasCargadas = 0;
+
         $db->beginTransaction();
         try {
+            // Evita que la deuda quede duplicada: lo que el sistema tenía
+            // cargado (y podía estar mal) se anula antes de cargar lo real.
+            if ($cancelarAnteriores) {
+                $stmt = $db->prepare("UPDATE invoices SET status = 'cancelled' WHERE user_id = :uid AND status IN ('pending', 'overdue')");
+                $stmt->execute([':uid' => $userId]);
+            }
+
+            $stmtCheckNum = $db->prepare("SELECT id FROM invoices WHERE invoice_number = :num");
+            $stmtMaxSeq   = $db->prepare("SELECT invoice_number FROM invoices WHERE invoice_number LIKE :prefix ORDER BY id DESC LIMIT 1");
+            $secuenciaPorAnio = [];
+
+            for ($i = 0; $i < count($periods); $i++) {
+                $period    = trim($periods[$i] ?? '');
+                $issueDate = trim($issueDates[$i] ?? '');
+                $dueDate   = trim($dueDates[$i] ?? '');
+                $subtotal  = floatval($amounts[$i] ?? 0);
+
+                if ($period === '' || $issueDate === '' || $dueDate === '' || $subtotal <= 0) {
+                    continue; // fila incompleta, se ignora
+                }
+
+                // Mismo esquema de numeración que la facturación por lote: F-{año}-{correlativo}.
+                $year = date('Y', strtotime($issueDate));
+                $prefix = "F-{$year}-";
+
+                if (!isset($secuenciaPorAnio[$year])) {
+                    $stmtMaxSeq->execute([':prefix' => $prefix . '%']);
+                    $ultima = $stmtMaxSeq->fetch();
+                    $secuencia = 0;
+                    if ($ultima) {
+                        $partes = explode('-', $ultima['invoice_number']);
+                        if (isset($partes[2])) {
+                            $secuencia = (int) $partes[2];
+                        }
+                    }
+                    $secuenciaPorAnio[$year] = $secuencia;
+                }
+
+                $secuenciaPorAnio[$year]++;
+                $invoiceNumber = $prefix . str_pad((string) $secuenciaPorAnio[$year], 4, '0', STR_PAD_LEFT);
+                $stmtCheckNum->execute([':num' => $invoiceNumber]);
+                while ($stmtCheckNum->fetch()) {
+                    $secuenciaPorAnio[$year]++;
+                    $invoiceNumber = $prefix . str_pad((string) $secuenciaPorAnio[$year], 4, '0', STR_PAD_LEFT);
+                    $stmtCheckNum->execute([':num' => $invoiceNumber]);
+                }
+
+                $stmtInsert = $db->prepare("
+                    INSERT INTO invoices (user_id, invoice_number, period, issue_date, due_date, subtotal, surcharge, total_amount, status, notes, created_by)
+                    VALUES (:uid, :num, :period, :issue, :due, :sub, 0.00, :sub2, 'pending', 'Cargada al conciliar estado de cuenta', :admin)
+                ");
+                $stmtInsert->execute([
+                    ':uid'    => $userId,
+                    ':num'    => $invoiceNumber,
+                    ':period' => $period,
+                    ':issue'  => $issueDate,
+                    ':due'    => $dueDate,
+                    ':sub'    => $subtotal,
+                    ':sub2'   => $subtotal,
+                    ':admin'  => $adminId,
+                ]);
+                $invoiceId = (int) $db->lastInsertId();
+
+                $stmtItem = $db->prepare("
+                    INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, line_total)
+                    VALUES (:iid, :desc, 1, :price, :total)
+                ");
+                $stmtItem->execute([
+                    ':iid'   => $invoiceId,
+                    ':desc'  => "Tasa de Higiene y Profilaxis - {$period} (conciliada)",
+                    ':price' => $subtotal,
+                    ':total' => $subtotal,
+                ]);
+
+                $facturasCargadas++;
+            }
+
             $stmt = $db->prepare("
                 UPDATE account_status_requests
                 SET status = 'resolved', resolved_at = NOW(), resolved_by = :admin, response_message = :msg
@@ -78,7 +167,7 @@ class AccountStatusController
                 INSERT INTO notifications (user_id, type, title, message)
                 VALUES (:uid, 'info', 'Tu estado de cuenta real', :msg)
             ");
-            $stmt->execute([':uid' => $solicitud['user_id'], ':msg' => $message]);
+            $stmt->execute([':uid' => $userId, ':msg' => $message]);
 
             $db->commit();
         } catch (\Exception $e) {
@@ -87,7 +176,8 @@ class AccountStatusController
             return $response->withHeader('Location', $basePath . '/admin/estado-cuenta')->withStatus(302);
         }
 
-        $_SESSION['flash_success'] = 'Respuesta enviada. El comercio la va a ver como notificación.';
+        $extra = $facturasCargadas > 0 ? " Se cargaron {$facturasCargadas} factura(s) real(es) en su cuenta." : '';
+        $_SESSION['flash_success'] = 'Respuesta enviada. El comercio la va a ver como notificación.' . $extra;
         return $response->withHeader('Location', $basePath . '/admin/estado-cuenta')->withStatus(302);
     }
 }

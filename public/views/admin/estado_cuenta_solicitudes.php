@@ -74,7 +74,7 @@ require __DIR__ . '/layout_header.php';
 </div></div>
 
 <!-- Modal Responder -->
-<div class="modal-overlay" id="modal-responder-solicitud"><div class="modal">
+<div class="modal-overlay" id="modal-responder-solicitud"><div class="modal modal-lg">
 <div class="modal-header"><h3>Responder Estado de Cuenta</h3><button class="modal-close" data-modal-close>&times;</button></div>
 <form method="POST" id="form-responder-solicitud">
 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
@@ -82,21 +82,78 @@ require __DIR__ . '/layout_header.php';
     <p style="margin:0 0 1rem;">Comercio: <strong id="responder-comercio"></strong></p>
     <div class="form-group">
         <label class="form-label">Estado de cuenta real (conciliado con el sistema anterior) *</label>
-        <textarea name="response_message" id="responder-mensaje" class="form-input" rows="5" required
+        <textarea name="response_message" id="responder-mensaje" class="form-input" rows="4" required
                   placeholder="Ej: Al día. Verificamos contra el sistema anterior y no registrás deuda pendiente."></textarea>
     </div>
-    <p style="font-size:0.78rem; color:var(--gray-500); margin:0.5rem 0 0;">Este texto le llega al comercio como notificación tal cual lo escribas.</p>
+    <p style="font-size:0.78rem; color:var(--gray-500); margin:0.5rem 0 1.25rem;">Este texto le llega al comercio como notificación tal cual lo escribas.</p>
+
+    <div class="form-group">
+        <label class="form-label">Facturas pendientes reales (opcional)</label>
+        <p style="font-size:0.78rem; color:var(--gray-500); margin:0 0 0.75rem;">Cargalas una por una si el comercio debe algo que el sistema no tiene bien registrado. Le van a aparecer en su panel con el mismo formato que sus facturas pagas.</p>
+        <div id="filas-facturas"></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-agregar-factura">+ Agregar factura</button>
+    </div>
+
+    <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; margin-top:1rem;">
+        <input type="checkbox" name="cancelar_anteriores" id="responder-cancelar-anteriores" value="1" checked>
+        Cancelar las facturas pendientes/vencidas que ya tenía cargadas, para no duplicar la deuda
+    </label>
 </div>
 <div class="modal-footer"><button type="button" class="btn btn-ghost" data-modal-close>Cancelar</button><button type="submit" class="btn btn-primary">Enviar respuesta</button></div>
 </form></div></div>
+
+<template id="tpl-fila-factura">
+    <div class="fila-factura" style="display:flex; gap:0.5rem; align-items:flex-end; margin-bottom:0.6rem; flex-wrap:wrap;">
+        <div class="form-group" style="margin-bottom:0; flex:1 1 110px;">
+            <label class="form-label" style="font-size:0.7rem;">Período</label>
+            <input type="text" name="facturas[period][]" class="form-input" placeholder="AAAA-MM" style="font-size:0.85rem;">
+        </div>
+        <div class="form-group" style="margin-bottom:0; flex:1 1 130px;">
+            <label class="form-label" style="font-size:0.7rem;">Fecha Emisión</label>
+            <input type="date" name="facturas[issue_date][]" class="form-input" style="font-size:0.85rem;">
+        </div>
+        <div class="form-group" style="margin-bottom:0; flex:1 1 130px;">
+            <label class="form-label" style="font-size:0.7rem;">Fecha Vencimiento</label>
+            <input type="date" name="facturas[due_date][]" class="form-input" style="font-size:0.85rem;">
+        </div>
+        <div class="form-group" style="margin-bottom:0; flex:1 1 110px;">
+            <label class="form-label" style="font-size:0.7rem;">Importe ($)</label>
+            <input type="number" name="facturas[amount][]" class="form-input" step="0.01" style="font-size:0.85rem;">
+        </div>
+        <button type="button" class="icon-btn btn-quitar-factura" title="Quitar" style="color:var(--danger); flex-shrink:0;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+</template>
 
 <script>
 function openResponderModal(d) {
     document.getElementById('form-responder-solicitud').action = '<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/estado-cuenta/responder/' + d.id;
     document.getElementById('responder-comercio').textContent = d.nombre + ' (' + d.codigo + ')';
     document.getElementById('responder-mensaje').value = '';
+    document.getElementById('filas-facturas').innerHTML = '';
+    document.getElementById('responder-cancelar-anteriores').checked = true;
     document.getElementById('modal-responder-solicitud').classList.add('active');
+    document.getElementById('btn-agregar-factura').click();
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const contenedor = document.getElementById('filas-facturas');
+    const plantilla = document.getElementById('tpl-fila-factura');
+    const btnAgregar = document.getElementById('btn-agregar-factura');
+
+    function agregarFila() {
+        const fila = plantilla.content.cloneNode(true);
+        fila.querySelector('.btn-quitar-factura').addEventListener('click', function() {
+            this.closest('.fila-factura').remove();
+        });
+        contenedor.appendChild(fila);
+    }
+
+    if (btnAgregar) {
+        btnAgregar.addEventListener('click', agregarFila);
+    }
+});
 </script>
 
 <?php require __DIR__ . '/layout_footer.php'; ?>
