@@ -65,7 +65,7 @@ require __DIR__ . '/layout_header.php';
 </div>
 
 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem;">
-    <form method="GET" action="" style="display:flex; gap:0.5rem; flex:1 1 260px; min-width:0;">
+    <form method="GET" action="" style="display:flex; gap:0.5rem; flex:1 1 260px; min-width:0; flex-wrap:wrap;">
         <input type="hidden" name="filtro" value="<?= htmlspecialchars($filtro) ?>">
         <div style="position:relative; flex:1 1 200px; min-width:0;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>

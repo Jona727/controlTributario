@@ -96,7 +96,7 @@ require __DIR__ . '/layout_header.php';
             <h3>Ranking y Seguimiento de Deudores</h3>
             <p style="font-size:0.75rem; color:var(--gray-400);">Incluye email y teléfono de cada comercio — no se lista a nadie hasta buscar o pedir el ranking completo.</p>
         </div>
-        <form method="GET" action="" style="display:flex; gap:0.5rem; flex:1 1 260px; min-width:0;">
+        <form method="GET" action="" style="display:flex; gap:0.5rem; flex:1 1 260px; min-width:0; flex-wrap:wrap;">
             <div style="position:relative; flex:1 1 200px; min-width:0;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--slate-medium);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input type="text" name="q" value="<?= htmlspecialchars($qDeudores) ?>" class="form-input" placeholder="Buscar deudor por nombre, código o CUIT..." style="padding-left: 2.25rem; width: 100%; min-width: 160px; font-size: 0.85rem;">
