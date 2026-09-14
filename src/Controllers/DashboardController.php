@@ -53,11 +53,19 @@ class DashboardController
 
         $tieneDeuda = (int) $facturasPendientes > 0;
 
-        // Si ya tiene deuda, hace falta saber si tiene una solicitud de
-        // estado de cuenta en trámite (para no dejarlo pedir dos veces) o
-        // ya respondida (para no repetirle el botón sin necesidad).
+        // Una vez que Catastro y Rentas concilió la cuenta al menos una vez
+        // (respondió una solicitud de estado de cuenta), se confía en las
+        // facturas del sistema de ahí en adelante y se muestran normales,
+        // en vez de seguir ocultando el detalle.
+        $stmt = $db->prepare("SELECT 1 FROM account_status_requests WHERE user_id = :uid AND status = 'resolved' LIMIT 1");
+        $stmt->execute([':uid' => $userId]);
+        $cuentaVerificada = (bool) $stmt->fetchColumn();
+
+        // Si ya tiene deuda y la cuenta todavía no fue conciliada, hace
+        // falta saber si tiene una solicitud de estado de cuenta en trámite
+        // (para no dejarlo pedir dos veces) o ya respondida.
         $solicitudEstadoCuenta = null;
-        if ($tieneDeuda) {
+        if ($tieneDeuda && !$cuentaVerificada) {
             $stmt = $db->prepare("
                 SELECT * FROM account_status_requests
                 WHERE user_id = :uid
