@@ -285,7 +285,7 @@ class PdfService
                         <td colspan='3'><span class='grid-label'>Tipo Régimen:</span> General</td>
                     </tr>
                     <tr>
-                        <td colspan='2' style='width: 65%;'><span class='grid-label'>Nombre:</span> " . htmlspecialchars($user['business_name']) . "</td>
+                        <td colspan='2' style='width: 65%;'><span class='grid-label'>Nombre:</span> " . htmlspecialchars($user['owner_name'] ?: $user['business_name']) . "</td>
                         <td style='width: 35%;'><span class='grid-label'>Registro:</span> {$registroNum}</td>
                     </tr>
                     <tr>
