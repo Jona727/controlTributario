@@ -63,14 +63,18 @@ require __DIR__ . '/layout_header.php';
             <?php endif; ?>
         </td>
         <td style="white-space: nowrap;">
-            <button class="btn btn-secondary btn-sm" onclick='openResponderModal(<?= json_encode([
-                'id' => $s['id'],
-                'nombre' => $s['owner_name'] ?: $s['business_name'],
-                'codigo' => $s['client_code'],
-                'facturas' => $facturasPorUsuario[$s['user_id']] ?? [],
-            ]) ?>)'>
-                <?= $s['status'] === 'pending' ? 'Responder' : 'Volver a responder' ?>
-            </button>
+            <?php if ($s['status'] === 'pending'): ?>
+                <button class="btn btn-secondary btn-sm" onclick='openResponderModal(<?= json_encode([
+                    'id' => $s['id'],
+                    'nombre' => $s['owner_name'] ?: $s['business_name'],
+                    'codigo' => $s['client_code'],
+                    'facturas' => $facturasPorUsuario[$s['user_id']] ?? [],
+                ]) ?>)'>
+                    Responder
+                </button>
+            <?php else: ?>
+                <span style="color:var(--slate-medium);">—</span>
+            <?php endif; ?>
         </td>
     </tr>
 <?php endforeach; endif; ?>
