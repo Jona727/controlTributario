@@ -120,6 +120,13 @@ class PdfService
         }
 
         $notesContent = !empty($invoice['notes']) ? htmlspecialchars($invoice['notes']) : 'Sin observaciones.';
+        // dompdf solo puede leer archivos locales dentro de su propio
+        // directorio (vendor/dompdf/dompdf) por defecto — se embebe el logo
+        // como base64 para no depender de esa restricción.
+        $logoFile = realpath(__DIR__ . '/../../public/assets/images/logo-pingo-transparent.png');
+        $logoPath = $logoFile
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoFile))
+            : '';
 
         return "
         <!DOCTYPE html>
@@ -146,19 +153,11 @@ class PdfService
                     border-collapse: collapse;
                     margin-bottom: 5px;
                 }
-                .logo-circle {
-                    width: 45px;
-                    height: 45px;
-                    border-radius: 50%;
-                    border: 2px double #000000;
-                    background-color: #ffffff;
+                .logo-img {
+                    width: 42px;
+                    height: auto;
                     display: inline-block;
                     vertical-align: middle;
-                    text-align: center;
-                    line-height: 41px;
-                    color: #000000;
-                    font-weight: bold;
-                    font-size: 16px;
                     margin-right: 8px;
                 }
                 .logo-text {
@@ -264,11 +263,10 @@ class PdfService
                 <table class='header-table'>
                     <tr>
                         <td style='width: 70%;'>
-                            <div class='logo-circle'>EP</div>
+                            <img class='logo-img' src='{$logoPath}'>
                             <div class='logo-text'>
                                 <h1 class='logo-title'>Municipio El Pingo</h1>
                                 <p class='logo-subtitle'>Juan Domingo Perón - El Pingo (3132) - Entre Ríos</p>
-                                <p class='logo-subtitle'>Tel./Fax int 28 - e-mail: rentas@elpingo.gob.ar</p>
                             </div>
                         </td>
                         <td class='header-right' style='width: 30%;'>
