@@ -507,6 +507,32 @@ class AdminController
 
         $pendientes = array_filter($solicitudes, fn($s) => $s['status'] === 'pending');
 
+        // Deuda que ya está cargada (heredada del sistema viejo) para cada
+        // comercio con solicitud, para prellenar el modal de respuesta como
+        // punto de partida editable — así se va depurando esa migración con
+        // datos reales a medida que cada comercio hace su reclamo, en vez de
+        // que el admin tenga que tipear todo de cero.
+        $facturasPorUsuario = [];
+        $userIds = array_unique(array_column($solicitudes, 'user_id'));
+        if (!empty($userIds)) {
+            $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+            $stmtFacturas = $db->prepare("
+                SELECT user_id, period, issue_date, due_date, subtotal
+                FROM invoices
+                WHERE user_id IN ({$placeholders}) AND status IN ('pending', 'overdue')
+                ORDER BY issue_date ASC
+            ");
+            $stmtFacturas->execute(array_values($userIds));
+            foreach ($stmtFacturas->fetchAll() as $f) {
+                $facturasPorUsuario[$f['user_id']][] = [
+                    'period'     => $f['period'],
+                    'issue_date' => $f['issue_date'],
+                    'due_date'   => $f['due_date'],
+                    'amount'     => (float) $f['subtotal'],
+                ];
+            }
+        }
+
         $userName = $request->getAttribute('user_name');
         $userRole = $request->getAttribute('user_role');
         $userId   = $request->getAttribute('user_id');

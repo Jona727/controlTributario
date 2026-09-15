@@ -63,7 +63,12 @@ require __DIR__ . '/layout_header.php';
             <?php endif; ?>
         </td>
         <td style="white-space: nowrap;">
-            <button class="btn btn-secondary btn-sm" onclick='openResponderModal(<?= json_encode(['id' => $s['id'], 'nombre' => $s['owner_name'] ?: $s['business_name'], 'codigo' => $s['client_code']]) ?>)'>
+            <button class="btn btn-secondary btn-sm" onclick='openResponderModal(<?= json_encode([
+                'id' => $s['id'],
+                'nombre' => $s['owner_name'] ?: $s['business_name'],
+                'codigo' => $s['client_code'],
+                'facturas' => $facturasPorUsuario[$s['user_id']] ?? [],
+            ]) ?>)'>
                 <?= $s['status'] === 'pending' ? 'Responder' : 'Volver a responder' ?>
             </button>
         </td>
@@ -88,8 +93,8 @@ require __DIR__ . '/layout_header.php';
     <p style="font-size:0.78rem; color:var(--gray-500); margin:0.5rem 0 1.25rem;">Este texto le llega al comercio como notificación tal cual lo escribas.</p>
 
     <div class="form-group">
-        <label class="form-label">Facturas pendientes reales (opcional)</label>
-        <p style="font-size:0.78rem; color:var(--gray-500); margin:0 0 0.75rem;">Cargalas una por una si el comercio debe algo que el sistema no tiene bien registrado. Le van a aparecer en su panel con el mismo formato que sus facturas pagas.</p>
+        <label class="form-label">Facturas pendientes reales</label>
+        <p style="font-size:0.78rem; color:var(--gray-500); margin:0 0 0.75rem;" id="facturas-ayuda">Cargalas una por una si el comercio debe algo que el sistema no tiene bien registrado. Le van a aparecer en su panel con el mismo formato que sus facturas pagas.</p>
         <div id="filas-facturas"></div>
         <button type="button" class="btn btn-ghost btn-sm" id="btn-agregar-factura">+ Agregar factura</button>
     </div>
@@ -127,31 +132,50 @@ require __DIR__ . '/layout_header.php';
 </template>
 
 <script>
+function agregarFilaFactura(prefill) {
+    const plantilla = document.getElementById('tpl-fila-factura');
+    const contenedor = document.getElementById('filas-facturas');
+    const fila = plantilla.content.cloneNode(true);
+    fila.querySelector('.btn-quitar-factura').addEventListener('click', function() {
+        this.closest('.fila-factura').remove();
+    });
+    if (prefill) {
+        const el = fila.querySelector('[name="facturas[period][]"]');
+        if (el) el.value = prefill.period || '';
+        const ei = fila.querySelector('[name="facturas[issue_date][]"]');
+        if (ei) ei.value = prefill.issue_date || '';
+        const ed = fila.querySelector('[name="facturas[due_date][]"]');
+        if (ed) ed.value = prefill.due_date || '';
+        const ea = fila.querySelector('[name="facturas[amount][]"]');
+        if (ea) ea.value = prefill.amount || '';
+    }
+    contenedor.appendChild(fila);
+}
+
 function openResponderModal(d) {
     document.getElementById('form-responder-solicitud').action = '<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/estado-cuenta/responder/' + d.id;
     document.getElementById('responder-comercio').textContent = d.nombre + ' (' + d.codigo + ')';
     document.getElementById('responder-mensaje').value = '';
     document.getElementById('filas-facturas').innerHTML = '';
     document.getElementById('responder-cancelar-anteriores').checked = true;
+
+    const facturas = d.facturas || [];
+    const ayuda = document.getElementById('facturas-ayuda');
+    if (facturas.length > 0) {
+        ayuda.textContent = 'Esto es lo que el sistema ya tenía cargado para este comercio (heredado de la migración del sistema anterior). Corregí los montos o fechas que hagan falta, sacá con la ✕ las que no correspondan, o agregá las que falten — con esto se va depurando la deuda real, comercio por comercio.';
+        facturas.forEach(f => agregarFilaFactura(f));
+    } else {
+        ayuda.textContent = 'Este comercio no tiene facturas pendientes cargadas en el sistema. Si igual debe algo, cargalo acá una por una.';
+        agregarFilaFactura(null);
+    }
+
     document.getElementById('modal-responder-solicitud').classList.add('active');
-    document.getElementById('btn-agregar-factura').click();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const contenedor = document.getElementById('filas-facturas');
-    const plantilla = document.getElementById('tpl-fila-factura');
     const btnAgregar = document.getElementById('btn-agregar-factura');
-
-    function agregarFila() {
-        const fila = plantilla.content.cloneNode(true);
-        fila.querySelector('.btn-quitar-factura').addEventListener('click', function() {
-            this.closest('.fila-factura').remove();
-        });
-        contenedor.appendChild(fila);
-    }
-
     if (btnAgregar) {
-        btnAgregar.addEventListener('click', agregarFila);
+        btnAgregar.addEventListener('click', () => agregarFilaFactura(null));
     }
 });
 </script>
