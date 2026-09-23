@@ -174,7 +174,25 @@ require __DIR__ . '/layout_header.php';
             <?php endif; ?>
         </td>
         <td style="white-space: nowrap;">
-            <button class="icon-btn" onclick='openEditModal(<?= json_encode($c) ?>)' title="Editar" style="color:var(--primary-600); margin-right: 0.25rem;">
+            <?php
+                $datosEdicion = [
+                    'id'                 => $c['id'],
+                    'client_code'        => $c['client_code'],
+                    'business_name'      => $c['business_name'],
+                    'cuit'               => $c['cuit'],
+                    'dni'                => $c['dni'],
+                    'address'            => $c['address'],
+                    'phone'              => $c['phone'],
+                    'email'              => $c['email'],
+                    'base_rate'          => $c['base_rate'],
+                    'is_active'          => $c['is_active'],
+                    'owner_name'         => $c['owner_name'],
+                    'rubro_code'         => $c['rubro_code'],
+                    'needs_data_review'  => $c['needs_data_review'],
+                    'data_review_reason' => $c['data_review_reason'],
+                ];
+            ?>
+            <button class="icon-btn" onclick='openEditModal(<?= json_encode($datosEdicion) ?>)' title="Editar" style="color:var(--primary-600); margin-right: 0.25rem;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
             <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios/eliminar/<?= $c['id'] ?>" style="display:inline;"

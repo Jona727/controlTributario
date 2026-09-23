@@ -7,6 +7,8 @@ require __DIR__ . '/../vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
+require __DIR__ . '/_auth_guard.php';
+
 header('Content-Type: text/plain; charset=utf-8');
 
 $confirmar = ($_GET['confirmar'] ?? '') === 'SI';
