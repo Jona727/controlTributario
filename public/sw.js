@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tributario-v2';
+const CACHE_NAME = 'tributario-v3';
 const STATIC_ASSETS = [
   './assets/css/app.css',
   './assets/js/app.js',
