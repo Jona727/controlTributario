@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initFlashMessages();
     initMobileMenu();
     initServiceWorker();
+    initInstallPrompt();
 });
 
 // ─── Tema claro / oscuro ───
@@ -197,6 +198,72 @@ function initMobileMenu() {
             sidebar.classList.remove('active');
         }
     });
+}
+
+// ─── PWA: banner de instalación automático ───
+function initInstallPrompt() {
+    // Si ya está instalada (abierta como app), no mostrar nada
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+        return;
+    }
+    // Si el usuario ya la descartó en esta sesión del navegador, no insistir
+    if (sessionStorage.getItem('pwa-install-dismissed') === '1') {
+        return;
+    }
+
+    let deferredPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        showInstallBanner();
+    });
+
+    window.addEventListener('appinstalled', () => {
+        hideInstallBanner();
+    });
+
+    function showInstallBanner() {
+        if (document.getElementById('pwa-install-banner')) return;
+
+        const basePath = document.querySelector('meta[name="app-base-path"]')?.content || '';
+        const banner = document.createElement('div');
+        banner.id = 'pwa-install-banner';
+        banner.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9999;'
+            + 'display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;'
+            + 'padding-bottom:calc(0.75rem + env(safe-area-inset-bottom, 0px));'
+            + 'background:var(--gray-900, #1b2129);color:#fff;'
+            + 'box-shadow:0 -2px 12px rgba(0,0,0,0.25);';
+        banner.innerHTML = `
+            <img src="${basePath}/assets/images/icon-192.png" alt="" style="width:36px;height:36px;border-radius:8px;flex-shrink:0;">
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:600;font-size:0.88rem;">Instalar Control Tributario</div>
+                <div style="font-size:0.76rem;opacity:0.8;">Accedé más rápido desde el ícono en tu pantalla de inicio</div>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" id="pwa-install-btn">Instalar</button>
+            <button type="button" class="icon-btn" id="pwa-install-dismiss" title="Cerrar" style="color:#fff;background:transparent;border:none;flex-shrink:0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        `;
+        document.body.appendChild(banner);
+
+        document.getElementById('pwa-install-btn').addEventListener('click', async () => {
+            hideInstallBanner();
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            await deferredPrompt.userChoice;
+            deferredPrompt = null;
+        });
+
+        document.getElementById('pwa-install-dismiss').addEventListener('click', () => {
+            sessionStorage.setItem('pwa-install-dismissed', '1');
+            hideInstallBanner();
+        });
+    }
+
+    function hideInstallBanner() {
+        document.getElementById('pwa-install-banner')?.remove();
+    }
 }
 
 // ─── PWA Service Worker ───
