@@ -163,6 +163,12 @@ body {
     color: var(--body-text);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+/* Red de seguridad: ningún gráfico/imagen fuerza scroll horizontal */
+img, svg, canvas, video {
+    max-width: 100%;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -1005,6 +1011,11 @@ h1, h2, h3, h4, h5, h6 {
     padding: 2rem 1.25rem 2.5rem 1.25rem;
 }
 
+/* Grupos de pestañas/botones: nunca empujan la página a scroll horizontal */
+.tab-buttons {
+    flex-wrap: wrap;
+}
+
 /* ── Tarjetas Clásicas de Datos (Súper Compactas y Sobrias) ── */
 .stats-grid {
     display: grid;
@@ -1461,6 +1472,18 @@ html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
     margin-top: 0.4rem;
 }
 
+/* Responsive Grids */
+.grid-2-1 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+}
+.grid-1-1 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
     /* Columnas secundarias de tablas: se ocultan (no se eliminan del DOM) para
@@ -1506,6 +1529,16 @@ html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
         margin-top: 0;
         border-radius: 0;
         padding: 0 1.5rem;
+        height: auto;
+        min-height: var(--header-height);
+        flex-wrap: wrap;
+        gap: 0.5rem 0;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+    }
+    .top-header h2 {
+        font-size: 1.15rem;
+        line-height: 1.3;
     }
     #mobile-menu-toggle {
         display: flex !important;
@@ -1527,18 +1560,6 @@ html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
     .grid-2-1, .grid-1-1 {
         grid-template-columns: 1fr;
     }
-}
-
-/* Responsive Grids */
-.grid-2-1 {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 1.5rem;
-}
-.grid-1-1 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
 }
 
 /* =====================================================
