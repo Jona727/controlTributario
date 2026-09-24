@@ -170,7 +170,7 @@ $activePage = 'dashboard';
             <?php else: ?>
             <div style="overflow-x:auto;">
                 <table class="data-table">
-                    <thead><tr><th># Factura</th><th>Período</th><th>Emisión</th><th>Vencimiento</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead>
+                    <thead><tr><th># Factura</th><th>Período</th><th class="col-secondary">Emisión</th><th>Vencimiento</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead>
                     <tbody>
                     <?php if (empty($facturas)): ?>
                         <tr><td colspan="7" class="empty-state empty-success">
@@ -185,7 +185,7 @@ $activePage = 'dashboard';
                         <tr>
                             <td style="font-weight:600;"><?= htmlspecialchars($f['invoice_number']) ?></td>
                             <td><?= htmlspecialchars($f['period'] ?? '–') ?></td>
-                            <td><?= date('d/m/Y', strtotime($f['issue_date'])) ?></td>
+                            <td class="col-secondary"><?= date('d/m/Y', strtotime($f['issue_date'])) ?></td>
                             <td><?= date('d/m/Y', strtotime($f['due_date'])) ?></td>
                             <?php 
                             $moraData = \App\Controllers\InvoiceController::calculateMora($f);

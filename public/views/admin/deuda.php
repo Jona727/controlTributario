@@ -69,7 +69,7 @@ require __DIR__ . '/layout_header.php';
         </div>
         <div class="card-body" style="display: flex; align-items: center; justify-content: center; gap: 2rem;">
             <div style="width: 50%; max-width: 180px;">
-                <canvas id="distributionChart" style="max-height: 180px;"></canvas>
+                <canvas id="distributionChart" style="max-height: 180px; width: 100%;"></canvas>
             </div>
             <div style="width: 50%; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.8rem;">
                 <div style="display:flex; align-items:center; gap:0.5rem;">
