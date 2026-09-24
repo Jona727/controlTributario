@@ -1,10 +1,10 @@
-const CACHE_NAME = 'tributario-v1';
+const CACHE_NAME = 'tributario-v2';
 const STATIC_ASSETS = [
   './assets/css/app.css',
   './assets/js/app.js',
   './manifest.json',
-  './assets/images/icon-192.jpg',
-  './assets/images/icon-512.jpg'
+  './assets/images/icon-192.png',
+  './assets/images/icon-512.png'
 ];
 
 // Install Event
