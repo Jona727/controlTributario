@@ -61,6 +61,13 @@ class DashboardController
         $stmt->execute([':uid' => $userId]);
         $cuentaVerificada = (bool) $stmt->fetchColumn();
 
+        // Si el comercio ya está clasificado "al día", su deuda (si tiene)
+        // es facturación nueva y real del sistema actual — no hace falta
+        // ocultarla ni pedir conciliación, aunque todavía no haya pasado
+        // nunca por el flujo de estado de cuenta.
+        $esConDeuda = ($user['payment_status'] ?? 'con_deuda') === 'con_deuda';
+        $ocultarDetalle = $tieneDeuda && !$cuentaVerificada && $esConDeuda;
+
         // Se consulta siempre (no solo cuando falta conciliar): incluso con
         // la cuenta ya verificada, el comercio puede querer marcar que algo
         // dejó de coincidir, y hace falta saber si ya tiene una solicitud

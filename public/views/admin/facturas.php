@@ -4,6 +4,18 @@ $activePage = 'facturas';
 require __DIR__ . '/layout_header.php';
 ?>
 
+<?php if ($totalLegacy > 0): ?>
+    <div class="alert-info" style="margin-bottom:1.5rem; justify-content:space-between;">
+        <span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; vertical-align:middle; margin-right:0.35rem;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Hay <?= $totalLegacy ?> factura(s) importadas del sistema anterior, sin conciliar — no se cuentan acá ni en Deuda e Indicadores hasta que se verifiquen.
+        </span>
+        <a href="?<?= htmlspecialchars(http_build_query(array_merge($_GET, ['legacy' => $mostrarLegacy ? '0' : '1']))) ?>" class="btn btn-ghost btn-sm" style="flex-shrink:0;">
+            <?= $mostrarLegacy ? 'Ocultar sin verificar' : 'Mostrar sin verificar' ?>
+        </a>
+    </div>
+<?php endif; ?>
+
 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.5rem;">
     <p style="font-size:0.85rem; color:var(--gray-500);">
         <?= $totalFacturas ?> factura(s)
@@ -119,7 +131,12 @@ require __DIR__ . '/layout_header.php';
         <td class="col-secondary"><?= date('d/m/Y', strtotime($f['due_date'])) ?></td>
         <td style="font-weight:600;">$ <?= number_format((float)$f['total_amount'],2,',','.') ?></td>
         <td>
-            <div style="margin-bottom:0.35rem;"><span class="status-badge <?= $sc ?>"><span class="status-dot"></span><?= $sl ?></span></div>
+            <div style="margin-bottom:0.35rem;">
+                <span class="status-badge <?= $sc ?>"><span class="status-dot"></span><?= $sl ?></span>
+                <?php if (!empty($f['is_legacy'])): ?>
+                    <span class="status-badge status-cancelled" title="Importada del sistema anterior, sin conciliar — no es información confiable todavía">Sin verificar</span>
+                <?php endif; ?>
+            </div>
             <div class="cell-actions row-actions">
                 <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/pdf/<?= $f['id'] ?>" class="btn-row-icon" title="Descargar PDF de Boleta" target="_blank">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -263,7 +280,7 @@ require __DIR__ . '/layout_header.php';
 <div class="modal-body">
     <div class="alert-warning">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Se generará una boleta para cada comercio activo usando su Tasa Base Fija configurada. Este proceso no se puede deshacer de forma automática.
+        Se generará una boleta para cada comercio activo marcado <strong>"Al día"</strong>, usando su Tasa Base Fija configurada. Los comercios "Con deuda" quedan afuera hasta que resuelvan su estado de cuenta. Este proceso no se puede deshacer de forma automática.
     </div>
     <div class="form-group">
         <label class="form-label">Período Fiscal *</label>
