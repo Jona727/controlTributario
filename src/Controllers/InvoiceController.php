@@ -873,12 +873,16 @@ class InvoiceController
         try {
             $db->beginTransaction();
 
-            // 1. Obtener todos los comercios activos (role_id = 3 y is_active = 1)
-            $stmt = $db->query("SELECT id, client_code, business_name, base_rate FROM users WHERE role_id = 3 AND is_active = 1");
+            // 1. Obtener los comercios activos y "al día" (role_id = 3,
+            // is_active = 1, payment_status = 'al_dia') — los "con_deuda"
+            // quedan afuera del lote hasta que resuelvan su estado de
+            // cuenta con el sistema anterior, para no mezclar una deuda
+            // vieja sin conciliar con cargos nuevos.
+            $stmt = $db->query("SELECT id, client_code, business_name, base_rate FROM users WHERE role_id = 3 AND is_active = 1 AND payment_status = 'al_dia'");
             $comercios = $stmt->fetchAll();
 
             if (empty($comercios)) {
-                throw new \Exception('No hay comercios activos registrados para facturar.');
+                throw new \Exception('No hay comercios "al día" registrados para facturar. Los "con deuda" se facturan recién cuando resuelven su estado de cuenta.');
             }
 
             // 2. Obtener el número correlativo máximo actual de factura para el año actual

@@ -7,6 +7,18 @@ require __DIR__ . '/layout_header.php';
 <!-- Include Chart.js CDN for professional interactive charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<?php if ($totalLegacy > 0): ?>
+    <div class="alert-info" style="margin-bottom:1.5rem; justify-content:space-between;">
+        <span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; vertical-align:middle; margin-right:0.35rem;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Estos indicadores no incluyen <?= $totalLegacy ?> factura(s) importadas del sistema anterior, sin conciliar.
+        </span>
+        <a href="?<?= htmlspecialchars(http_build_query(array_merge($_GET, ['legacy' => $mostrarLegacy ? '0' : '1']))) ?>" class="btn btn-ghost btn-sm" style="flex-shrink:0;">
+            <?= $mostrarLegacy ? 'Ocultar sin verificar' : 'Mostrar sin verificar' ?>
+        </a>
+    </div>
+<?php endif; ?>
+
 <!-- ═══ Stat Cards ═══ -->
 <div class="stats-grid" style="margin-bottom: 1.5rem;">
     <div class="stat-card stat-danger">

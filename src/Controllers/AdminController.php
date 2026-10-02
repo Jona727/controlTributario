@@ -28,32 +28,34 @@ class AdminController
         $stmt = $db->query("SELECT COUNT(*) as total FROM users WHERE role_id = 3 AND is_active = 1");
         $stats['total_comercios'] = $stmt->fetch()['total'];
 
-        // Facturas pendientes
-        $stmt = $db->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'pending'");
+        // Facturas pendientes (no cuenta la facturación migrada sin
+        // conciliar, para que estos números sean confiables de un vistazo)
+        $stmt = $db->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'pending' AND is_legacy = 0");
         $stats['facturas_pendientes'] = $stmt->fetch()['total'];
 
         // Facturas vencidas
-        $stmt = $db->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'overdue'");
+        $stmt = $db->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'overdue' AND is_legacy = 0");
         $stats['facturas_vencidas'] = $stmt->fetch()['total'];
 
         // Deuda total (pendientes + vencidas)
-        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status IN ('pending', 'overdue')");
+        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status IN ('pending', 'overdue') AND is_legacy = 0");
         $stats['deuda_total'] = $stmt->fetch()['total'];
 
         // Facturas pagadas (para el gráfico)
-        $stmt = $db->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'paid'");
+        $stmt = $db->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'paid' AND is_legacy = 0");
         $stats['facturas_pagadas'] = $stmt->fetch()['total'];
 
         // Recaudación del mes actual
-        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status = 'paid' AND MONTH(issue_date) = MONTH(CURDATE()) AND YEAR(issue_date) = YEAR(CURDATE())");
+        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status = 'paid' AND is_legacy = 0 AND MONTH(issue_date) = MONTH(CURDATE()) AND YEAR(issue_date) = YEAR(CURDATE())");
         $stats['recaudacion_mes'] = $stmt->fetch()['total'];
 
         // Últimas facturas
         $stmt = $db->query("
-            SELECT i.*, u.business_name, u.client_code 
-            FROM invoices i 
-            JOIN users u ON i.user_id = u.id 
-            ORDER BY i.created_at DESC 
+            SELECT i.*, u.business_name, u.client_code
+            FROM invoices i
+            JOIN users u ON i.user_id = u.id
+            WHERE i.is_legacy = 0
+            ORDER BY i.created_at DESC
             LIMIT 10
         ");
         $facturas = $stmt->fetchAll();
@@ -64,7 +66,7 @@ class AdminController
                    COUNT(i.id) as facturas_vencidas,
                    SUM(i.total_amount) as deuda
             FROM users u
-            JOIN invoices i ON u.id = i.user_id AND i.status = 'overdue'
+            JOIN invoices i ON u.id = i.user_id AND i.status = 'overdue' AND i.is_legacy = 0
             WHERE u.role_id = 3
             GROUP BY u.id
             ORDER BY deuda DESC
@@ -112,7 +114,7 @@ class AdminController
 
         $q = trim($queryParams['q'] ?? '');
         $filtro = $queryParams['filtro'] ?? '';
-        $filtrosValidos = ['con_deuda', 'por_validar', 'sin_dni', 'inactivos', 'todos'];
+        $filtrosValidos = ['con_deuda', 'al_dia', 'por_validar', 'sin_dni', 'inactivos', 'todos'];
         if (!in_array($filtro, $filtrosValidos, true)) {
             $filtro = '';
         }
@@ -129,6 +131,7 @@ class AdminController
                 ) > 0
             ")->fetchColumn(),
             'por_validar' => (int) $db->query("SELECT COUNT(*) FROM users WHERE role_id = 3 AND needs_data_review = 1")->fetchColumn(),
+            'al_dia'      => (int) $db->query("SELECT COUNT(*) FROM users WHERE role_id = 3 AND payment_status = 'al_dia'")->fetchColumn(),
             'deuda_total' => (float) $db->query("
                 SELECT COALESCE(SUM(i.total_amount), 0) FROM invoices i
                 JOIN users u ON i.user_id = u.id
@@ -156,6 +159,8 @@ class AdminController
             }
             if ($filtro === 'con_deuda') {
                 $where .= " AND (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE user_id = u.id AND status IN ('pending','overdue')) > 0";
+            } elseif ($filtro === 'al_dia') {
+                $where .= " AND u.payment_status = 'al_dia'";
             } elseif ($filtro === 'por_validar') {
                 $where .= " AND u.needs_data_review = 1";
             } elseif ($filtro === 'sin_dni') {
@@ -219,11 +224,18 @@ class AdminController
         $filterUserId = $queryParams['user_id'] ?? '';
         $filterPeriod = $queryParams['period'] ?? '';
         $tab = $queryParams['tab'] ?? 'pendientes';
+        $mostrarLegacy = ($queryParams['legacy'] ?? '') === '1';
 
         // Condiciones WHERE compartidas entre el conteo (para la paginación)
         // y el listado en sí, para que ambos siempre queden en sincro.
         $where = "WHERE 1=1";
         $params = [];
+        if (!$mostrarLegacy) {
+            // Por defecto no se cuenta la facturación migrada del sistema
+            // anterior sin conciliar — no es información confiable hasta
+            // que se verifique (ver botón "Mostrar sin verificar" arriba).
+            $where .= " AND i.is_legacy = 0";
+        }
         if ($filterUserId !== '') {
             $where .= " AND i.user_id = :uid";
             $params[':uid'] = $filterUserId;
@@ -232,6 +244,8 @@ class AdminController
             $where .= " AND i.period = :period";
             $params[':period'] = $filterPeriod;
         }
+
+        $totalLegacy = (int) $db->query("SELECT COUNT(*) FROM invoices WHERE is_legacy = 1")->fetchColumn();
         if ($tab === 'pagadas') {
             $where .= " AND i.status = 'paid'";
         } elseif ($tab === 'anuladas') {
@@ -300,16 +314,23 @@ class AdminController
         // Sincroniza mora/estado antes de calcular cualquier total.
         \App\Controllers\InvoiceController::refreshOverdueStatuses();
 
-        // 1. Estadísticas globales de deuda
+        $queryParamsLegacy = $request->getQueryParams();
+        $mostrarLegacy = ($queryParamsLegacy['legacy'] ?? '') === '1';
+        $legacyCond = $mostrarLegacy ? '' : ' AND is_legacy = 0';
+        $legacyCondI = $mostrarLegacy ? '' : ' AND i.is_legacy = 0';
+        $totalLegacy = (int) $db->query("SELECT COUNT(*) FROM invoices WHERE is_legacy = 1")->fetchColumn();
+
+        // 1. Estadísticas globales de deuda — por defecto no cuentan la
+        // facturación migrada del sistema anterior sin conciliar.
         $stats = [];
-        
-        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status = 'overdue'");
+
+        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status = 'overdue'{$legacyCond}");
         $stats['vencido'] = $stmt->fetch()['total'];
 
-        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status = 'pending'");
+        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status = 'pending'{$legacyCond}");
         $stats['pendiente'] = $stmt->fetch()['total'];
 
-        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status = 'paid'");
+        $stmt = $db->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE status = 'paid'{$legacyCond}");
         $stats['pagado'] = $stmt->fetch()['total'];
 
         $stats['deuda_total'] = $stats['vencido'] + $stats['pendiente'];
@@ -349,7 +370,7 @@ class AdminController
                            SUM(CASE WHEN i.status IN ('pending', 'overdue') THEN i.total_amount ELSE 0 END) as deuda_total
                     FROM users u
                     JOIN invoices i ON u.id = i.user_id
-                    WHERE u.role_id = 3 {$whereBusqueda}
+                    WHERE u.role_id = 3 {$whereBusqueda}{$legacyCondI}
                     GROUP BY u.id
                     HAVING deuda_total > 0
                 ) t
@@ -369,7 +390,7 @@ class AdminController
                        SUM(CASE WHEN i.status IN ('pending', 'overdue') THEN i.total_amount ELSE 0 END) as deuda_total
                 FROM users u
                 JOIN invoices i ON u.id = i.user_id
-                WHERE u.role_id = 3 {$whereBusqueda}
+                WHERE u.role_id = 3 {$whereBusqueda}{$legacyCondI}
                 GROUP BY u.id
                 HAVING deuda_total > 0
                 ORDER BY deuda_total DESC
@@ -387,6 +408,7 @@ class AdminController
                    SUM(CASE WHEN status = 'paid' THEN total_amount ELSE 0 END) as pagado,
                    SUM(CASE WHEN status IN ('pending', 'overdue') THEN total_amount ELSE 0 END) as pendiente
             FROM invoices
+            WHERE 1=1{$legacyCond}
             GROUP BY mes
             ORDER BY mes DESC
             LIMIT 6

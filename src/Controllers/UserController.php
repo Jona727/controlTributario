@@ -126,11 +126,17 @@ class UserController
             $rubroCode = null;
         }
 
-        // DNI anterior, para saber si el que llega es un dato nuevo (y
-        // entonces conviene actualizar también la contraseña de acceso).
-        $stmtDniActual = $db->prepare("SELECT dni FROM users WHERE id = :id");
-        $stmtDniActual->execute([':id' => $id]);
-        $dniAnterior = $stmtDniActual->fetch()['dni'] ?? null;
+        // DNI y estado de deuda anteriores: el DNI para saber si hay que
+        // actualizar también la contraseña, el estado de deuda para saber
+        // si este guardado es el que recién pasa a "al día" (y por lo tanto
+        // hay que cancelar la deuda vieja).
+        $stmtAnterior = $db->prepare("SELECT dni, payment_status FROM users WHERE id = :id");
+        $stmtAnterior->execute([':id' => $id]);
+        $datosAnteriores = $stmtAnterior->fetch();
+        $dniAnterior = $datosAnteriores['dni'] ?? null;
+        $paymentStatusAnterior = $datosAnteriores['payment_status'] ?? 'con_deuda';
+
+        $paymentStatus = ($data['payment_status'] ?? '') === 'al_dia' ? 'al_dia' : 'con_deuda';
 
         $stmt = $db->prepare("
             UPDATE users SET
@@ -146,7 +152,8 @@ class UserController
                 rubro_code        = :rubro_code,
                 activity_category = :rubro,
                 needs_data_review = :needs_review,
-                data_review_reason = CASE WHEN :needs_review2 = 0 THEN NULL ELSE data_review_reason END
+                data_review_reason = CASE WHEN :needs_review2 = 0 THEN NULL ELSE data_review_reason END,
+                payment_status    = :payment_status
             WHERE id = :id AND role_id = 3
         ");
         $needsReview = isset($data['needs_data_review']) ? 1 : 0;
@@ -164,8 +171,20 @@ class UserController
             ':rubro'         => $activityCategory,
             ':needs_review'  => $needsReview,
             ':needs_review2' => $needsReview,
+            ':payment_status' => $paymentStatus,
             ':id'            => $id,
         ]);
+
+        // Si recién ahora pasa de "con deuda" a "al día", la deuda vieja del
+        // sistema anterior deja de ser válida: se cancela para que el
+        // comercio arranque limpio con las boletas nuevas.
+        if ($paymentStatusAnterior === 'con_deuda' && $paymentStatus === 'al_dia') {
+            $stmtCancelar = $db->prepare("
+                UPDATE invoices SET status = 'cancelled'
+                WHERE user_id = :id AND status IN ('pending', 'overdue')
+            ");
+            $stmtCancelar->execute([':id' => $id]);
+        }
 
         // Actualizar password: si se escribió una a mano, esa manda. Si no,
         // pero se acaba de cargar (o cambiar) el DNI, se usa el DNI como

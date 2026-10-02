@@ -99,6 +99,7 @@ require __DIR__ . '/layout_header.php';
 <?php
     $chips = [
         'con_deuda'   => "Con deuda ({$comerciosStats['con_deuda']})",
+        'al_dia'      => "Al día ({$comerciosStats['al_dia']})",
         'por_validar' => "Por validar ({$comerciosStats['por_validar']})",
         'sin_dni'     => 'Sin DNI',
         'inactivos'   => 'Inactivos',
@@ -157,7 +158,16 @@ require __DIR__ . '/layout_header.php';
         <td class="col-secondary" style="font-weight:600;">
             <?= (float) $c['base_rate'] > 0 ? '$ ' . number_format((float) $c['base_rate'], 2, ',', '.') : '<span style="color:var(--slate-medium);font-weight:400;">— (monto variable)</span>' ?>
         </td>
-        <td style="font-weight:600;color:<?= $c['deuda_pendiente'] > 0 ? 'var(--danger)' : 'var(--success)' ?>;">$ <?= number_format((float)$c['deuda_pendiente'],2,',','.') ?></td>
+        <td style="font-weight:600;color:<?= $c['deuda_pendiente'] > 0 ? 'var(--danger)' : 'var(--success)' ?>;">
+            $ <?= number_format((float)$c['deuda_pendiente'],2,',','.') ?>
+            <div style="margin-top:0.25rem;">
+                <?php if ($c['payment_status'] === 'al_dia'): ?>
+                    <span class="status-badge status-paid" style="font-size:0.62rem;"><span class="status-dot"></span>Al día</span>
+                <?php else: ?>
+                    <span class="status-badge status-overdue" style="font-size:0.62rem;"><span class="status-dot"></span>Con deuda</span>
+                <?php endif; ?>
+            </div>
+        </td>
         <td>
             <div style="margin-bottom:0.3rem;"><?php if($c['is_active']): ?><span class="status-badge status-paid"><span class="status-dot"></span>Activo</span><?php else: ?><span class="status-badge status-cancelled">Inactivo</span><?php endif; ?></div>
             <?php if (!empty($c['needs_data_review'])): ?>
@@ -190,6 +200,7 @@ require __DIR__ . '/layout_header.php';
                     'rubro_code'         => $c['rubro_code'],
                     'needs_data_review'  => $c['needs_data_review'],
                     'data_review_reason' => $c['data_review_reason'],
+                    'payment_status'     => $c['payment_status'],
                 ];
             ?>
             <button class="icon-btn" onclick='openEditModal(<?= json_encode($datosEdicion) ?>)' title="Editar" style="color:var(--primary-600); margin-right: 0.25rem;">
@@ -339,6 +350,14 @@ require __DIR__ . '/layout_header.php';
             <p style="font-size:0.72rem; color:var(--gray-400); margin:0.3rem 0 0;">Al elegir un rubro se sugiere su cuota en "Tasa Base Fija" — podés ajustarla igual si hace falta.</p>
         </div>
     </div>
+    <div class="form-group">
+        <label class="form-label">Estado de deuda</label>
+        <select name="payment_status" id="edit-payment-status" class="form-input">
+            <option value="con_deuda">Con deuda (arrastra deuda del sistema anterior, sin conciliar)</option>
+            <option value="al_dia">Al día (factura normal desde el sistema nuevo)</option>
+        </select>
+        <p style="font-size:0.72rem; color:var(--gray-400); margin:0.3rem 0 0;">Al pasar a "Al día" se cancelan automáticamente sus facturas viejas pendientes/vencidas.</p>
+    </div>
     <label style="display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" name="is_active" id="edit-is-active" value="1"> Activo</label>
     <div id="edit-review-wrap" style="display:none; margin-top:0.75rem; padding:0.75rem; background:var(--alert-warning-bg); border:1px solid var(--alert-warning-border); border-radius:6px;">
         <p id="edit-review-reason" style="font-size:0.78rem; color:var(--alert-warning-text); margin:0 0 0.5rem;"></p>
@@ -360,6 +379,7 @@ function openEditModal(d) {
     document.getElementById('edit-email').value = d.email;
     document.getElementById('edit-base-rate').value = d.base_rate;
     document.getElementById('edit-is-active').checked = d.is_active == 1;
+    document.getElementById('edit-payment-status').value = d.payment_status || 'con_deuda';
     document.getElementById('edit-owner-name').value = d.owner_name || '';
     document.getElementById('edit-rubro-code').value = d.rubro_code || '';
 
