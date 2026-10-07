@@ -197,9 +197,13 @@ require __DIR__ . '/layout_header.php';
                         <?php endif; ?>
                     </button>
                 <?php endif; ?>
-                <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/estado/<?= $f['id'] ?>" class="col-secondary" style="margin:0;">
+                <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas/estado/<?= $f['id'] ?>" class="col-secondary" style="margin:0;"
+                      data-confirm-submit
+                      data-confirm-title="Cambiar estado de factura"
+                      data-confirm-message="Vas a cambiar manualmente el estado de la factura «<?= htmlspecialchars($f['invoice_number']) ?>». ¿Confirmás?"
+                      data-confirm-label="Cambiar estado">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                    <select name="status" onchange="this.form.submit()" class="status-select" title="Cambiar estado">
+                    <select name="status" onchange="if(this.value) this.form.requestSubmit(); else this.selectedIndex = 0;" class="status-select" title="Cambiar estado">
                         <option value="">Estado...</option>
                         <option value="pending">Pendiente</option>
                         <option value="overdue">Vencido</option>
