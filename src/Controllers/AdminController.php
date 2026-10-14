@@ -272,6 +272,7 @@ class AdminController
                        WHERE i2.user_id = i.user_id
                          AND i2.status IN ('pending', 'overdue')
                          AND i2.issue_date < i.issue_date
+                         AND i2.is_legacy = 0
                    ) as has_older_debt
             FROM invoices i
             JOIN users u ON i.user_id = u.id
