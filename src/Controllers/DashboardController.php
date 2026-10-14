@@ -66,7 +66,14 @@ class DashboardController
         // ocultarla ni pedir conciliación, aunque todavía no haya pasado
         // nunca por el flujo de estado de cuenta.
         $esConDeuda = ($user['payment_status'] ?? 'con_deuda') === 'con_deuda';
-        $ocultarDetalle = $tieneDeuda && !$cuentaVerificada && $esConDeuda;
+        $sinVerificar = !$cuentaVerificada && $esConDeuda;
+        $ocultarDetalle = $tieneDeuda && $sinVerificar;
+
+        // Un comercio "con deuda" sin verificar y sin ninguna factura
+        // cargada todavía no es lo mismo que estar al día — simplemente no
+        // se concilió su cuenta con el sistema anterior. Sin esto, caía en
+        // el mismo "estás al día" que un comercio realmente verificado.
+        $sinDatosAun = $sinVerificar && empty($facturas);
 
         // Se consulta siempre (no solo cuando falta conciliar): incluso con
         // la cuenta ya verificada, el comercio puede querer marcar que algo
