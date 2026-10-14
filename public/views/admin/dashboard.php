@@ -86,7 +86,7 @@ require __DIR__ . '/layout_header.php';
         <!-- Cobros Recientes -->
         <div class="card" style="border-radius: 6px; box-shadow: var(--shadow-sm); width: 100%;">
             <div class="card-header" style="padding: 1.25rem 1.5rem;">
-                <h3 style="font-size: 1.05rem;">Cobros Recientes en Ventanilla</h3>
+                <h3 style="font-size: 1.05rem;">Cobros de Hoy en Ventanilla</h3>
                 <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/cierre-caja" class="btn btn-ghost btn-sm" style="border-radius: 4px;">Ver Rendición del Día</a>
             </div>
             <div style="overflow-x: auto;">

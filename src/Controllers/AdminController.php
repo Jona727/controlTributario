@@ -74,12 +74,16 @@ class AdminController
         ");
         $morosos = $stmt->fetchAll();
 
-        // Cobros recientes en ventanilla (últimos 5 pagos registrados)
+        // Cobros en ventanilla de hoy (últimos 5), para que coincida con lo
+        // que dice la tarjeta y con la Rendición del Día a la que enlaza —
+        // antes traía los últimos 5 pagos sin importar la fecha, y podía
+        // mostrar cobros de meses atrás como si fueran de hoy.
         $stmt = $db->query("
             SELECT p.*, i.invoice_number, i.period, u.business_name, u.client_code
             FROM payments p
             JOIN invoices i ON p.invoice_id = i.id
             JOIN users u ON i.user_id = u.id
+            WHERE DATE(p.payment_date) = CURDATE()
             ORDER BY p.payment_date DESC
             LIMIT 5
         ");
@@ -88,12 +92,6 @@ class AdminController
         // Datos del usuario logueado
         $userName = $request->getAttribute('user_name');
         $userRole = $request->getAttribute('user_role');
-
-        // Notificaciones no leídas (para el badge)
-        $userId = $request->getAttribute('user_id');
-        $stmt = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
-        $stmt->execute([':uid' => $userId]);
-        $notifCount = $stmt->fetch()['total'];
 
         ob_start();
         require __DIR__ . '/../../public/views/admin/dashboard.php';
@@ -199,11 +197,6 @@ class AdminController
 
         $userName = $request->getAttribute('user_name');
         $userRole = $request->getAttribute('user_role');
-        $userId   = $request->getAttribute('user_id');
-
-        $stmtN = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
-        $stmtN->execute([':uid' => $userId]);
-        $notifCount = $stmtN->fetch()['total'];
 
         ob_start();
         require __DIR__ . '/../../public/views/admin/comercios.php';
@@ -295,11 +288,6 @@ class AdminController
 
         $userName = $request->getAttribute('user_name');
         $userRole = $request->getAttribute('user_role');
-        $userId   = $request->getAttribute('user_id');
-
-        $stmtN = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
-        $stmtN->execute([':uid' => $userId]);
-        $notifCount = $stmtN->fetch()['total'];
 
         ob_start();
         require __DIR__ . '/../../public/views/admin/facturas.php';
@@ -421,11 +409,6 @@ class AdminController
 
         $userName = $request->getAttribute('user_name');
         $userRole = $request->getAttribute('user_role');
-        $userId   = $request->getAttribute('user_id');
-
-        $stmtN = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
-        $stmtN->execute([':uid' => $userId]);
-        $notifCount = $stmtN->fetch()['total'];
 
         ob_start();
         require __DIR__ . '/../../public/views/admin/deuda.php';
@@ -463,11 +446,6 @@ class AdminController
 
         $userName = $request->getAttribute('user_name');
         $userRole = $request->getAttribute('user_role');
-        $userId   = $request->getAttribute('user_id');
-
-        $stmtN = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
-        $stmtN->execute([':uid' => $userId]);
-        $notifCount = $stmtN->fetch()['total'];
 
         ob_start();
         require __DIR__ . '/../../public/views/admin/tarifario.php';
@@ -561,11 +539,6 @@ class AdminController
 
         $userName = $request->getAttribute('user_name');
         $userRole = $request->getAttribute('user_role');
-        $userId   = $request->getAttribute('user_id');
-
-        $stmtN = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
-        $stmtN->execute([':uid' => $userId]);
-        $notifCount = $stmtN->fetch()['total'];
 
         ob_start();
         require __DIR__ . '/../../public/views/admin/estado_cuenta_solicitudes.php';
@@ -606,12 +579,6 @@ class AdminController
         // Datos de sesión del usuario logueado
         $userName = $request->getAttribute('user_name');
         $userRole = $request->getAttribute('user_role');
-        $userId   = $request->getAttribute('user_id');
-
-        // Notificaciones no leídas
-        $stmtN = $db->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :uid AND is_read = 0");
-        $stmtN->execute([':uid' => $userId]);
-        $notifCount = $stmtN->fetch()['total'];
 
         ob_start();
         require __DIR__ . '/../../public/views/admin/cierre_caja.php';
