@@ -39,8 +39,6 @@ $app->group('/admin', function ($group) {
     $group->post('/comercios/editar/{id}',    [UserController::class, 'update']);
     $group->post('/comercios/eliminar/{id}',  [UserController::class, 'delete']);
     $group->post('/comercios/importar',       [UserController::class, 'importCsv']);
-    $group->post('/comercios/resetear-passwords', [UserController::class, 'resetAllPasswords']);
-    $group->get('/comercios/credenciales-test',   [UserController::class, 'exportarCredencialesTest']);
 
     // CRUD Facturas
     $group->post('/facturas/crear',           [InvoiceController::class, 'store']);
@@ -74,6 +72,16 @@ $app->group('/admin/usuarios', function ($group) {
     $group->get('',           [AdminUserController::class, 'index']);
     $group->post('/crear',    [AdminUserController::class, 'store']);
     $group->post('/eliminar/{id}', [AdminUserController::class, 'delete']);
+})
+->add(new RoleMiddleware(['super']))
+->add(new JwtMiddleware());
+
+// Credenciales y reseteo masivo de contraseñas de comercios: exponen el
+// DNI (contraseña de acceso) de cada uno, así que quedan reservadas al
+// Super Administrador, no a cualquier admin.
+$app->group('/admin/comercios', function ($group) {
+    $group->post('/resetear-passwords', [UserController::class, 'resetAllPasswords']);
+    $group->get('/credenciales-test',   [UserController::class, 'exportarCredencialesTest']);
 })
 ->add(new RoleMiddleware(['super']))
 ->add(new JwtMiddleware());
