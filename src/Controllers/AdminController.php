@@ -121,13 +121,16 @@ class AdminController
         $huboConsulta = $q !== '' || $filtro !== '';
 
         // Indicadores agregados: siempre visibles, se calculan aparte para
-        // no depender de traer la lista completa de comercios.
+        // no depender de traer la lista completa de comercios. No cuentan
+        // la facturación migrada del sistema anterior sin conciliar — igual
+        // que en Dashboard, Facturación e Indicadores — para no mostrar acá
+        // una "deuda" distinta a la que se ve en el resto del panel.
         $comerciosStats = [
             'activos'     => (int) $db->query("SELECT COUNT(*) FROM users WHERE role_id = 3 AND is_active = 1")->fetchColumn(),
             'con_deuda'   => (int) $db->query("
                 SELECT COUNT(*) FROM users u
                 WHERE u.role_id = 3 AND (
-                    SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE user_id = u.id AND status IN ('pending','overdue')
+                    SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE user_id = u.id AND status IN ('pending','overdue') AND is_legacy = 0
                 ) > 0
             ")->fetchColumn(),
             'por_validar' => (int) $db->query("SELECT COUNT(*) FROM users WHERE role_id = 3 AND needs_data_review = 1")->fetchColumn(),
@@ -135,7 +138,7 @@ class AdminController
             'deuda_total' => (float) $db->query("
                 SELECT COALESCE(SUM(i.total_amount), 0) FROM invoices i
                 JOIN users u ON i.user_id = u.id
-                WHERE u.role_id = 3 AND i.status IN ('pending','overdue')
+                WHERE u.role_id = 3 AND i.status IN ('pending','overdue') AND i.is_legacy = 0
             ")->fetchColumn(),
         ];
         $totalComerciosGlobal = (int) $db->query("SELECT COUNT(*) FROM users WHERE role_id = 3")->fetchColumn();
@@ -158,7 +161,7 @@ class AdminController
                 $params[':q4'] = $like;
             }
             if ($filtro === 'con_deuda') {
-                $where .= " AND (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE user_id = u.id AND status IN ('pending','overdue')) > 0";
+                $where .= " AND (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE user_id = u.id AND status IN ('pending','overdue') AND is_legacy = 0) > 0";
             } elseif ($filtro === 'al_dia') {
                 $where .= " AND u.payment_status = 'al_dia'";
             } elseif ($filtro === 'por_validar') {
@@ -180,7 +183,7 @@ class AdminController
             $stmt = $db->prepare("
                 SELECT u.*, r.name as role_name,
                        (SELECT COUNT(*) FROM invoices WHERE user_id = u.id) as total_facturas,
-                       (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE user_id = u.id AND status IN ('pending','overdue')) as deuda_pendiente
+                       (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE user_id = u.id AND status IN ('pending','overdue') AND is_legacy = 0) as deuda_pendiente
                 FROM users u
                 JOIN roles r ON u.role_id = r.id
                 {$where}

@@ -166,8 +166,13 @@ require __DIR__ . '/layout_header.php';
         <td class="col-secondary" style="font-weight:600;">
             <?= (float) $c['base_rate'] > 0 ? '$ ' . number_format((float) $c['base_rate'], 2, ',', '.') : '<span style="color:var(--slate-medium);font-weight:400;">— (monto variable)</span>' ?>
         </td>
-        <td style="font-weight:600;color:<?= $c['deuda_pendiente'] > 0 ? 'var(--danger)' : 'var(--success)' ?>;">
-            $ <?= number_format((float)$c['deuda_pendiente'],2,',','.') ?>
+        <?php $sinConciliar = $c['payment_status'] !== 'al_dia' && (float) $c['deuda_pendiente'] <= 0; ?>
+        <td style="font-weight:600;color:<?= $sinConciliar ? 'var(--slate-medium)' : ((float) $c['deuda_pendiente'] > 0 ? 'var(--danger)' : 'var(--success)') ?>;">
+            <?php if ($sinConciliar): ?>
+                <span style="font-weight:400;font-style:italic;" title="Todavía no tiene facturas reales cargadas en el sistema nuevo — no significa que esté al día.">Pendiente de conciliar</span>
+            <?php else: ?>
+                $ <?= number_format((float)$c['deuda_pendiente'],2,',','.') ?>
+            <?php endif; ?>
             <div style="margin-top:0.25rem;">
                 <?php if ($c['payment_status'] === 'al_dia'): ?>
                     <span class="status-badge status-paid" style="font-size:0.62rem;"><span class="status-dot"></span>Al día</span>
