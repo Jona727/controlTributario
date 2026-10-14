@@ -199,30 +199,22 @@ $activePage = 'dashboard';
                     <?php endif; ?>
                 </div>
             <?php else: ?>
-            <?php $facturasCanceladas = array_filter($facturas, fn($f) => $f['status'] === 'cancelled'); ?>
-            <?php if (!empty($facturasCanceladas)): ?>
-                <div style="padding:0.75rem 1.5rem 0;">
-                    <button type="button" id="btn-ver-canceladas" class="btn btn-ghost btn-sm">
-                        Mostrar <?= count($facturasCanceladas) ?> factura(s) reemplazada(s)/cancelada(s)
-                    </button>
-                    <p style="font-size:0.75rem;color:var(--slate-medium);margin:0.35rem 0 0;">Quedan fuera de la lista por defecto porque ya no representan deuda — en general fueron reemplazadas por una factura conciliada.</p>
-                </div>
-            <?php endif; ?>
+            <?php $facturasVisibles = array_filter($facturas, fn($f) => $f['status'] !== 'cancelled'); ?>
             <div style="overflow-x:auto;">
-                <table class="data-table" id="tabla-mis-facturas">
+                <table class="data-table">
                     <thead><tr><th># Factura</th><th>Período</th><th class="col-secondary">Emisión</th><th>Vencimiento</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead>
                     <tbody>
-                    <?php if (empty($facturas) || count($facturasCanceladas) === count($facturas)): ?>
-                        <tr id="fila-vacia-facturas"><td colspan="7" class="empty-state empty-success">
+                    <?php if (empty($facturasVisibles)): ?>
+                        <tr><td colspan="7" class="empty-state empty-success">
                             <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                             <p>Estás al día — todavía no tenés ninguna factura generada ni deuda pendiente.</p>
                         </td></tr>
                     <?php endif; ?>
-                    <?php foreach ($facturas as $f):
+                    <?php foreach ($facturasVisibles as $f):
                         $sc = match($f['status']){'paid'=>'status-paid','pending'=>'status-pending','overdue'=>'status-overdue',default=>'status-cancelled'};
                         $sl = match($f['status']){'paid'=>'Pagado','pending'=>'Pendiente','overdue'=>'Vencido','cancelled'=>'Cancelado',default=>$f['status']};
                     ?>
-                        <tr<?= $f['status'] === 'cancelled' ? ' class="fila-cancelada" style="display:none;"' : '' ?>>
+                        <tr>
                             <td style="font-weight:600;"><?= htmlspecialchars($f['invoice_number']) ?></td>
                             <td><?= htmlspecialchars($f['period'] ?? '–') ?></td>
                             <td class="col-secondary"><?= date('d/m/Y', strtotime($f['issue_date'])) ?></td>
@@ -256,19 +248,5 @@ $activePage = 'dashboard';
 </div>
 
 <script src="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/js/app.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('btn-ver-canceladas');
-    if (!btn) return;
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('#tabla-mis-facturas .fila-cancelada').forEach(row => {
-            row.style.display = '';
-        });
-        const filaVacia = document.getElementById('fila-vacia-facturas');
-        if (filaVacia) filaVacia.style.display = 'none';
-        btn.style.display = 'none';
-    });
-});
-</script>
 </body>
 </html>
