@@ -115,7 +115,7 @@ $activePage = 'dashboard';
             <div class="stat-card stat-danger">
                 <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
                 <div class="stat-label">Deuda Pendiente</div>
-                <?php if ($ocultarDetalle): ?>
+                <?php if ($ocultarDetalle || $sinDatosAun): ?>
                     <div class="stat-value" style="font-size:1.1rem;">Pendiente de conciliar</div>
                 <?php else: ?>
                     <div class="stat-value">$ <?= number_format((float)$deudaTotal,2,',','.') ?></div>
@@ -167,13 +167,53 @@ $activePage = 'dashboard';
                         </div>
                     <?php endif; ?>
                 </div>
+            <?php elseif ($sinDatosAun): ?>
+                <div style="padding: 1.5rem;">
+                    <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'pending'): ?>
+                        <div style="display:flex; gap:1rem; align-items:flex-start; padding:1.25rem; background:var(--slate-light); border:1px solid var(--slate-border); border-radius:10px;">
+                            <div style="flex-shrink:0; width:42px; height:42px; border-radius:50%; background:var(--brand-primary); display:flex; align-items:center; justify-content:center;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div style="flex:1; min-width:0;">
+                                <h4 style="margin:0 0 0.35rem; font-size:0.95rem; color:var(--slate-dark);">Tu solicitud de estado de cuenta está siendo procesada</h4>
+                                <p style="margin:0; font-size:0.82rem; color:var(--slate-medium); line-height:1.5;">Catastro y Rentas la está revisando. Apenas tengan una respuesta te va a llegar como notificación acá mismo.</p>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <div style="display:flex; gap:1rem; align-items:flex-start; padding:1.25rem; background:var(--slate-light); border:1px solid var(--slate-border); border-radius:10px;">
+                            <div style="flex-shrink:0; width:42px; height:42px; border-radius:50%; background:var(--slate-medium); display:flex; align-items:center; justify-content:center;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            </div>
+                            <div style="flex:1; min-width:0;">
+                                <h4 style="margin:0 0 0.35rem; font-size:0.95rem; color:var(--slate-dark);">Todavía no conciliamos tu cuenta con el sistema anterior</h4>
+                                <p style="margin:0; font-size:0.82rem; color:var(--slate-medium); line-height:1.5;">Por ahora no tenés facturas cargadas en el sistema nuevo. Si venías con tasas pendientes del sistema anterior, pedí tu estado de cuenta para que te confirmemos la situación real — si no tenías deuda, listo.</p>
+                                <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'resolved'): ?>
+                                    <p style="font-size:0.78rem; color:var(--slate-medium); margin:0.5rem 0 0;">Ya te respondimos una solicitud anterior — revisá tus notificaciones. Si tu situación cambió, podés volver a pedirlo.</p>
+                                <?php endif; ?>
+                                <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/user/estado-cuenta/solicitar" style="margin-top:0.85rem;">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                    <button type="submit" class="btn btn-primary">Solicitar estado de cuenta</button>
+                                </form>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
             <?php else: ?>
+            <?php $facturasCanceladas = array_filter($facturas, fn($f) => $f['status'] === 'cancelled'); ?>
+            <?php if (!empty($facturasCanceladas)): ?>
+                <div style="padding:0.75rem 1.5rem 0;">
+                    <button type="button" id="btn-ver-canceladas" class="btn btn-ghost btn-sm">
+                        Mostrar <?= count($facturasCanceladas) ?> factura(s) reemplazada(s)/cancelada(s)
+                    </button>
+                    <p style="font-size:0.75rem;color:var(--slate-medium);margin:0.35rem 0 0;">Quedan fuera de la lista por defecto porque ya no representan deuda — en general fueron reemplazadas por una factura conciliada.</p>
+                </div>
+            <?php endif; ?>
             <div style="overflow-x:auto;">
-                <table class="data-table">
+                <table class="data-table" id="tabla-mis-facturas">
                     <thead><tr><th># Factura</th><th>Período</th><th class="col-secondary">Emisión</th><th>Vencimiento</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead>
                     <tbody>
-                    <?php if (empty($facturas)): ?>
-                        <tr><td colspan="7" class="empty-state empty-success">
+                    <?php if (empty($facturas) || count($facturasCanceladas) === count($facturas)): ?>
+                        <tr id="fila-vacia-facturas"><td colspan="7" class="empty-state empty-success">
                             <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                             <p>Estás al día — todavía no tenés ninguna factura generada ni deuda pendiente.</p>
                         </td></tr>
@@ -182,7 +222,7 @@ $activePage = 'dashboard';
                         $sc = match($f['status']){'paid'=>'status-paid','pending'=>'status-pending','overdue'=>'status-overdue',default=>'status-cancelled'};
                         $sl = match($f['status']){'paid'=>'Pagado','pending'=>'Pendiente','overdue'=>'Vencido','cancelled'=>'Cancelado',default=>$f['status']};
                     ?>
-                        <tr>
+                        <tr<?= $f['status'] === 'cancelled' ? ' class="fila-cancelada" style="display:none;"' : '' ?>>
                             <td style="font-weight:600;"><?= htmlspecialchars($f['invoice_number']) ?></td>
                             <td><?= htmlspecialchars($f['period'] ?? '–') ?></td>
                             <td class="col-secondary"><?= date('d/m/Y', strtotime($f['issue_date'])) ?></td>
@@ -216,5 +256,19 @@ $activePage = 'dashboard';
 </div>
 
 <script src="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('btn-ver-canceladas');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('#tabla-mis-facturas .fila-cancelada').forEach(row => {
+            row.style.display = '';
+        });
+        const filaVacia = document.getElementById('fila-vacia-facturas');
+        if (filaVacia) filaVacia.style.display = 'none';
+        btn.style.display = 'none';
+    });
+});
+</script>
 </body>
 </html>
