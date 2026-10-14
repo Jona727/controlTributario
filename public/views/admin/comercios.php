@@ -77,10 +77,16 @@ require __DIR__ . '/layout_header.php';
         <?php endif; ?>
     </form>
     <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-        <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios/credenciales-test" class="btn btn-ghost" target="_blank" title="Ver el usuario y DNI de cada comercio, para probar el login">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            Ver Credenciales
-        </a>
+        <form method="GET" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios/credenciales-test" target="_blank" style="display:inline;"
+              data-confirm-submit
+              data-confirm-title="Ver credenciales de todos los comercios"
+              data-confirm-message="Se va a abrir una página con el usuario y el DNI (contraseña de acceso) de cada comercio activo, en texto plano. Mostrala solo si la necesitás para dar soporte — no la dejes abierta ni la compartas. ¿Confirmás?"
+              data-confirm-label="Ver credenciales">
+            <button type="submit" class="btn btn-ghost" title="Ver el usuario y DNI de cada comercio, para probar el login">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                Ver Credenciales
+            </button>
+        </form>
         <button type="button" class="btn btn-secondary" data-modal-open="modal-reset-passwords" title="Asignar una contraseña provisoria a los comercios que todavía no tienen DNI cargado">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
             Resetear Contraseñas
