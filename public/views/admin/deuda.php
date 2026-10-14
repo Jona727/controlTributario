@@ -162,19 +162,30 @@ require __DIR__ . '/layout_header.php';
                         <td class="col-secondary" style="color: var(--warning); font-weight: 500;">$ <?= number_format((float)$d['monto_pendiente'], 2, ',', '.') ?></td>
                         <td style="font-weight: 700; color: var(--danger); font-size: 0.9rem;">$ <?= number_format((float)$d['deuda_total'], 2, ',', '.') ?></td>
                         <td class="col-secondary">
-                            <div style="font-size: 0.75rem;">✉ <?= htmlspecialchars($d['email']) ?></div>
+                            <?php if (!empty($d['email'])): ?>
+                                <div style="font-size: 0.75rem;">✉ <?= htmlspecialchars($d['email']) ?></div>
+                            <?php else: ?>
+                                <div style="font-size: 0.75rem; color: var(--slate-medium);">Sin email cargado</div>
+                            <?php endif; ?>
                             <?php if (!empty($d['phone'])): ?>
                                 <div style="font-size: 0.75rem; color: var(--gray-500);">☎ <?= htmlspecialchars($d['phone']) ?></div>
                             <?php endif; ?>
                         </td>
                         <td>
+                            <?php if (!empty($d['email'])): ?>
                             <a href="mailto:<?= $d['email'] ?>?subject=Recordatorio%20de%20Pago%20-%20Tasas%20Municipales&body=Estimado%20responsable%20de%20<?= rawurlencode($d['business_name']) ?>%2C%20le%20escribimos%20desde%20la%20Municipalidad%20para%20recordarle%20que%20registra%20una%20deuda%20de%20%24<?= number_format((float)$d['deuda_total'], 2, ',', '.') ?>%20en%20concepto%20de%20Tasas%20de%20Seguridad%20e%20Higiene.%20Por%20favor%20ingrese%20al%20sistema%20para%20regularizar."
-                               class="btn btn-ghost btn-sm" 
+                               class="btn btn-ghost btn-sm"
                                style="padding: 0.35rem 0.6rem; color: var(--primary-600); border-color: var(--primary-200);"
                                title="Enviar Notificación de Cobro" target="_blank">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                                 Reclamar
                             </a>
+                            <?php else: ?>
+                            <span class="btn btn-ghost btn-sm" style="padding: 0.35rem 0.6rem; color: var(--slate-medium); opacity: 0.6; cursor: default;" title="Este comercio no tiene email cargado — no se le puede reclamar por este medio.">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                                Sin email
+                            </span>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; endif; ?>
