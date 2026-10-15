@@ -600,13 +600,18 @@ class InvoiceController
                 }
             }
 
-            // Validar control cronológico para el lote
+            // Validar control cronológico para el lote — no cuenta facturas
+            // migradas sin conciliar (is_legacy): están ocultas y no son
+            // información confiable, así que no deben bloquear el cobro de
+            // una factura real posterior (mismo criterio que en el cobro
+            // individual).
             $checkStmt = $db->prepare("
-                SELECT id, invoice_number, period 
-                FROM invoices 
-                WHERE user_id = :uid 
-                  AND status IN ('pending', 'overdue') 
-                  AND issue_date < :issue 
+                SELECT id, invoice_number, period
+                FROM invoices
+                WHERE user_id = :uid
+                  AND status IN ('pending', 'overdue')
+                  AND issue_date < :issue
+                  AND is_legacy = 0
                 ORDER BY issue_date ASC
             ");
             $checkStmt->execute([

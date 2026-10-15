@@ -91,6 +91,11 @@ require __DIR__ . '/layout_header.php';
         <?php if (!empty($_GET['user_id']) || !empty($_GET['period'])): ?>
             <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas?tab=<?= htmlspecialchars($tab) ?>" class="btn btn-ghost">Limpiar</a>
         <?php endif; ?>
+        <?php if ($tab === 'pendientes' && !empty($_GET['user_id']) && !empty($facturas)): ?>
+            <button type="button" id="btn-seleccionar-todas" class="btn btn-ghost" title="Tilda todas las facturas pendientes/vencidas de este comercio para cobrarlas en un solo lote">
+                Seleccionar todas las pendientes
+            </button>
+        <?php endif; ?>
     </div>
 </form>
 
@@ -578,6 +583,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Solo checkear si están visibles (podrían estar filtradas, aunque la paginación no se hace en frontend, pero por si acaso)
                 cb.checked = e.target.checked;
             });
+            updateCobrarLoteBtn();
+        });
+    }
+
+    const btnSeleccionarTodas = document.getElementById('btn-seleccionar-todas');
+    if (btnSeleccionarTodas) {
+        btnSeleccionarTodas.addEventListener('click', () => {
+            checkFacturas.forEach(cb => { cb.checked = true; });
+            if (checkAll) checkAll.checked = true;
             updateCobrarLoteBtn();
         });
     }
