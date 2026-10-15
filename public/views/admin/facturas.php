@@ -18,10 +18,12 @@ require __DIR__ . '/layout_header.php';
 
 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.5rem;">
     <p style="font-size:0.85rem; color:var(--gray-500);">
-        <?= $totalFacturas ?> factura(s)
-        <?php if ($totalFacturas > 0): ?>
-            <span style="color:var(--slate-dark); font-weight:600;">— $ <?= number_format($montoTotalTab, 2, ',', '.') ?></span>
-            <?= $tab === 'pendientes' ? 'en total' : ($tab === 'pagadas' ? 'cobrado' : '') ?>
+        <?php if ($huboConsulta): ?>
+            <?= $totalFacturas ?> factura(s)
+            <?php if ($totalFacturas > 0): ?>
+                <span style="color:var(--slate-dark); font-weight:600;">— $ <?= number_format($montoTotalTab, 2, ',', '.') ?></span>
+                <?= $tab === 'pendientes' ? 'en total' : ($tab === 'pagadas' ? 'cobrado' : '') ?>
+            <?php endif; ?>
         <?php endif; ?>
     </p>
     <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
@@ -49,7 +51,7 @@ require __DIR__ . '/layout_header.php';
 <div class="tabs" style="display:flex; border-bottom:1px solid var(--slate-border); margin-bottom:1.5rem; gap:1.5rem; flex-wrap:wrap;">
     <?php
         $tabExtra = '';
-        foreach (['user_id', 'period'] as $qp) {
+        foreach (['user_id', 'period', 'ver'] as $qp) {
             if (!empty($_GET[$qp])) {
                 $tabExtra .= '&' . $qp . '=' . urlencode($_GET[$qp]);
             }
@@ -91,6 +93,9 @@ require __DIR__ . '/layout_header.php';
         <?php if (!empty($_GET['user_id']) || !empty($_GET['period'])): ?>
             <a href="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/facturas?tab=<?= htmlspecialchars($tab) ?>" class="btn btn-ghost">Limpiar</a>
         <?php endif; ?>
+        <?php if (!$verTodas): ?>
+            <a href="?<?= htmlspecialchars(http_build_query(array_merge($_GET, ['ver' => 'todos', 'page' => 1]))) ?>" class="btn btn-ghost">Ver todas</a>
+        <?php endif; ?>
         <?php if ($tab === 'pendientes' && !empty($_GET['user_id']) && !empty($facturas)): ?>
             <button type="button" id="btn-seleccionar-todas" class="btn btn-ghost" title="Tilda todas las facturas pendientes/vencidas de este comercio para cobrarlas en un solo lote">
                 Seleccionar todas las pendientes
@@ -100,6 +105,12 @@ require __DIR__ . '/layout_header.php';
 </form>
 
 <div class="card">
+<?php if (!$huboConsulta): ?>
+    <div class="empty-state" style="padding: 2.5rem 1rem;">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <p>Filtrá por comercio o período, o tocá "Ver todas" arriba — para no cargar de entrada todas las facturas de esta pestaña.</p>
+    </div>
+<?php else: ?>
 <div style="overflow-x:auto;">
 <table class="data-table">
 <thead><tr>
@@ -223,6 +234,7 @@ require __DIR__ . '/layout_header.php';
 </table>
 </div>
 <?php require __DIR__ . '/../partials/pagination.php'; ?>
+<?php endif; ?>
 </div>
 
 <!-- Modal Crear Factura -->

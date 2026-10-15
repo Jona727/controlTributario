@@ -221,66 +221,83 @@ class AdminController
         $filterPeriod = $queryParams['period'] ?? '';
         $tab = $queryParams['tab'] ?? 'pendientes';
         $mostrarLegacy = ($queryParams['legacy'] ?? '') === '1';
+        $verTodas = ($queryParams['ver'] ?? '') === 'todos';
 
-        // Condiciones WHERE compartidas entre el conteo (para la paginación)
-        // y el listado en sí, para que ambos siempre queden en sincro.
-        $where = "WHERE 1=1";
-        $params = [];
-        if (!$mostrarLegacy) {
-            // Por defecto no se cuenta la facturación migrada del sistema
-            // anterior sin conciliar — no es información confiable hasta
-            // que se verifique (ver botón "Mostrar sin verificar" arriba).
-            $where .= " AND i.is_legacy = 0";
-        }
-        if ($filterUserId !== '') {
-            $where .= " AND i.user_id = :uid";
-            $params[':uid'] = $filterUserId;
-        }
-        if ($filterPeriod !== '') {
-            $where .= " AND i.period = :period";
-            $params[':period'] = $filterPeriod;
-        }
+        // Mismo criterio que en Comercios: no se lista ninguna factura hasta
+        // que se filtre por comercio/período o se pida ver todas a propósito
+        // — listar miles de facturas de entrada no sirve de nada.
+        $huboConsulta = $filterUserId !== '' || $filterPeriod !== '' || $verTodas;
 
         $totalLegacy = (int) $db->query("SELECT COUNT(*) FROM invoices WHERE is_legacy = 1")->fetchColumn();
-        if ($tab === 'pagadas') {
-            $where .= " AND i.status = 'paid'";
-        } elseif ($tab === 'anuladas') {
-            $where .= " AND i.status = 'cancelled'";
-        } else {
-            $where .= " AND i.status IN ('pending', 'overdue')";
-        }
 
-        $countStmt = $db->prepare("SELECT COUNT(*) AS total, COALESCE(SUM(i.total_amount), 0) AS monto_total FROM invoices i {$where}");
-        $countStmt->execute($params);
-        $countRow = $countStmt->fetch();
-        $totalFacturas = (int) $countRow['total'];
-        $montoTotalTab = (float) $countRow['monto_total'];
-
+        $facturas = [];
+        $totalFacturas = 0;
+        $montoTotalTab = 0.0;
+        $page = 1;
+        $totalPages = 1;
         $perPage = 25;
-        $totalPages = max(1, (int) ceil($totalFacturas / $perPage));
-        $page = max(1, min($totalPages, (int) ($queryParams['page'] ?? 1)));
-        $offset = ($page - 1) * $perPage;
 
-        $sql = "
-            SELECT i.*, u.business_name, u.client_code, u.cuit, p.id AS payment_id,
-                   EXISTS (
-                       SELECT 1 FROM invoices i2
-                       WHERE i2.user_id = i.user_id
-                         AND i2.status IN ('pending', 'overdue')
-                         AND i2.issue_date < i.issue_date
-                         AND i2.is_legacy = 0
-                   ) as has_older_debt
-            FROM invoices i
-            JOIN users u ON i.user_id = u.id
-            LEFT JOIN payments p ON i.id = p.invoice_id
-            {$where}
-            ORDER BY u.business_name ASC, i.due_date ASC
-            LIMIT {$perPage} OFFSET {$offset}
-        ";
+        if ($huboConsulta) {
+            // Condiciones WHERE compartidas entre el conteo (para la
+            // paginación) y el listado en sí, para que ambos siempre queden
+            // en sincro.
+            $where = "WHERE 1=1";
+            $params = [];
+            if (!$mostrarLegacy) {
+                // Por defecto no se cuenta la facturación migrada del
+                // sistema anterior sin conciliar — no es información
+                // confiable hasta que se verifique (ver botón "Mostrar sin
+                // verificar" arriba).
+                $where .= " AND i.is_legacy = 0";
+            }
+            if ($filterUserId !== '') {
+                $where .= " AND i.user_id = :uid";
+                $params[':uid'] = $filterUserId;
+            }
+            if ($filterPeriod !== '') {
+                $where .= " AND i.period = :period";
+                $params[':period'] = $filterPeriod;
+            }
 
-        $stmt = $db->prepare($sql);
-        $stmt->execute($params);
-        $facturas = $stmt->fetchAll();
+            if ($tab === 'pagadas') {
+                $where .= " AND i.status = 'paid'";
+            } elseif ($tab === 'anuladas') {
+                $where .= " AND i.status = 'cancelled'";
+            } else {
+                $where .= " AND i.status IN ('pending', 'overdue')";
+            }
+
+            $countStmt = $db->prepare("SELECT COUNT(*) AS total, COALESCE(SUM(i.total_amount), 0) AS monto_total FROM invoices i {$where}");
+            $countStmt->execute($params);
+            $countRow = $countStmt->fetch();
+            $totalFacturas = (int) $countRow['total'];
+            $montoTotalTab = (float) $countRow['monto_total'];
+
+            $totalPages = max(1, (int) ceil($totalFacturas / $perPage));
+            $page = max(1, min($totalPages, (int) ($queryParams['page'] ?? 1)));
+            $offset = ($page - 1) * $perPage;
+
+            $sql = "
+                SELECT i.*, u.business_name, u.client_code, u.cuit, p.id AS payment_id,
+                       EXISTS (
+                           SELECT 1 FROM invoices i2
+                           WHERE i2.user_id = i.user_id
+                             AND i2.status IN ('pending', 'overdue')
+                             AND i2.issue_date < i.issue_date
+                             AND i2.is_legacy = 0
+                       ) as has_older_debt
+                FROM invoices i
+                JOIN users u ON i.user_id = u.id
+                LEFT JOIN payments p ON i.id = p.invoice_id
+                {$where}
+                ORDER BY u.business_name ASC, i.due_date ASC
+                LIMIT {$perPage} OFFSET {$offset}
+            ";
+
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $facturas = $stmt->fetchAll();
+        }
 
         // Comercios para el selector
         $stmt = $db->query("SELECT id, client_code, business_name FROM users WHERE role_id = 3 AND is_active = 1 ORDER BY business_name");
