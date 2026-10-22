@@ -92,11 +92,11 @@ require __DIR__ . '/layout_header.php';
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
             Resetear Contraseñas
         </button>
-        <?php endif; ?>
         <button class="btn btn-secondary" data-modal-open="modal-importar-csv">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem; vertical-align: middle;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             Importar CSV
         </button>
+        <?php endif; ?>
         <button class="btn btn-primary" data-modal-open="modal-crear-comercio">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Nuevo
@@ -275,7 +275,8 @@ require __DIR__ . '/layout_header.php';
 <div class="modal-footer"><button type="button" class="btn btn-ghost" data-modal-close>Cancelar</button><button type="submit" class="btn btn-primary">Aplicar a todos</button></div>
 </form></div></div>
 
-<!-- Modal Importar CSV -->
+<!-- Modal Importar CSV: reservado al Super Admin -->
+<?php if (($userRole ?? '') === 'super'): ?>
 <div class="modal-overlay" id="modal-importar-csv"><div class="modal">
 <div class="modal-header"><h3>Importar Comercios desde CSV</h3><button class="modal-close" data-modal-close>&times;</button></div>
 <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/admin/comercios/importar" enctype="multipart/form-data" onsubmit="iniciarImportacion(event, this)">
@@ -303,6 +304,7 @@ require __DIR__ . '/layout_header.php';
     </button>
 </div>
 </form></div></div>
+<?php endif; ?>
 
 <!-- Modal Crear -->
 <div class="modal-overlay" id="modal-crear-comercio"><div class="modal">

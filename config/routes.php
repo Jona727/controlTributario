@@ -38,7 +38,6 @@ $app->group('/admin', function ($group) {
     $group->post('/comercios/crear',          [UserController::class, 'store']);
     $group->post('/comercios/editar/{id}',    [UserController::class, 'update']);
     $group->post('/comercios/eliminar/{id}',  [UserController::class, 'delete']);
-    $group->post('/comercios/importar',       [UserController::class, 'importCsv']);
 
     // CRUD Facturas
     $group->post('/facturas/crear',           [InvoiceController::class, 'store']);
@@ -76,12 +75,14 @@ $app->group('/admin/usuarios', function ($group) {
 ->add(new RoleMiddleware(['super']))
 ->add(new JwtMiddleware());
 
-// Credenciales y reseteo masivo de contraseñas de comercios: exponen el
-// DNI (contraseña de acceso) de cada uno, así que quedan reservadas al
-// Super Administrador, no a cualquier admin.
+// Credenciales, reseteo masivo de contraseñas e importación CSV de
+// comercios: exponen el DNI (contraseña de acceso) de cada uno o cargan
+// datos en bloque, así que quedan reservadas al Super Administrador, no a
+// cualquier admin.
 $app->group('/admin/comercios', function ($group) {
     $group->post('/resetear-passwords', [UserController::class, 'resetAllPasswords']);
     $group->get('/credenciales-test',   [UserController::class, 'exportarCredencialesTest']);
+    $group->post('/importar',           [UserController::class, 'importCsv']);
 })
 ->add(new RoleMiddleware(['super']))
 ->add(new JwtMiddleware());
