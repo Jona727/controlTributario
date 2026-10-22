@@ -18,7 +18,7 @@ class UserController
         $data = $request->getParsedBody();
         $db   = Database::getConnection();
 
-        $required = ['business_name', 'cuit', 'address', 'email', 'password'];
+        $required = ['business_name', 'cuit', 'address', 'password'];
         foreach ($required as $field) {
             if (empty(trim($data[$field] ?? ''))) {
                 $_SESSION['flash_error'] = "El campo {$field} es obligatorio.";
@@ -27,30 +27,46 @@ class UserController
             }
         }
 
-        // Verificar duplicados
+        $clientCode = self::generateNextClientCode($db);
+
+        // Email: no es obligatorio. Si no se cargó, se genera uno provisorio
+        // (mismo criterio que en la importación CSV) a partir del código ya
+        // único, y el comercio queda marcado para revisión — así no se pierde
+        // el alta por un dato que a veces no se tiene a mano todavía.
+        $email = trim($data['email'] ?? '');
+        $needsReview = 0;
+        $reviewReason = null;
+        if ($email === '') {
+            $email = 'sin-email.' . preg_replace('/[^a-z0-9]+/', '-', strtolower($clientCode)) . '@controltributario.local';
+            $needsReview = 1;
+            $reviewReason = 'Sin email de contacto (se generó uno provisorio)';
+        }
+
+        // Verificar duplicados (el email generado automáticamente nunca
+        // colisiona, porque se arma a partir del código único)
         $stmt = $db->prepare("SELECT id FROM users WHERE email = :email OR cuit = :cuit");
-        $stmt->execute([':email' => $data['email'], ':cuit' => $data['cuit']]);
+        $stmt->execute([':email' => $email, ':cuit' => trim($data['cuit'])]);
         if ($stmt->fetch()) {
             $_SESSION['flash_error'] = 'Ya existe un comercio con ese email o CUIT.';
             $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
             return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
         }
 
-        $clientCode = self::generateNextClientCode($db);
-
         $stmt = $db->prepare("
-            INSERT INTO users (client_code, business_name, cuit, address, phone, email, password_hash, base_rate, role_id)
-            VALUES (:code, :name, :cuit, :addr, :phone, :email, :pass, :base_rate, 3)
+            INSERT INTO users (client_code, business_name, cuit, address, phone, email, password_hash, base_rate, role_id, needs_data_review, data_review_reason)
+            VALUES (:code, :name, :cuit, :addr, :phone, :email, :pass, :base_rate, 3, :needs_review, :review_reason)
         ");
         $stmt->execute([
-            ':code'      => $clientCode,
-            ':name'      => trim($data['business_name']),
-            ':cuit'      => trim($data['cuit']),
-            ':addr'      => trim($data['address']),
-            ':phone'     => trim($data['phone'] ?? ''),
-            ':email'     => trim($data['email']),
-            ':pass'      => password_hash($data['password'], PASSWORD_DEFAULT),
-            ':base_rate' => floatval($data['base_rate'] ?? 0.00),
+            ':code'          => $clientCode,
+            ':name'          => trim($data['business_name']),
+            ':cuit'          => trim($data['cuit']),
+            ':addr'          => trim($data['address']),
+            ':phone'         => trim($data['phone'] ?? ''),
+            ':email'         => $email,
+            ':pass'          => password_hash($data['password'], PASSWORD_DEFAULT),
+            ':base_rate'     => floatval($data['base_rate'] ?? 0.00),
+            ':needs_review'  => $needsReview,
+            ':review_reason' => $reviewReason,
         ]);
 
         $newUserId = (int) $db->lastInsertId();
@@ -67,6 +83,31 @@ class UserController
         $_SESSION['flash_success'] = "Comercio creado exitosamente. Código asignado: {$clientCode}.";
         $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
         return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
+    }
+
+    /**
+     * Arma la URL de vuelta al listado de comercios, preservando la
+     * búsqueda/filtro/página desde donde se editó o desactivó un comercio
+     * (viajan como campos ocultos en el formulario). Sin esto, guardar un
+     * comercio devolvía siempre al listado vacío de /admin/comercios, y
+     * había que volver a buscar o a tocar "Ver todas" para seguir editando.
+     */
+    private static function redirectAListaComercios(array $data, string $basePath): string
+    {
+        $params = [];
+        $q = trim($data['redirect_q'] ?? '');
+        if ($q !== '') {
+            $params['q'] = $q;
+        }
+        $filtro = trim($data['redirect_filtro'] ?? '');
+        if ($filtro !== '') {
+            $params['filtro'] = $filtro;
+        }
+        $page = (int) ($data['redirect_page'] ?? 1);
+        if ($page > 1) {
+            $params['page'] = $page;
+        }
+        return $basePath . '/admin/comercios' . (!empty($params) ? '?' . http_build_query($params) : '');
     }
 
     /**
@@ -126,17 +167,28 @@ class UserController
             $rubroCode = null;
         }
 
-        // DNI y estado de deuda anteriores: el DNI para saber si hay que
-        // actualizar también la contraseña, el estado de deuda para saber
-        // si este guardado es el que recién pasa a "al día" (y por lo tanto
-        // hay que cancelar la deuda vieja).
-        $stmtAnterior = $db->prepare("SELECT dni, payment_status FROM users WHERE id = :id");
+        // DNI, código y estado de deuda anteriores: el DNI para saber si hay
+        // que actualizar también la contraseña, el código por si hace falta
+        // generar un email provisorio, y el estado de deuda para saber si
+        // este guardado es el que recién pasa a "al día" (y por lo tanto hay
+        // que cancelar la deuda vieja).
+        $stmtAnterior = $db->prepare("SELECT dni, payment_status, client_code FROM users WHERE id = :id");
         $stmtAnterior->execute([':id' => $id]);
         $datosAnteriores = $stmtAnterior->fetch();
         $dniAnterior = $datosAnteriores['dni'] ?? null;
         $paymentStatusAnterior = $datosAnteriores['payment_status'] ?? 'con_deuda';
 
         $paymentStatus = ($data['payment_status'] ?? '') === 'al_dia' ? 'al_dia' : 'con_deuda';
+
+        // Email: no es obligatorio. Si se deja vacío, se genera uno
+        // provisorio (mismo criterio que en el alta y la importación CSV)
+        // para no chocar con la restricción UNIQUE si varios comercios
+        // quedan sin email cargado.
+        $email = trim($data['email'] ?? '');
+        if ($email === '') {
+            $codigoParaEmail = $datosAnteriores['client_code'] ?? ('id' . $id);
+            $email = 'sin-email.' . preg_replace('/[^a-z0-9]+/', '-', strtolower($codigoParaEmail)) . '@controltributario.local';
+        }
 
         $stmt = $db->prepare("
             UPDATE users SET
@@ -163,7 +215,7 @@ class UserController
             ':dni'           => $dni !== '' ? $dni : null,
             ':addr'          => trim($data['address']),
             ':phone'         => trim($data['phone'] ?? ''),
-            ':email'         => trim($data['email']),
+            ':email'         => $email,
             ':active'        => isset($data['is_active']) ? 1 : 0,
             ':base_rate'     => floatval($data['base_rate'] ?? 0.00),
             ':owner'         => $ownerName !== '' ? $ownerName : null,
@@ -215,7 +267,7 @@ class UserController
 
         $_SESSION['flash_success'] = 'Comercio actualizado exitosamente.';
         $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
-        return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
+        return $response->withHeader('Location', self::redirectAListaComercios($data, $basePath))->withStatus(302);
     }
 
     /**
@@ -223,8 +275,9 @@ class UserController
      */
     public function delete(Request $request, Response $response, array $args): Response
     {
-        $id = (int) $args['id'];
-        $db = Database::getConnection();
+        $id   = (int) $args['id'];
+        $data = $request->getParsedBody() ?? [];
+        $db   = Database::getConnection();
 
         $stmt = $db->prepare("UPDATE users SET is_active = 0 WHERE id = :id AND role_id = 3");
         $stmt->execute([':id' => $id]);
@@ -242,7 +295,7 @@ class UserController
 
         $_SESSION['flash_success'] = 'Comercio desactivado exitosamente.';
         $basePath = $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public';
-        return $response->withHeader('Location', $basePath . '/admin/comercios')->withStatus(302);
+        return $response->withHeader('Location', self::redirectAListaComercios($data, $basePath))->withStatus(302);
     }
 
     /**

@@ -225,6 +225,9 @@ require __DIR__ . '/layout_header.php';
                   data-confirm-message="Vas a desactivar a «<?= htmlspecialchars($c['business_name']) ?>». No va a poder facturarse hasta que lo reactives. ¿Confirmás?"
                   data-confirm-label="Desactivar">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                <input type="hidden" name="redirect_q" value="<?= htmlspecialchars($q ?? '') ?>">
+                <input type="hidden" name="redirect_filtro" value="<?= htmlspecialchars($filtro ?? '') ?>">
+                <input type="hidden" name="redirect_page" value="<?= htmlspecialchars((string) ($page ?? 1)) ?>">
                 <button type="submit" class="icon-btn" title="Eliminar/Desactivar" style="color:var(--danger);">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                 </button>
@@ -303,7 +306,7 @@ require __DIR__ . '/layout_header.php';
     <div class="form-group"><label class="form-label">CUIT *</label><input type="text" id="create-cuit" name="cuit" class="form-input cuit-mask" placeholder="20-12345678-9" required></div>
     <div class="form-group"><label class="form-label">Razón Social *</label><input type="text" name="business_name" class="form-input" required></div>
     <div class="form-group"><label class="form-label">Domicilio *</label><input type="text" name="address" class="form-input" required></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Teléfono</label><input type="text" name="phone" class="form-input"></div><div class="form-group"><label class="form-label">Email *</label><input type="email" name="email" class="form-input" required></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Teléfono</label><input type="text" name="phone" class="form-input"></div><div class="form-group"><label class="form-label">Email</label><input type="email" name="email" class="form-input"></div></div>
     <div class="form-row">
         <div class="form-group"><label class="form-label">Tasa Base Fija ($) *</label><input type="number" name="base_rate" class="form-input" step="0.01" value="0.00" required></div>
         <div class="form-group">
@@ -325,6 +328,9 @@ require __DIR__ . '/layout_header.php';
 <div class="modal-header"><h3>Editar Comercio</h3><button class="modal-close" data-modal-close>&times;</button></div>
 <form method="POST" id="form-editar-comercio">
 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+<input type="hidden" name="redirect_q" value="<?= htmlspecialchars($q ?? '') ?>">
+<input type="hidden" name="redirect_filtro" value="<?= htmlspecialchars($filtro ?? '') ?>">
+<input type="hidden" name="redirect_page" value="<?= htmlspecialchars((string) ($page ?? 1)) ?>">
 <div class="modal-body">
     <div class="form-row"><div class="form-group"><label class="form-label">Código</label><input type="text" id="edit-client-code" class="form-input" disabled title="El código de comercio se asigna una sola vez y no se puede editar."></div><div class="form-group"><label class="form-label">CUIT *</label><input type="text" name="cuit" id="edit-cuit" class="form-input cuit-mask" required></div></div>
     <div class="form-group">
@@ -334,7 +340,7 @@ require __DIR__ . '/layout_header.php';
     </div>
     <div class="form-group"><label class="form-label">Razón Social *</label><input type="text" name="business_name" id="edit-business-name" class="form-input" required></div>
     <div class="form-group"><label class="form-label">Domicilio *</label><input type="text" name="address" id="edit-address" class="form-input" required></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Teléfono</label><input type="text" name="phone" id="edit-phone" class="form-input"></div><div class="form-group"><label class="form-label">Email *</label><input type="email" name="email" id="edit-email" class="form-input" required></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Teléfono</label><input type="text" name="phone" id="edit-phone" class="form-input"></div><div class="form-group"><label class="form-label">Email</label><input type="email" name="email" id="edit-email" class="form-input"></div></div>
     <div class="form-row">
         <div class="form-group"><label class="form-label">Tasa Base Fija ($) *</label><input type="number" name="base_rate" id="edit-base-rate" class="form-input" step="0.01" required></div>
         <div class="form-group">
