@@ -108,12 +108,19 @@ class AdminController
     public function comercios(Request $request, Response $response): Response
     {
         $db = Database::getConnection();
+        $userRole = $request->getAttribute('user_role');
         $queryParams = $request->getQueryParams();
 
         $q = trim($queryParams['q'] ?? '');
         $filtro = $queryParams['filtro'] ?? '';
         $filtrosValidos = ['con_deuda', 'al_dia', 'por_validar', 'sin_dni', 'inactivos', 'todos'];
         if (!in_array($filtro, $filtrosValidos, true)) {
+            $filtro = '';
+        }
+        // El filtro "al_dia" depende del estado de conciliación con el
+        // sistema anterior — reservado al Super Admin (no solo oculto en la
+        // vista: también se ignora acá si alguien arma la URL a mano).
+        if ($filtro === 'al_dia' && $userRole !== 'super') {
             $filtro = '';
         }
         $huboConsulta = $q !== '' || $filtro !== '';
@@ -216,11 +223,16 @@ class AdminController
         // mostrado coincida con el que se cobraría en ventanilla ahora mismo.
         \App\Controllers\InvoiceController::refreshOverdueStatuses();
 
+        $userRole = $request->getAttribute('user_role');
+
         $queryParams = $request->getQueryParams();
         $filterUserId = $queryParams['user_id'] ?? '';
         $filterPeriod = $queryParams['period'] ?? '';
         $tab = $queryParams['tab'] ?? 'pendientes';
-        $mostrarLegacy = ($queryParams['legacy'] ?? '') === '1';
+        // La facturación migrada del sistema anterior sin conciliar queda
+        // reservada al Super Admin — el resto de los administradores trabaja
+        // con el sistema limpio, sin esta opción ni lo que revela.
+        $mostrarLegacy = $userRole === 'super' && ($queryParams['legacy'] ?? '') === '1';
         $verTodas = ($queryParams['ver'] ?? '') === 'todos';
 
         // Mismo criterio que en Comercios: no se lista ninguna factura hasta
@@ -323,8 +335,11 @@ class AdminController
         // Sincroniza mora/estado antes de calcular cualquier total.
         \App\Controllers\InvoiceController::refreshOverdueStatuses();
 
+        $userRole = $request->getAttribute('user_role');
+
         $queryParamsLegacy = $request->getQueryParams();
-        $mostrarLegacy = ($queryParamsLegacy['legacy'] ?? '') === '1';
+        // Reservado al Super Admin — ver nota equivalente en facturas().
+        $mostrarLegacy = $userRole === 'super' && ($queryParamsLegacy['legacy'] ?? '') === '1';
         $legacyCond = $mostrarLegacy ? '' : ' AND is_legacy = 0';
         $legacyCondI = $mostrarLegacy ? '' : ' AND i.is_legacy = 0';
         $totalLegacy = (int) $db->query("SELECT COUNT(*) FROM invoices WHERE is_legacy = 1")->fetchColumn();

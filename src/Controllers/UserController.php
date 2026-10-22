@@ -178,7 +178,14 @@ class UserController
         $dniAnterior = $datosAnteriores['dni'] ?? null;
         $paymentStatusAnterior = $datosAnteriores['payment_status'] ?? 'con_deuda';
 
-        $paymentStatus = ($data['payment_status'] ?? '') === 'al_dia' ? 'al_dia' : 'con_deuda';
+        // El campo "Estado de deuda" solo se muestra en el formulario al
+        // Super Admin — si no vino en el POST (admin común editando), se
+        // mantiene el valor que ya tenía en vez de resetearlo a "con_deuda".
+        if (isset($data['payment_status'])) {
+            $paymentStatus = $data['payment_status'] === 'al_dia' ? 'al_dia' : 'con_deuda';
+        } else {
+            $paymentStatus = $paymentStatusAnterior;
+        }
 
         // Email: no es obligatorio. Si se deja vacío, se genera uno
         // provisorio (mismo criterio que en el alta y la importación CSV)

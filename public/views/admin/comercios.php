@@ -105,14 +105,19 @@ require __DIR__ . '/layout_header.php';
 </div>
 
 <?php
+    // El chip "Al día" filtra por el estado de conciliación con el sistema
+    // anterior (payment_status) — queda reservado al Super Admin, igual que
+    // el resto de la información de conciliación.
     $chips = [
         'con_deuda'   => "Con deuda ({$comerciosStats['con_deuda']})",
-        'al_dia'      => "Al día ({$comerciosStats['al_dia']})",
-        'por_validar' => "Por validar ({$comerciosStats['por_validar']})",
-        'sin_dni'     => 'Sin DNI',
-        'inactivos'   => 'Inactivos',
-        'todos'       => 'Ver todos (' . $totalComerciosGlobal . ')',
     ];
+    if (($userRole ?? '') === 'super') {
+        $chips['al_dia'] = "Al día ({$comerciosStats['al_dia']})";
+    }
+    $chips['por_validar'] = "Por validar ({$comerciosStats['por_validar']})";
+    $chips['sin_dni']     = 'Sin DNI';
+    $chips['inactivos']   = 'Inactivos';
+    $chips['todos']       = 'Ver todos (' . $totalComerciosGlobal . ')';
 ?>
 <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem;">
     <?php foreach ($chips as $key => $label): ?>
@@ -166,7 +171,8 @@ require __DIR__ . '/layout_header.php';
         <td class="col-secondary" style="font-weight:600;">
             <?= (float) $c['base_rate'] > 0 ? '$ ' . number_format((float) $c['base_rate'], 2, ',', '.') : '<span style="color:var(--slate-medium);font-weight:400;">— (monto variable)</span>' ?>
         </td>
-        <?php $sinConciliar = $c['payment_status'] !== 'al_dia' && (float) $c['deuda_pendiente'] <= 0; ?>
+        <?php if (($userRole ?? '') === 'super'):
+            $sinConciliar = $c['payment_status'] !== 'al_dia' && (float) $c['deuda_pendiente'] <= 0; ?>
         <td style="font-weight:600;color:<?= $sinConciliar ? 'var(--slate-medium)' : ((float) $c['deuda_pendiente'] > 0 ? 'var(--danger)' : 'var(--success)') ?>;">
             <?php if ($sinConciliar): ?>
                 <span style="font-weight:400;font-style:italic;" title="Todavía no tiene facturas reales cargadas en el sistema nuevo — no significa que esté al día.">Pendiente de conciliar</span>
@@ -181,6 +187,11 @@ require __DIR__ . '/layout_header.php';
                 <?php endif; ?>
             </div>
         </td>
+        <?php else: ?>
+        <td style="font-weight:600;color:<?= (float) $c['deuda_pendiente'] > 0 ? 'var(--danger)' : 'var(--success)' ?>;">
+            $ <?= number_format((float) $c['deuda_pendiente'], 2, ',', '.') ?>
+        </td>
+        <?php endif; ?>
         <td>
             <div style="margin-bottom:0.3rem;"><?php if($c['is_active']): ?><span class="status-badge status-paid"><span class="status-dot"></span>Activo</span><?php else: ?><span class="status-badge status-cancelled">Inactivo</span><?php endif; ?></div>
             <?php if (!empty($c['needs_data_review'])): ?>
@@ -369,6 +380,7 @@ require __DIR__ . '/layout_header.php';
             <p style="font-size:0.72rem; color:var(--gray-400); margin:0.3rem 0 0;">Al elegir un rubro se sugiere su cuota en "Tasa Base Fija" — podés ajustarla igual si hace falta.</p>
         </div>
     </div>
+    <?php if (($userRole ?? '') === 'super'): ?>
     <div class="form-group">
         <label class="form-label">Estado de deuda</label>
         <select name="payment_status" id="edit-payment-status" class="form-input">
@@ -377,6 +389,7 @@ require __DIR__ . '/layout_header.php';
         </select>
         <p style="font-size:0.72rem; color:var(--gray-400); margin:0.3rem 0 0;">Al pasar a "Al día" se cancelan automáticamente sus facturas viejas pendientes/vencidas.</p>
     </div>
+    <?php endif; ?>
     <label style="display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" name="is_active" id="edit-is-active" value="1"> Activo</label>
     <div id="edit-review-wrap" style="display:none; margin-top:0.75rem; padding:0.75rem; background:var(--alert-warning-bg); border:1px solid var(--alert-warning-border); border-radius:6px;">
         <p id="edit-review-reason" style="font-size:0.78rem; color:var(--alert-warning-text); margin:0 0 0.5rem;"></p>
@@ -398,7 +411,8 @@ function openEditModal(d) {
     document.getElementById('edit-email').value = d.email;
     document.getElementById('edit-base-rate').value = d.base_rate;
     document.getElementById('edit-is-active').checked = d.is_active == 1;
-    document.getElementById('edit-payment-status').value = d.payment_status || 'con_deuda';
+    const editPaymentStatus = document.getElementById('edit-payment-status');
+    if (editPaymentStatus) editPaymentStatus.value = d.payment_status || 'con_deuda';
     document.getElementById('edit-owner-name').value = d.owner_name || '';
     document.getElementById('edit-rubro-code').value = d.rubro_code || '';
 
