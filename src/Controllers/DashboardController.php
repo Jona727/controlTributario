@@ -27,13 +27,17 @@ class DashboardController
         $stmt->execute([':id' => $userId]);
         $user = $stmt->fetch();
 
-        // Facturas del usuario
+        // Facturas del usuario: por período ascendente (más vieja primero,
+        // más reciente al final) — el período es más confiable que la fecha
+        // de vencimiento para ordenar cronológicamente, porque en facturas
+        // migradas del sistema anterior el vencimiento no siempre coincide
+        // con el período real que facturan.
         $stmt = $db->prepare("
-            SELECT i.*, p.id AS payment_id 
-            FROM invoices i 
-            LEFT JOIN payments p ON i.id = p.invoice_id 
-            WHERE i.user_id = :uid 
-            ORDER BY i.due_date DESC
+            SELECT i.*, p.id AS payment_id
+            FROM invoices i
+            LEFT JOIN payments p ON i.id = p.invoice_id
+            WHERE i.user_id = :uid
+            ORDER BY i.period ASC, i.due_date ASC
         ");
         $stmt->execute([':uid' => $userId]);
         $facturas = $stmt->fetchAll();
