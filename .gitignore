@@ -1,10 +1,13 @@
-/vendor/
-# No versionado a propósito: el auto-deploy de Hostinger falla con
-# "Your lock file does not contain a compatible set of packages" por una
-# incompatibilidad de su Composer con el formato del lock file. Sin este
-# archivo, composer install resuelve directo desde composer.json en cada
-# deploy (menos reproducible, pero evita que el deploy quede bloqueado).
-composer.lock
+# vendor/ SÍ se versiona a propósito (ver más abajo) — el auto-deploy de
+# Hostinger no soporta elegir la versión de Composer que usa, y la que
+# corre ahí no logra resolver nuestras dependencias ni con lock ni sin él.
+# Subiendo vendor/ directo, el sitio funciona sin que Hostinger tenga que
+# instalar nada. Como contrapartida, composer.json/composer.lock dejan de
+# versionarse (si quedaran en el repo, Hostinger los detecta e igual
+# intenta correr su Composer roto) — se usan solo localmente para
+# actualizar dependencias, y después hay que commitear vendor/ a mano.
+/composer.json
+/composer.lock
 .env
 .env.*
 !.env.example
