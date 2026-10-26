@@ -2,10 +2,13 @@
 # Hostinger no soporta elegir la versión de Composer que usa, y la que
 # corre ahí no logra resolver nuestras dependencias ni con lock ni sin él.
 # Subiendo vendor/ directo, el sitio funciona sin que Hostinger tenga que
-# instalar nada. Como contrapartida, composer.json/composer.lock dejan de
-# versionarse (si quedaran en el repo, Hostinger los detecta e igual
-# intenta correr su Composer roto) — se usan solo localmente para
-# actualizar dependencias, y después hay que commitear vendor/ a mano.
+# instalar nada.
+#
+# composer.json/composer.lock viven en deps/ (SÍ versionados ahí, para que
+# Dependabot siga avisando de vulnerabilidades y quede el historial de
+# cambios de versión) — si quedaran en la raíz, Hostinger los detecta e
+# igual intenta correr su Composer roto. Esta regla es solo una red de
+# seguridad por si alguien corre composer acá por error: no se suben.
 /composer.json
 /composer.lock
 .env
