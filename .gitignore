@@ -1,4 +1,10 @@
 /vendor/
+# No versionado a propósito: el auto-deploy de Hostinger falla con
+# "Your lock file does not contain a compatible set of packages" por una
+# incompatibilidad de su Composer con el formato del lock file. Sin este
+# archivo, composer install resuelve directo desde composer.json en cada
+# deploy (menos reproducible, pero evita que el deploy quede bloqueado).
+composer.lock
 .env
 .env.*
 !.env.example
