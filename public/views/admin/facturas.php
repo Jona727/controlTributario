@@ -77,9 +77,14 @@ require __DIR__ . '/layout_header.php';
         <label class="form-label">Filtrar por Comercio</label>
         <select name="user_id" class="form-select searchable-select">
             <option value="">Todos los comercios</option>
-            <?php foreach ($comerciosSelect as $cs): ?>
+            <?php foreach ($comerciosSelect as $cs):
+                $etiqueta = $cs['client_code'] . ' – ' . $cs['business_name'];
+                if (!empty($cs['owner_name']) && strcasecmp($cs['owner_name'], $cs['business_name']) !== 0) {
+                    $etiqueta .= ' (' . $cs['owner_name'] . ')';
+                }
+            ?>
                 <option value="<?= $cs['id'] ?>" <?= (isset($_GET['user_id']) && $_GET['user_id'] == $cs['id']) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($cs['client_code'] . ' – ' . $cs['business_name']) ?>
+                    <?= htmlspecialchars($etiqueta) ?>
                 </option>
             <?php endforeach; ?>
         </select>
@@ -247,8 +252,13 @@ require __DIR__ . '/layout_header.php';
         <label class="form-label">Comercio *</label>
         <select name="user_id" class="form-select searchable-select" required>
             <option value="">Seleccionar comercio...</option>
-            <?php foreach ($comerciosSelect as $cs): ?>
-                <option value="<?= $cs['id'] ?>"><?= htmlspecialchars($cs['client_code'] . ' – ' . $cs['business_name']) ?></option>
+            <?php foreach ($comerciosSelect as $cs):
+                $etiqueta = $cs['client_code'] . ' – ' . $cs['business_name'];
+                if (!empty($cs['owner_name']) && strcasecmp($cs['owner_name'], $cs['business_name']) !== 0) {
+                    $etiqueta .= ' (' . $cs['owner_name'] . ')';
+                }
+            ?>
+                <option value="<?= $cs['id'] ?>"><?= htmlspecialchars($etiqueta) ?></option>
             <?php endforeach; ?>
         </select>
     </div>

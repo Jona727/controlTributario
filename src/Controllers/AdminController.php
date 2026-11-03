@@ -311,8 +311,10 @@ class AdminController
             $facturas = $stmt->fetchAll();
         }
 
-        // Comercios para el selector
-        $stmt = $db->query("SELECT id, client_code, business_name FROM users WHERE role_id = 3 AND is_active = 1 ORDER BY business_name");
+        // Comercios para el selector — incluye el titular para que el buscador
+        // (TomSelect) también encuentre por nombre de persona, no solo por
+        // razón social (ej: "Chajud Zaida" además de "Peluquería").
+        $stmt = $db->query("SELECT id, client_code, business_name, owner_name FROM users WHERE role_id = 3 AND is_active = 1 ORDER BY business_name");
         $comerciosSelect = $stmt->fetchAll();
 
         $userName = $request->getAttribute('user_name');
