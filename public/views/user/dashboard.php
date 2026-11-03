@@ -199,18 +199,17 @@ $activePage = 'dashboard';
                     <?php endif; ?>
                 </div>
             <?php else: ?>
-            <?php $facturasVisibles = array_filter($facturas, fn($f) => $f['status'] !== 'cancelled'); ?>
             <div style="overflow-x:auto;">
                 <table class="data-table">
                     <thead><tr><th># Factura</th><th>Período</th><th class="col-secondary">Emisión</th><th>Vencimiento</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead>
                     <tbody>
-                    <?php if (empty($facturasVisibles)): ?>
+                    <?php if (empty($facturasConfiables)): ?>
                         <tr><td colspan="7" class="empty-state empty-success">
                             <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                             <p>Estás al día — todavía no tenés ninguna factura generada ni deuda pendiente.</p>
                         </td></tr>
                     <?php endif; ?>
-                    <?php foreach ($facturasVisibles as $f):
+                    <?php foreach ($facturasConfiables as $f):
                         $sc = match($f['status']){'paid'=>'status-paid','pending'=>'status-pending','overdue'=>'status-overdue',default=>'status-cancelled'};
                         $sl = match($f['status']){'paid'=>'Pagado','pending'=>'Pendiente','overdue'=>'Vencido','cancelled'=>'Cancelado',default=>$f['status']};
                     ?>
