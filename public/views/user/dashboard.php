@@ -115,7 +115,7 @@ $activePage = 'dashboard';
             <div class="stat-card stat-danger">
                 <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
                 <div class="stat-label">Deuda Pendiente</div>
-                <?php if ($ocultarDetalle || $sinDatosAun): ?>
+                <?php if ($sinDatosAun): ?>
                     <div class="stat-value" style="font-size:1.1rem;">Pendiente de conciliar</div>
                 <?php else: ?>
                     <div class="stat-value">$ <?= number_format((float)$deudaTotal,2,',','.') ?></div>
@@ -136,8 +136,8 @@ $activePage = 'dashboard';
         <!-- Facturas -->
         <div class="card">
             <div class="card-header"><h3>Mis Facturas</h3></div>
-            <?php if ($ocultarDetalle): ?>
-                <div style="padding: 1.5rem;">
+            <?php if ($sinVerificar): ?>
+                <div style="padding: 1.5rem; <?= empty($facturasConfiables) ? '' : 'padding-bottom: 0.75rem;' ?>">
                     <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'pending'): ?>
                         <div style="display:flex; gap:1rem; align-items:flex-start; padding:1.25rem; background:var(--slate-light); border:1px solid var(--slate-border); border-radius:10px;">
                             <div style="flex-shrink:0; width:42px; height:42px; border-radius:50%; background:var(--brand-primary); display:flex; align-items:center; justify-content:center;">
@@ -146,6 +146,23 @@ $activePage = 'dashboard';
                             <div style="flex:1; min-width:0;">
                                 <h4 style="margin:0 0 0.35rem; font-size:0.95rem; color:var(--slate-dark);">Tu solicitud de estado de cuenta está siendo procesada</h4>
                                 <p style="margin:0; font-size:0.82rem; color:var(--slate-medium); line-height:1.5;">Catastro y Rentas la está revisando. Apenas tengan una respuesta te va a llegar como notificación acá mismo.</p>
+                            </div>
+                        </div>
+                    <?php elseif (empty($facturasConfiables)): ?>
+                        <div style="display:flex; gap:1rem; align-items:flex-start; padding:1.25rem; background:var(--slate-light); border:1px solid var(--slate-border); border-radius:10px;">
+                            <div style="flex-shrink:0; width:42px; height:42px; border-radius:50%; background:var(--slate-medium); display:flex; align-items:center; justify-content:center;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            </div>
+                            <div style="flex:1; min-width:0;">
+                                <h4 style="margin:0 0 0.35rem; font-size:0.95rem; color:var(--slate-dark);">Todavía no conciliamos tu cuenta con el sistema anterior</h4>
+                                <p style="margin:0; font-size:0.82rem; color:var(--slate-medium); line-height:1.5;">Si venías con tasas pendientes del sistema anterior, pedí tu estado de cuenta para que te confirmemos la situación real — si no tenías deuda, listo.</p>
+                                <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'resolved'): ?>
+                                    <p style="font-size:0.78rem; color:var(--slate-medium); margin:0.5rem 0 0;">Ya te respondimos una solicitud anterior — revisá tus notificaciones. Si tu situación cambió, podés volver a pedirlo.</p>
+                                <?php endif; ?>
+                                <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/user/estado-cuenta/solicitar" style="margin-top:0.85rem;">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                    <button type="submit" class="btn btn-primary">Solicitar estado de cuenta</button>
+                                </form>
                             </div>
                         </div>
                     <?php else: ?>
@@ -154,8 +171,8 @@ $activePage = 'dashboard';
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                             </div>
                             <div style="flex:1; min-width:0;">
-                                <h4 style="margin:0 0 0.35rem; font-size:0.95rem; color:var(--alert-warning-text);">Tenés facturación pendiente de regularizar</h4>
-                                <p style="margin:0; font-size:0.82rem; color:var(--slate-medium); line-height:1.5;">Para conocer el detalle exacto de tu situación, pedí tu estado de cuenta — Catastro y Rentas lo revisa y te confirma el monto real.</p>
+                                <h4 style="margin:0 0 0.35rem; font-size:0.95rem; color:var(--alert-warning-text);">Tenés deuda del sistema anterior pendiente de conciliar</h4>
+                                <p style="margin:0; font-size:0.82rem; color:var(--slate-medium); line-height:1.5;">Pedí tu estado de cuenta para que Catastro y Rentas la revise y te confirme el monto real. Mientras tanto, abajo podés ver y descargar tu facturación más reciente.</p>
                                 <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'resolved'): ?>
                                     <p style="font-size:0.78rem; color:var(--slate-medium); margin:0.5rem 0 0;">Ya te respondimos una solicitud anterior — revisá tus notificaciones. Si tu situación cambió, podés volver a pedirlo.</p>
                                 <?php endif; ?>
@@ -167,38 +184,8 @@ $activePage = 'dashboard';
                         </div>
                     <?php endif; ?>
                 </div>
-            <?php elseif ($sinDatosAun): ?>
-                <div style="padding: 1.5rem;">
-                    <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'pending'): ?>
-                        <div style="display:flex; gap:1rem; align-items:flex-start; padding:1.25rem; background:var(--slate-light); border:1px solid var(--slate-border); border-radius:10px;">
-                            <div style="flex-shrink:0; width:42px; height:42px; border-radius:50%; background:var(--brand-primary); display:flex; align-items:center; justify-content:center;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            </div>
-                            <div style="flex:1; min-width:0;">
-                                <h4 style="margin:0 0 0.35rem; font-size:0.95rem; color:var(--slate-dark);">Tu solicitud de estado de cuenta está siendo procesada</h4>
-                                <p style="margin:0; font-size:0.82rem; color:var(--slate-medium); line-height:1.5;">Catastro y Rentas la está revisando. Apenas tengan una respuesta te va a llegar como notificación acá mismo.</p>
-                            </div>
-                        </div>
-                    <?php else: ?>
-                        <div style="display:flex; gap:1rem; align-items:flex-start; padding:1.25rem; background:var(--slate-light); border:1px solid var(--slate-border); border-radius:10px;">
-                            <div style="flex-shrink:0; width:42px; height:42px; border-radius:50%; background:var(--slate-medium); display:flex; align-items:center; justify-content:center;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                            </div>
-                            <div style="flex:1; min-width:0;">
-                                <h4 style="margin:0 0 0.35rem; font-size:0.95rem; color:var(--slate-dark);">Todavía no conciliamos tu cuenta con el sistema anterior</h4>
-                                <p style="margin:0; font-size:0.82rem; color:var(--slate-medium); line-height:1.5;">Por ahora no tenés facturas cargadas en el sistema nuevo. Si venías con tasas pendientes del sistema anterior, pedí tu estado de cuenta para que te confirmemos la situación real — si no tenías deuda, listo.</p>
-                                <?php if ($solicitudEstadoCuenta && $solicitudEstadoCuenta['status'] === 'resolved'): ?>
-                                    <p style="font-size:0.78rem; color:var(--slate-medium); margin:0.5rem 0 0;">Ya te respondimos una solicitud anterior — revisá tus notificaciones. Si tu situación cambió, podés volver a pedirlo.</p>
-                                <?php endif; ?>
-                                <form method="POST" action="<?= $_ENV['APP_BASE_PATH'] ?? '/tasas_municipales/public' ?>/user/estado-cuenta/solicitar" style="margin-top:0.85rem;">
-                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                    <button type="submit" class="btn btn-primary">Solicitar estado de cuenta</button>
-                                </form>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            <?php else: ?>
+            <?php endif; ?>
+            <?php if (!$sinVerificar || !empty($facturasConfiables)): ?>
             <div style="overflow-x:auto;">
                 <table class="data-table">
                     <thead><tr><th># Factura</th><th>Período</th><th class="col-secondary">Emisión</th><th>Vencimiento</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead>

@@ -42,56 +42,54 @@ class DashboardController
         $stmt->execute([':uid' => $userId]);
         $facturas = $stmt->fetchAll();
 
-        // Resumen — no cuenta facturación migrada del sistema anterior sin
-        // conciliar (is_legacy = 1): igual que en el resto del panel, no es
-        // información confiable hasta que se verifique.
-        $stmt = $db->prepare("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices WHERE user_id = :uid AND status IN ('pending','overdue') AND is_legacy = 0");
-        $stmt->execute([':uid' => $userId]);
-        $deudaTotal = $stmt->fetch()['total'];
-
-        $stmt = $db->prepare("SELECT COUNT(*) as total FROM invoices WHERE user_id = :uid AND status = 'paid' AND is_legacy = 0");
-        $stmt->execute([':uid' => $userId]);
-        $facturasPagadas = $stmt->fetch()['total'];
-
-        $stmt = $db->prepare("SELECT COUNT(*) as total FROM invoices WHERE user_id = :uid AND status IN ('pending','overdue') AND is_legacy = 0");
-        $stmt->execute([':uid' => $userId]);
-        $facturasPendientes = $stmt->fetch()['total'];
-
-        $tieneDeuda = (int) $facturasPendientes > 0;
-
-        // Facturas confiables (no legacy, no canceladas) para la tabla "Mis
-        // Facturas" — una factura real nueva (por ejemplo, una cargada ya
-        // facturada para el período actual) se muestra siempre, aunque el
-        // comercio todavía arrastre deuda vieja del sistema anterior sin
-        // conciliar. Lo legacy nunca se muestra como factura real acá.
-        $facturasConfiables = array_filter($facturas, fn($f) => $f['status'] !== 'cancelled' && (int) ($f['is_legacy'] ?? 0) === 0);
-
         // Una vez que Catastro y Rentas concilió la cuenta al menos una vez
         // (respondió una solicitud de estado de cuenta), se confía en las
-        // facturas del sistema de ahí en adelante y se muestran normales,
-        // en vez de seguir ocultando el detalle.
+        // facturas del sistema de ahí en adelante y se muestran normales.
         $stmt = $db->prepare("SELECT 1 FROM account_status_requests WHERE user_id = :uid AND status = 'resolved' LIMIT 1");
         $stmt->execute([':uid' => $userId]);
         $cuentaVerificada = (bool) $stmt->fetchColumn();
 
         // Si el comercio ya está clasificado "al día", su deuda (si tiene)
         // es facturación nueva y real del sistema actual — no hace falta
-        // ocultarla ni pedir conciliación, aunque todavía no haya pasado
-        // nunca por el flujo de estado de cuenta.
+        // ocultarle nada ni pedirle conciliación, aunque todavía no haya
+        // pasado nunca por el flujo de estado de cuenta.
         $esConDeuda = ($user['payment_status'] ?? 'con_deuda') === 'con_deuda';
         $sinVerificar = !$cuentaVerificada && $esConDeuda;
 
-        // Un comercio "con deuda" sin verificar y sin ninguna factura
-        // cargada todavía no es lo mismo que estar al día — simplemente no
-        // se concilió su cuenta con el sistema anterior. Sin esto, caía en
-        // el mismo "estás al día" que un comercio realmente verificado.
-        $sinDatosAun = $sinVerificar && empty($facturas);
+        // Facturas confiables para "Mis Facturas": nunca lo legacy (sin
+        // conciliar del sistema anterior). Mientras el comercio esté
+        // con_deuda y sin verificar, tampoco se cuenta lo YA VENCIDO — esa
+        // deuda vieja tiene que pasar por la conciliación manual de
+        // Catastro y Rentas, no mostrarse como si fuera un saldo confiable.
+        // Lo pendiente (todavía no vencido) sí se muestra: es facturación
+        // real y actual, como el período en curso.
+        $facturasConfiables = array_values(array_filter($facturas, function ($f) use ($sinVerificar) {
+            if ($f['status'] === 'cancelled') {
+                return false;
+            }
+            if ((int) ($f['is_legacy'] ?? 0) === 1) {
+                return false;
+            }
+            if ($sinVerificar && $f['status'] === 'overdue') {
+                return false;
+            }
+            return true;
+        }));
 
-        // Solo se pide conciliar cuando no hay ninguna factura confiable que
-        // mostrar — si ya existe al menos una factura real (por ejemplo, un
-        // período ya facturado en el sistema nuevo), se muestra igual, sin
-        // esperar a que se concilie la deuda vieja del sistema anterior.
-        $ocultarDetalle = $sinVerificar && empty($facturasConfiables) && !$sinDatosAun;
+        // El resumen de arriba se calcula sobre el mismo conjunto que se
+        // muestra en la tabla, para que nunca haya un número que no
+        // coincida con lo que el comercio ve abajo.
+        $deudaTotal = array_sum(array_map(
+            fn($f) => (float) $f['total_amount'],
+            array_filter($facturasConfiables, fn($f) => in_array($f['status'], ['pending', 'overdue'], true))
+        ));
+        $facturasPendientes = count(array_filter($facturasConfiables, fn($f) => in_array($f['status'], ['pending', 'overdue'], true)));
+        $facturasPagadas = count(array_filter($facturasConfiables, fn($f) => $f['status'] === 'paid'));
+
+        // Un comercio "con deuda" sin verificar y sin ninguna factura
+        // confiable para mostrar todavía no es lo mismo que estar al día —
+        // simplemente no se concilió su cuenta con el sistema anterior.
+        $sinDatosAun = $sinVerificar && empty($facturasConfiables);
 
         // Se consulta siempre (no solo cuando falta conciliar): incluso con
         // la cuenta ya verificada, el comercio puede querer marcar que algo
